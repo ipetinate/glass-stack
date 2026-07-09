@@ -1,0 +1,7 @@
+client/.env
+
+# ai junk
+
+.codex/*
+CLAUDE*
+AGENTS*
