@@ -41,20 +41,17 @@ The goal is to make server administration accessible and intuitive, without sacr
   - [React](https://react.dev/)
 - **Language**
   - [TypeScript](https://www.typescriptlang.org/)
-- **Styling**
+- **UI Layer**
   - [Tailwind CSS](https://tailwindcss.com/)
-- **State Management**
+  - [Framer Motion](https://www.framer.com/motion/)
+  - [Lucide React](https://lucide.dev/)
+  - [D3.js](https://d3js.org/)
+- **State + Data**
   - [Zustand](https://zustand-demo.pmnd.rs/)
-- **Data Fetching**
   - [TanStack Query](https://tanstack.com/query)
+  - [Axios](https://axios-http.com/)
 - **Routing**
   - [React Router](https://reactrouter.com/)
-- **Animation**
-  - [Framer Motion](https://www.framer.com/motion/)
-- **Icons**
-  - [Lucide React](https://lucide.dev/)
-- **Data Visualization**
-  - [D3.js](https://d3js.org/)
 - **Bundler + Tooling**
   - [Vite](https://vite.dev/)
 - **Linter + Code Style**
