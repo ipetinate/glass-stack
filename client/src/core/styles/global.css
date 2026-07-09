@@ -1,0 +1,68 @@
+* {
+    box-sizing: border-box;
+    scrollbar-color: rgb(21 26 33 / 0.22) transparent;
+    scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+    background-color: rgb(21 26 33 / 0.28);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(21 26 33 / 0.42);
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+:where(.dark, .dark *) {
+    scrollbar-color: rgb(255 255 255 / 0.34) transparent;
+}
+
+:where(.dark, .dark *)::-webkit-scrollbar-thumb {
+    background-color: rgb(255 255 255 / 0.34);
+}
+
+:where(.dark, .dark *)::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(255 255 255 / 0.48);
+}
+
+html,
+body,
+#app {
+    border: 0;
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    min-height: 100dvh;
+}
+
+html {
+    overscroll-behavior-y: none;
+    background-color: #0d1724;
+    background: var(--app-wallpaper-background, url("/images/wallpapers/default-dark.avif"));
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+body {
+    min-height: 100dvh;
+    overflow: hidden;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+}
