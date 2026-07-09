@@ -75,18 +75,32 @@ pnpm test
 
 ## Stack
 
-- [React](https://react.dev/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Vite](https://vite.dev/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [TanStack Query](https://tanstack.com/query)
-- [Zustand](https://zustand-demo.pmnd.rs/)
-- [React Router](https://reactrouter.com/)
-- [Lucide React](https://lucide.dev/)
-- [Framer Motion](https://www.framer.com/motion/)
-- [D3.js](https://d3js.org/)
-- [Vitest](https://vitest.dev/)
-- [OxLint](https://oxc.rs/docs/guide/usage/linter)
+- **Framework**
+  - [React](https://react.dev/)
+- **Language**
+  - [TypeScript](https://www.typescriptlang.org/)
+- **Styling**
+  - [Tailwind CSS](https://tailwindcss.com/)
+- **State Management**
+  - [Zustand](https://zustand-demo.pmnd.rs/)
+- **Data Fetching**
+  - [TanStack Query](https://tanstack.com/query)
+- **Routing**
+  - [React Router](https://reactrouter.com/)
+- **Animation**
+  - [Framer Motion](https://www.framer.com/motion/)
+- **Icons**
+  - [Lucide React](https://lucide.dev/)
+- **Data Visualization**
+  - [D3.js](https://d3js.org/)
+- **Bundler + Tooling**
+  - [Vite](https://vite.dev/)
+- **Linter + Code Style**
+  - [OxLint](https://oxc.rs/docs/guide/usage/linter)
+  - [Prettier](https://prettier.io/)
+- **Testing**
+  - [Vitest](https://vitest.dev/)
+  - [Testing Library](https://testing-library.com/)
 
 ## Useful Links
 
