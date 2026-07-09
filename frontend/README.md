@@ -21,21 +21,59 @@
 
 ## About
 
-Glass Stack is an open-source server management platform built for homelabs and self-hosted environments. It provides a clean, transparent interface to manage your servers, install and configure applications via Docker containers, browse and edit files, and interact with your system through a built-in terminal — all from a single dashboard.
+The Glass Stack frontend is a modern single-page application built with React and TypeScript. It provides the user interface for managing servers, browsing files, accessing a terminal, and installing applications — all through a responsive, desktop-like experience in the browser.
 
-The goal is to make server administration accessible and intuitive, without sacrificing power or flexibility. Whether you are running a single Raspberry Pi or a multi-node home cluster, Glass Stack gives you visibility and control over your entire infrastructure.
+The UI is designed with a modular architecture, where each feature (Dashboard, File Manager, Terminal, Applications Store, Settings) lives in its own module with dedicated routes, pages, and components.
 
 ### Features
 
-- **Dashboard** — Real-time overview of your server status, resources, and running services.
+- **Dashboard** — Real-time overview of server status, resources, and running services.
 - **Applications Store** — Install, update, and remove Docker-based applications with a few clicks.
 - **File Manager** — Browse, upload, edit, and manage files directly from the browser.
 - **Terminal** — Full shell access to your server without leaving the interface.
 - **Settings** — Customize appearance, themes, wallpapers, and system preferences.
 
-## Stack
+## How to Run
 
-### Frontend
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [pnpm](https://pnpm.io/)
+
+### Installation
+
+```bash
+cd frontend
+pnpm install
+```
+
+### Development
+
+```bash
+pnpm dev
+```
+
+The application will be available at `http://localhost:5173`.
+
+### Build
+
+```bash
+pnpm build
+```
+
+### Lint
+
+```bash
+pnpm lint
+```
+
+### Tests
+
+```bash
+pnpm test
+```
+
+## Stack
 
 - [React](https://react.dev/)
 - [TypeScript](https://www.typescriptlang.org/)
@@ -49,10 +87,6 @@ The goal is to make server administration accessible and intuitive, without sacr
 - [D3.js](https://d3js.org/)
 - [Vitest](https://vitest.dev/)
 - [OxLint](https://oxc.rs/docs/guide/usage/linter)
-
-### Backend
-
-- _To be defined_
 
 ## Useful Links
 
