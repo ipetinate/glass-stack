@@ -1,3 +1,5 @@
-module glass-stack
+module github.com/ipetinate/glass-stack/backend
 
 go 1.26.4
+
+require github.com/go-chi/chi/v5 v5.3.1 // indirect

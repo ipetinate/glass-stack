@@ -63,7 +63,18 @@ The goal is to make server administration accessible and intuitive, without sacr
 
 ### Backend
 
-- _To be defined_
+- **Language**
+  - [Go](https://go.dev/)
+- **HTTP Server**
+  - [net/std](https://pkg.go.dev/net/http)
+- **Database**
+  - [SQLite](https://www.sqlite.org/)
+- **Container Management**
+  - [Docker Engine API](https://docs.docker.com/engine/api/)
+- **Real-time Events**
+  - Server-Sent Events (SSE)
+- **System Monitoring**
+  - Host metrics via Go syscalls
 
 ## Useful Links
 
