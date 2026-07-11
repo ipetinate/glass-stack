@@ -12,6 +12,7 @@ func NewRouter() http.Handler {
 	router := chi.NewRouter()
 
 	router.Get("/health", handlers.Health)
+	router.Get("/api/events", handlers.Events)
 
 	return router
 }
