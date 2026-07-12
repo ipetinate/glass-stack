@@ -32,5 +32,4 @@ func TestHealthHandlerGet(t *testing.T) {
 	if body.Status != "ok" {
 		t.Fatalf("Expected status 'ok', got %q", body.Status)
 	}
-
 }
