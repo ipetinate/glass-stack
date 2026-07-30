@@ -113,7 +113,7 @@ export function AvatarPicker({
       {source ? (
         <div className="mx-auto flex max-w-xs items-center gap-2 rounded-xl border border-black/10 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-md dark:border-white/15 dark:bg-black/25">
           <div
-            className="relative flex h-10 min-w-0 flex-1 cursor-pointer items-center"
+            className="relative flex h-10 min-w-0 flex-1 cursor-pointer items-center overflow-hidden"
             onPointerDown={(event) => {
               event.currentTarget.setPointerCapture(event.pointerId)
               const bounds = event.currentTarget.getBoundingClientRect()
