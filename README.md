@@ -78,5 +78,11 @@ The goal is to make server administration accessible and intuitive, without sacr
 
 ## Useful Links
 
-- [Figma](https://www.figma.com/files/team/1656792652117448309/all-projects)
+- [Figma](https://www.figma.com/design/u7JQalT1bK3498NiMmLLvg/GlassStack)
 - [GitHub Issues](https://github.com/ipetinate/glass-stack/issues)
+
+## Project Documentation
+
+The product, architecture, roadmap, and delivery backlog live in the
+[GlassStack Obsidian vault](./docs/vault/00-start-here/GlassStack.md).
+The vault can also be read as regular Markdown without Obsidian.

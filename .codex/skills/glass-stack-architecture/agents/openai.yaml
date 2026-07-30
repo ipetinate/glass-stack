@@ -1,0 +1,4 @@
+interface:
+  display_name: "GlassStack Architecture"
+  short_description: "Keep GlassStack changes aligned with its architecture"
+  default_prompt: "Use $glass-stack-architecture before coding. Inspect the current repository, identify the owning domain and adapter boundary, follow the approved folder and dependency rules, and report any intentional architectural exception."
