@@ -79,14 +79,7 @@ func TestEvents(t *testing.T) {
 	}
 
 	eventReader := bufio.NewReader(response.Body)
-	line, err := eventReader.ReadString('\n')
-	if err != nil {
-		t.Fatalf("failed to read event: %v", err)
-	}
-
-	if !strings.HasPrefix(line, "data: ") {
-		t.Fatalf("expected SSE data, got %q", line)
-	}
+	line := readSSEDataLine(t, eventReader)
 
 	var event handlers.Event
 
@@ -104,6 +97,9 @@ func TestEvents(t *testing.T) {
 
 	if event.Payload.CPUSensor != "cpu-test" {
 		t.Fatalf("expected CPU sensor name, got %q", event.Payload.CPUSensor)
+	}
+	if event.ID == "" || event.SchemaVersion != 1 {
+		t.Fatalf("unexpected event envelope: %+v", event)
 	}
 
 	readSSESeparator(t, eventReader)
@@ -204,11 +200,15 @@ func readSSESeparator(t *testing.T, reader *bufio.Reader) {
 
 func readSSEDataLine(t *testing.T, reader *bufio.Reader) string {
 	t.Helper()
-	line, err := reader.ReadString('\n')
-	if err != nil {
-		t.Fatalf("failed to read SSE event: %v", err)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			t.Fatalf("failed to read SSE event: %v", err)
+		}
+		if strings.HasPrefix(line, "data: ") {
+			return line
+		}
 	}
-	return line
 }
 
 func decodeSSELine(t *testing.T, line string, target any) {

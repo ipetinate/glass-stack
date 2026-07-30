@@ -25,27 +25,35 @@ type MemoryPayload = host.MemoryPayload
 // Event and its typed variants are compatibility DTOs for existing clients and
 // tests. New transport code consumes events.Event directly.
 type Event struct {
-	Type       string             `json:"type"`
-	OccurredAt time.Time          `json:"occurredAt"`
-	Payload    TemperaturePayload `json:"payload"`
+	ID            string             `json:"id"`
+	SchemaVersion int                `json:"schemaVersion"`
+	Type          string             `json:"type"`
+	OccurredAt    time.Time          `json:"occurredAt"`
+	Payload       TemperaturePayload `json:"payload"`
 }
 
 type IOEvent struct {
-	Type       string    `json:"type"`
-	OccurredAt time.Time `json:"occurredAt"`
-	Payload    IOPayload `json:"payload"`
+	ID            string    `json:"id"`
+	SchemaVersion int       `json:"schemaVersion"`
+	Type          string    `json:"type"`
+	OccurredAt    time.Time `json:"occurredAt"`
+	Payload       IOPayload `json:"payload"`
 }
 
 type CPUEvent struct {
-	Type       string          `json:"type"`
-	OccurredAt time.Time       `json:"occurredAt"`
-	Payload    CPUUsagePayload `json:"payload"`
+	ID            string          `json:"id"`
+	SchemaVersion int             `json:"schemaVersion"`
+	Type          string          `json:"type"`
+	OccurredAt    time.Time       `json:"occurredAt"`
+	Payload       CPUUsagePayload `json:"payload"`
 }
 
 type GPUEvent struct {
-	Type       string          `json:"type"`
-	OccurredAt time.Time       `json:"occurredAt"`
-	Payload    GPUUsagePayload `json:"payload"`
+	ID            string          `json:"id"`
+	SchemaVersion int             `json:"schemaVersion"`
+	Type          string          `json:"type"`
+	OccurredAt    time.Time       `json:"occurredAt"`
+	Payload       GPUUsagePayload `json:"payload"`
 }
 
 type TemperatureReader interface {
@@ -85,7 +93,10 @@ func EventStream(broker *events.Broker) http.HandlerFunc {
 		response.Header().Set("Connection", "keep-alive")
 		flusher.Flush()
 
-		subscription := broker.Subscribe(request.Context())
+		subscription := broker.SubscribeAfter(
+			request.Context(),
+			request.Header.Get("Last-Event-ID"),
+		)
 		defer subscription.Close()
 
 		interval := eventInterval(request.URL.Query().Get("interval"))
@@ -170,7 +181,12 @@ func writeSSE(
 	if err != nil {
 		return false
 	}
-	if _, err := fmt.Fprintf(response, "data: %s\n\n", data); err != nil {
+	if _, err := fmt.Fprintf(
+		response,
+		"id: %s\ndata: %s\n\n",
+		event.ID,
+		data,
+	); err != nil {
 		return false
 	}
 	flusher.Flush()

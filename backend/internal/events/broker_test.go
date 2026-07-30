@@ -31,6 +31,67 @@ func TestBrokerReplaysRecentEventsToNewSubscribers(t *testing.T) {
 			if actual.Type != expected.Type {
 				t.Fatalf("expected %q, got %q", expected.Type, actual.Type)
 			}
+			if actual.ID == "" || actual.SchemaVersion != 1 {
+				t.Fatalf("event envelope = %+v", actual)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("timed out waiting for replayed event")
+		}
+	}
+}
+
+func TestBrokerResumesAfterLastEventID(t *testing.T) {
+	t.Parallel()
+
+	broker := NewBroker(4, 4)
+	for _, eventType := range []string{"temperature", "cpu", "gpu"} {
+		if err := broker.Publish(context.Background(), Event{
+			Type:       eventType,
+			OccurredAt: time.Now().UTC(),
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	subscription := broker.SubscribeAfter(context.Background(), "2")
+	defer subscription.Close()
+
+	select {
+	case event := <-subscription.Events():
+		if event.ID != "3" || event.Type != "gpu" {
+			t.Fatalf("resumed event = %+v", event)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for resumed event")
+	}
+	select {
+	case event := <-subscription.Events():
+		t.Fatalf("unexpected replayed event: %+v", event)
+	default:
+	}
+}
+
+func TestBrokerReplaysNewestEventsWhenSubscriberBufferIsSmaller(t *testing.T) {
+	t.Parallel()
+
+	broker := NewBroker(2, 4)
+	for _, eventType := range []string{"temperature", "cpu", "gpu", "io"} {
+		if err := broker.Publish(context.Background(), Event{
+			Type:       eventType,
+			OccurredAt: time.Now().UTC(),
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	subscription := broker.Subscribe(context.Background())
+	defer subscription.Close()
+	for _, expected := range []string{"gpu", "io"} {
+		select {
+		case event := <-subscription.Events():
+			if event.Type != expected {
+				t.Fatalf("event type = %q, want %q", event.Type, expected)
+			}
 		case <-time.After(time.Second):
 			t.Fatal("timed out waiting for replayed event")
 		}

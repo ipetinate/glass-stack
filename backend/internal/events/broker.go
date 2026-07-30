@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"strconv"
 	"sync"
 )
 
@@ -14,7 +15,8 @@ type Publisher interface {
 // samples rather than blocking the host metrics loop indefinitely.
 type Broker struct {
 	mu          sync.RWMutex
-	nextID      uint64
+	nextEventID uint64
+	nextSubID   uint64
 	buffer      int
 	historySize int
 	history     []Event
@@ -44,6 +46,12 @@ func (broker *Broker) Publish(context context.Context, event Event) error {
 	broker.mu.Lock()
 	defer broker.mu.Unlock()
 
+	broker.nextEventID++
+	event.ID = strconv.FormatUint(broker.nextEventID, 10)
+	if event.SchemaVersion == 0 {
+		event.SchemaVersion = 1
+	}
+
 	if broker.historySize > 0 {
 		broker.history = append(broker.history, event)
 		if len(broker.history) > broker.historySize {
@@ -64,6 +72,7 @@ func (broker *Broker) Publish(context context.Context, event Event) error {
 type Subscription struct {
 	events <-chan Event
 	close  func()
+	done   chan struct{}
 	once   sync.Once
 }
 
@@ -76,36 +85,54 @@ func (subscription *Subscription) Close() {
 }
 
 func (broker *Broker) Subscribe(context context.Context) *Subscription {
+	return broker.SubscribeAfter(context, "")
+}
+
+func (broker *Broker) SubscribeAfter(
+	context context.Context,
+	lastEventID string,
+) *Subscription {
+	afterID, _ := strconv.ParseUint(lastEventID, 10, 64)
+
 	broker.mu.Lock()
-	broker.nextID++
-	id := broker.nextID
+	broker.nextSubID++
+	subscriberID := broker.nextSubID
 	subscriber := make(chan Event, broker.buffer)
-	broker.subscribers[id] = subscriber
-	for _, event := range broker.history {
-		select {
-		case subscriber <- event:
-		default:
-			break
+	broker.subscribers[subscriberID] = subscriber
+	history := broker.history
+	if len(history) > broker.buffer {
+		history = history[len(history)-broker.buffer:]
+	}
+	for _, event := range history {
+		eventID, _ := strconv.ParseUint(event.ID, 10, 64)
+		if afterID == 0 || eventID > afterID {
+			subscriber <- event
 		}
 	}
 	broker.mu.Unlock()
 
+	done := make(chan struct{})
 	subscription := &Subscription{
 		events: subscriber,
+		done:   done,
 		close: func() {
 			broker.mu.Lock()
 			defer broker.mu.Unlock()
-			if current, ok := broker.subscribers[id]; ok {
-				delete(broker.subscribers, id)
+			if current, ok := broker.subscribers[subscriberID]; ok {
+				delete(broker.subscribers, subscriberID)
 				close(current)
 			}
+			close(done)
 		},
 	}
 
 	if done := context.Done(); done != nil {
 		go func() {
-			<-done
-			subscription.Close()
+			select {
+			case <-done:
+				subscription.Close()
+			case <-subscription.done:
+			}
 		}()
 	}
 
