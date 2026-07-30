@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { Navigate, Outlet, useLocation } from 'react-router'
 
 import { GlassAPIError } from '@/lib/glass-api'
+import { GlassStackLoader } from '@/core/components/ui/GlassStackLoader'
 import { useAppStore } from '@/core/stores/app'
 import { PreferencesSync } from '@/modules/settings/components/PreferencesSync'
 
@@ -65,10 +66,7 @@ export function AuthGate() {
 function AuthLoading() {
   return (
     <div className="grid min-h-dvh place-items-center bg-[#071525] text-white">
-      <div role="status" className="flex items-center gap-3 text-sm text-white/70">
-        <span className="size-4 animate-spin rounded-full border-2 border-white/20 border-t-cyan-300" />
-        Connecting to GlassStack…
-      </div>
+      <GlassStackLoader label="Conectando ao Glass Stack…" size={96} />
     </div>
   )
 }
