@@ -49,6 +49,9 @@ export function AvatarPicker({
 
   const handleFile = (file?: File) => {
     if (!file || !file.type.startsWith('image/')) return
+    setCrop({ x: 0, y: 0 })
+    setZoom(1)
+    setArea(null)
     setSource(URL.createObjectURL(file))
   }
 
@@ -71,6 +74,7 @@ export function AvatarPicker({
             image={source}
             crop={crop}
             zoom={zoom}
+            objectFit="cover"
             aspect={1}
             cropSize={{ width: 200, height: 200 }}
             cropShape="round"
