@@ -144,6 +144,7 @@ type SetupStore interface {
 
 type ChallengeStore interface {
 	CreateAuthChallenge(context.Context, AuthChallenge) error
+	AuthChallengeByToken(context.Context, []byte, string, time.Time) (AuthChallenge, error)
 	ConsumeAuthChallenge(context.Context, []byte, string, time.Time) (AuthChallenge, error)
 }
 

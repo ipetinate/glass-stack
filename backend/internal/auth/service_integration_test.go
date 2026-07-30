@@ -47,9 +47,13 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	bootstrapToken, err := service.EnsureBootstrap(ctx)
+	bootstrapToken, err := service.EnsureBootstrap(ctx, "")
 	if err != nil || bootstrapToken == "" {
 		t.Fatalf("EnsureBootstrap() token = %q, err = %v", bootstrapToken, err)
+	}
+	continuedToken, err := service.EnsureBootstrap(ctx, bootstrapToken)
+	if err != nil || continuedToken != bootstrapToken {
+		t.Fatalf("EnsureBootstrap() after restart token = %q, err = %v", continuedToken, err)
 	}
 	enrollment, err := service.BeginSetupTOTP(ctx, bootstrapToken, "owner")
 	if err != nil {
@@ -63,6 +67,15 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 	)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if _, _, err := service.CompleteSetup(ctx, auth.CompleteSetupInput{
+		BootstrapToken: bootstrapToken,
+		ChallengeToken: enrollment.ChallengeToken,
+		Username:       "owner",
+		Password:       "correct but unique passphrase",
+		TOTPCode:       "999999",
+	}); !errors.Is(err, auth.ErrAuthentication) {
+		t.Fatalf("invalid setup code err = %v, want ErrAuthentication", err)
 	}
 	setup, recoveryCodes, err := service.CompleteSetup(ctx, auth.CompleteSetupInput{
 		BootstrapToken: bootstrapToken,

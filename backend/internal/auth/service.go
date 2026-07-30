@@ -131,13 +131,29 @@ func (service *Service) SetupStatus(ctx context.Context) (SetupStatus, error) {
 	return SetupStatus{Required: count == 0}, nil
 }
 
-func (service *Service) EnsureBootstrap(ctx context.Context) (string, error) {
+func (service *Service) EnsureBootstrap(
+	ctx context.Context,
+	previousToken string,
+) (string, error) {
 	status, err := service.SetupStatus(ctx)
 	if err != nil {
 		return "", err
 	}
 	if !status.Required {
 		return "", nil
+	}
+	if strings.TrimSpace(previousToken) != "" {
+		valid, err := service.store.BootstrapTokenValid(
+			ctx,
+			hashToken(strings.TrimSpace(previousToken)),
+			service.now().UTC(),
+		)
+		if err != nil {
+			return "", fmt.Errorf("validate previous bootstrap token: %w", err)
+		}
+		if valid {
+			return strings.TrimSpace(previousToken), nil
+		}
 	}
 	token, hash, err := randomToken(32)
 	if err != nil {
@@ -298,7 +314,7 @@ func (service *Service) AcceptInvitation(
 	var recoveryCodes []string
 	var recoveryHashes [][]byte
 	if invitation.Role == RoleAdmin {
-		secret, err := service.consumeEnrollmentChallenge(
+		secret, err := service.loadEnrollmentChallenge(
 			ctx,
 			input.ChallengeToken,
 			challengePurposeInvitation,
@@ -311,6 +327,14 @@ func (service *Service) AcceptInvitation(
 		counter, valid := validateTOTP(secret, input.TOTPCode, now, -1)
 		if !valid {
 			return LoginResult{}, nil, ErrAuthentication
+		}
+		if _, err := service.store.ConsumeAuthChallenge(
+			ctx,
+			hashToken(input.ChallengeToken),
+			challengePurposeInvitation,
+			now,
+		); err != nil {
+			return LoginResult{}, nil, ErrInvalidToken
 		}
 		ciphertext, nonce, err := encryptSecret(service.masterKey, []byte(secret))
 		if err != nil {
@@ -383,7 +407,7 @@ func (service *Service) CompleteSetup(
 	}
 
 	now := service.now().UTC()
-	secret, err := service.consumeEnrollmentChallenge(
+	secret, err := service.loadEnrollmentChallenge(
 		ctx,
 		input.ChallengeToken,
 		challengePurposeSetup,
@@ -396,6 +420,14 @@ func (service *Service) CompleteSetup(
 	counter, valid := validateTOTP(secret, input.TOTPCode, now, -1)
 	if !valid {
 		return LoginResult{}, nil, ErrAuthentication
+	}
+	if _, err := service.store.ConsumeAuthChallenge(
+		ctx,
+		hashToken(input.ChallengeToken),
+		challengePurposeSetup,
+		now,
+	); err != nil {
+		return LoginResult{}, nil, ErrInvalidToken
 	}
 	ciphertext, nonce, err := encryptSecret(service.masterKey, []byte(secret))
 	if err != nil {
@@ -863,14 +895,14 @@ func (service *Service) createEnrollmentChallenge(
 	return token, nil
 }
 
-func (service *Service) consumeEnrollmentChallenge(
+func (service *Service) loadEnrollmentChallenge(
 	ctx context.Context,
 	token string,
 	purpose string,
 	username string,
 	now time.Time,
 ) (string, error) {
-	challenge, err := service.store.ConsumeAuthChallenge(
+	challenge, err := service.store.AuthChallengeByToken(
 		ctx,
 		hashToken(token),
 		purpose,

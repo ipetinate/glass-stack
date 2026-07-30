@@ -165,6 +165,47 @@ func (store *AuthStore) CreateAuthChallenge(
 	})
 }
 
+func (store *AuthStore) AuthChallengeByToken(
+	ctx context.Context,
+	hash []byte,
+	purpose string,
+	now time.Time,
+) (auth.AuthChallenge, error) {
+	var challenge auth.AuthChallenge
+	var userID sql.NullString
+	var createdAt, expiresAt string
+	err := store.database.db.QueryRowContext(
+		ctx,
+		`SELECT token_hash, purpose, user_id, payload_json, created_at, expires_at
+		   FROM auth_challenges
+		  WHERE token_hash = ? AND purpose = ?
+		    AND consumed_at IS NULL AND expires_at > ?`,
+		hash,
+		purpose,
+		formatTime(now),
+	).Scan(
+		&challenge.TokenHash,
+		&challenge.Purpose,
+		&userID,
+		&challenge.PayloadJSON,
+		&createdAt,
+		&expiresAt,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return auth.AuthChallenge{}, auth.ErrInvalidToken
+		}
+		return auth.AuthChallenge{}, err
+	}
+	challenge.UserID = userID.String
+	challenge.CreatedAt, err = parseTime(createdAt)
+	if err != nil {
+		return auth.AuthChallenge{}, err
+	}
+	challenge.ExpiresAt, err = parseTime(expiresAt)
+	return challenge, err
+}
+
 func (store *AuthStore) ConsumeAuthChallenge(
 	ctx context.Context,
 	hash []byte,
