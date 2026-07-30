@@ -54,7 +54,7 @@ export function PasswordSafetyStatus({
       aria-live="polite"
       className={cn(
         'flex items-center gap-2',
-        assessment.status === 'safe' && 'text-emerald-300',
+        assessment.status === 'safe' && 'text-emerald-500 dark:text-emerald-300',
         assessment.status === 'compromised' && 'text-rose-300',
         assessment.status === 'unavailable' && 'text-amber-300',
         className,

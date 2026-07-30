@@ -57,7 +57,7 @@ export function OnboardingTimeline({
                   isCurrent
                     ? 'text-current'
                     : isCompleted
-                      ? 'text-current/75 hover:bg-white/20 dark:hover:bg-black/20'
+                    ? 'rounded-lg text-current/75 hover:bg-white/20 dark:hover:bg-black/20'
                       : 'cursor-not-allowed text-current/35'
                 }`}
               >
@@ -65,7 +65,7 @@ export function OnboardingTimeline({
                   <motion.span
                     layoutId="onboarding-current-stage"
                     transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    className="absolute inset-0 z-0 rounded-sm bg-white/35 dark:bg-black/30"
+                    className="absolute inset-0 z-0 rounded-lg bg-white/35 dark:bg-black/30"
                     aria-hidden="true"
                   />
                 ) : null}

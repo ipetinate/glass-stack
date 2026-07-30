@@ -15,6 +15,7 @@ import { GlassInput } from '@/core/components/form'
 import { useOnboardingAction } from '../components/OnboardingActions'
 import { StageError } from '../components/OnboardingShell'
 import { useOnboardingStore } from '../stores/onboardingStore'
+import { OnboardingStage, OnboardingStageTitle } from '../components/OnboardingStage'
 
 const bootstrapTokenPath = 'GLASS_DATA_DIR/secrets/bootstrap-token'
 
@@ -76,13 +77,13 @@ export function ConnectPage() {
     <form
       id="onboarding-connect-form"
       onSubmit={submit}
-      className="mx-auto max-w-3xl"
+      className="mx-auto w-full max-w-3xl"
     >
-      <h2 className="text-3xl font-light sm:text-4xl">
+      <OnboardingStageTitle>
         Conecte este navegador ao servidor
-      </h2>
+      </OnboardingStageTitle>
 
-      <div className="mt-10 space-y-8 rounded-2xl border border-black/10 bg-white/30 p-6 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/30 sm:p-8">
+      <OnboardingStage className="mt-8 space-y-8 rounded-2xl border border-slate-900/10 bg-white/30 p-6 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-[#111c2b]/55 sm:p-8">
         <div className="flex items-start gap-4">
           <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-cyan-300/15 text-cyan-500 dark:text-cyan-200">
             <Shield aria-hidden="true" size={24} />
@@ -139,7 +140,7 @@ export function ConnectPage() {
             <FileKey2 aria-hidden="true" className="size-4" />
             <span className="inline-flex items-center">
               O servidor informa o caminho exato no log (normalmente em{' '}
-              <code className="inline-flex items-center gap-1 rounded bg-black/10 py-0.5 pl-1.5 pr-0.5 backdrop-blur-md dark:bg-white/10">
+              <code className="inline-flex items-center gap-1 rounded bg-slate-900/10 py-0.5 pl-1.5 pr-0.5 backdrop-blur-md dark:bg-white/10">
                 {bootstrapTokenPath}
                 <button
                   type="button"
@@ -168,14 +169,14 @@ export function ConnectPage() {
         </div>
 
         <span className="inline-flex items-center gap-2 text-xs opacity-70">
-          <AlertTriangleIcon className="size-4 text-black/60" />
-          <p className="text-xs leading-5 text-black/60">
+          <AlertTriangleIcon className="size-4 text-slate-700/70 dark:text-white/60" />
+          <p className="text-xs leading-5 text-slate-700/70 dark:text-white/60">
             O token expira em 24 horas e é removido depois da configuração.
           </p>
         </span>
 
         {state.error ? <StageError>{state.error}</StageError> : null}
-      </div>
+      </OnboardingStage>
     </form>
   )
 }

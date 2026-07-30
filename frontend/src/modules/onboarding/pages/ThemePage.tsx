@@ -5,6 +5,7 @@ import { ThemePreview } from '@/modules/settings/components/ThemeToggler'
 import { useThemeStore } from '@/core/stores/theme'
 import { useOnboardingStore } from '../stores/onboardingStore'
 import { useOnboardingAction } from '../components/OnboardingActions'
+import { OnboardingStage, OnboardingStageTitle } from '../components/OnboardingStage'
 
 export function ThemePage() {
   const navigate = useNavigate()
@@ -17,9 +18,9 @@ export function ThemePage() {
   }
 
   return (
-    <section>
-      <h2 className="text-3xl font-extralight sm:text-4xl">Qual variação de tema você prefere?</h2>
-      <div className="mt-16 flex justify-center gap-5">
+    <OnboardingStage>
+      <OnboardingStageTitle>Qual variação de tema você prefere?</OnboardingStageTitle>
+      <div className="mt-10 flex flex-wrap justify-center gap-5 sm:mt-14">
         {(['light', 'dark'] as const).map((theme) => (
           <SelectableCard
             key={theme}
@@ -35,6 +36,6 @@ export function ThemePage() {
           </SelectableCard>
         ))}
       </div>
-    </section>
+    </OnboardingStage>
   )
 }

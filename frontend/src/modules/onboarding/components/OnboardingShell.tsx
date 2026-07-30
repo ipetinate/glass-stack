@@ -63,9 +63,19 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
   const state = useOnboardingStore()
 
   useEffect(() => {
+    // An onboarding visit is always a fresh setup attempt. Remove only the
+    // onboarding session, never unrelated application storage.
+    sessionStorage.removeItem('glassstack-onboarding')
+    localStorage.removeItem('glassstack-onboarding')
+    useOnboardingStore.getState().reset()
+    const isDark = document.documentElement.classList.contains('dark')
+    useOnboardingStore.getState().setField('theme', isDark ? 'dark' : 'light')
+  }, [])
+
+  useEffect(() => {
     const token = new URLSearchParams(window.location.hash.slice(1)).get('bootstrap')
     if (token) {
-      state.setField('bootstrapToken', token)
+      useOnboardingStore.getState().setField('bootstrapToken', token)
       window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`)
     }
   }, [])
@@ -136,12 +146,12 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
 
   return (
     <main
-      className="grid min-h-dvh place-items-center overflow-auto bg-cover bg-center p-4 font-instrument text-[#151A21] dark:text-white"
+      className="grid min-h-dvh place-items-center overflow-auto bg-cover bg-center p-4 font-instrument text-[#243247] dark:text-white"
       style={{ backgroundImage: 'url("/images/onboarding/background.jpg")' }}
     >
       <OnboardingActionsProvider setAction={setAction}>
         <div
-          className="relative flex h-[min(800px,calc(100dvh-32px))] w-[min(1000px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl bg-white/35 p-6 shadow-2xl backdrop-blur-[5px] dark:bg-black/35 sm:p-8"
+          className="relative flex h-[min(800px,calc(100dvh-32px))] w-[min(1000px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl bg-white/35 p-6 shadow-2xl backdrop-blur-[5px] dark:bg-[#111c2b]/65 sm:p-8"
           data-testid="onboarding-shell"
         >
           {!isPresentedWelcome ? (
