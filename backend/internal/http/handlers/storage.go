@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/ipetinate/glass-stack/backend/internal/observability"
 	systeminfo "github.com/ipetinate/glass-stack/backend/internal/system"
 )
 
@@ -16,7 +17,11 @@ func Storage(reader StorageReader) http.HandlerFunc {
 	return func(response http.ResponseWriter, request *http.Request) {
 		snapshot, err := reader.Read(request.Context())
 		if err != nil {
-			http.Error(response, err.Error(), http.StatusInternalServerError)
+			writeJSON(response, http.StatusInternalServerError, map[string]any{
+				"code":      "storage_unavailable",
+				"message":   "Storage information is temporarily unavailable.",
+				"requestId": observability.RequestID(request.Context()),
+			})
 			return
 		}
 		response.Header().Set("Content-Type", "application/json")
