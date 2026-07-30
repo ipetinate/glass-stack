@@ -72,6 +72,7 @@ export function AvatarPicker({
             crop={crop}
             zoom={zoom}
             aspect={1}
+            cropSize={{ width: 200, height: 200 }}
             cropShape="round"
             showGrid
             onCropChange={setCrop}
@@ -81,7 +82,7 @@ export function AvatarPicker({
             }
             classes={{
               containerClassName: 'size-52 rounded-full !overflow-hidden',
-              cropAreaClassName: 'rounded-full border-2 border-white/85 shadow-[0_0_0_9999px_rgb(7_21_37_/_0.28)]',
+              cropAreaClassName: 'rounded-full border-2 border-white/85',
             }}
           />
         ) : (
