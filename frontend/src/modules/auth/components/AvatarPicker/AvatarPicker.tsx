@@ -112,7 +112,22 @@ export function AvatarPicker({
 
       {source ? (
         <div className="mx-auto flex max-w-xs items-center gap-2 rounded-xl border border-black/10 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-md dark:border-white/15 dark:bg-black/25">
-          <div className="relative flex h-8 min-w-0 flex-1 items-center">
+          <div
+            className="relative flex h-10 min-w-0 flex-1 cursor-pointer items-center"
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId)
+              const bounds = event.currentTarget.getBoundingClientRect()
+              const percentage = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width))
+              setZoom(Number((1 + percentage * 2).toFixed(1)))
+            }}
+            onPointerMove={(event) => {
+              if (!event.currentTarget.hasPointerCapture(event.pointerId)) return
+              const bounds = event.currentTarget.getBoundingClientRect()
+              const percentage = Math.min(1, Math.max(0, (event.clientX - bounds.left) / bounds.width))
+              setZoom(Number((1 + percentage * 2).toFixed(1)))
+            }}
+            onPointerUp={(event) => event.currentTarget.releasePointerCapture(event.pointerId)}
+          >
             <input
               aria-label="Crop zoom"
               type="range"
@@ -121,7 +136,7 @@ export function AvatarPicker({
               step={0.1}
               value={zoom}
               onChange={(event) => setZoom(Number(event.target.value))}
-              className="relative z-10 m-0 h-8 w-full cursor-pointer appearance-none bg-transparent accent-cyan-300 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-900/20 dark:[&::-webkit-slider-runnable-track]:bg-white/20 [&::-webkit-slider-thumb]:size-0 [&::-webkit-slider-thumb]:appearance-none"
+              className="pointer-events-none relative z-10 m-0 h-8 w-full appearance-none bg-transparent accent-cyan-300 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-900/20 dark:[&::-webkit-slider-runnable-track]:bg-white/20 [&::-webkit-slider-thumb]:size-0 [&::-webkit-slider-thumb]:appearance-none"
             />
             <span
               aria-hidden="true"
