@@ -1,0 +1,8 @@
+{
+  "source": "https://raw.githubusercontent.com/danielmiessler/SecLists/aeb36e9df937d1b77042e5667780e8156cd419f7/Passwords/Common-Credentials/Pwdb_top-100000.txt",
+  "sourceCommit": "aeb36e9df937d1b77042e5667780e8156cd419f7",
+  "sourceSha256": "07f876a616f08fb2cc5c3e0ce04e4a6d1123380580472b0997baebc4e8226977",
+  "entries": 100000,
+  "format": "sorted concatenated SHA-1 digests, 20 bytes per record",
+  "outputSha256": "4c1ad942f63d2cb5790c1d769c49d83f2b29c00f8d5293b77803d8c31fbc020e"
+}
