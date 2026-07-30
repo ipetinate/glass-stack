@@ -17,7 +17,7 @@ func New(environment string) *slog.Logger {
 	if environment == Production {
 		handler = slog.NewJSONHandler(os.Stdout, options)
 	} else {
-		handler = slog.NewTextHandler(os.Stdout, options)
+		handler = newPrettyHandler(os.Stdout, options)
 	}
 
 	return slog.New(handler).With(
