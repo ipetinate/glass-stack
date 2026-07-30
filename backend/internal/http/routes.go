@@ -56,6 +56,7 @@ func NewRouter() http.Handler {
 
 func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 	router := chi.NewRouter()
+	router.Use(RequestID)
 	if runtime.Logger != nil {
 		router.Use(RequestLogger(runtime.Logger))
 	}

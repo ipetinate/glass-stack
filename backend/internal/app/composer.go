@@ -45,10 +45,12 @@ func newRuntime() (*httpserver.Runtime, error) {
 		_ = db.Close()
 		return nil, fmt.Errorf("initialize password compromise checker: %w", err)
 	}
+	logger := logging.New(environment())
 	authService, err := auth.NewService(
 		database.NewAuthStore(db),
 		masterKey,
 		passwordChecker,
+		logger,
 	)
 	if err != nil {
 		_ = db.Close()
@@ -76,7 +78,7 @@ func newRuntime() (*httpserver.Runtime, error) {
 		Host:           systeminfo.NewHostCollector(),
 		Storage:        host.StorageCollector{},
 		MetricPeriod:   time.Second,
-		Logger:         logging.New(environment()),
+		Logger:         logger,
 		Auth:           authService,
 		Settings:       settingsService,
 		Database:       db,

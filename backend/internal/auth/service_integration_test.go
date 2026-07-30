@@ -8,11 +8,14 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/ipetinate/glass-stack/backend/internal/auth"
+	"github.com/ipetinate/glass-stack/backend/internal/observability"
 	"github.com/ipetinate/glass-stack/backend/internal/platform/database"
 	"github.com/ipetinate/glass-stack/backend/internal/platform/secrets"
 )
@@ -38,6 +41,7 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 		database.NewAuthStore(db),
 		masterKey,
 		safePasswordChecker{},
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -55,6 +59,7 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 		database.NewAuthStore(db),
 		masterKey,
 		safePasswordChecker{},
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -99,6 +104,7 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 		database.NewAuthStore(db),
 		masterKey,
 		safePasswordChecker{},
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -120,7 +126,12 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 		t.Fatalf("replayed MFA challenge err = %v, want ErrInvalidToken", err)
 	}
 
-	invitationToken, err := service.CreateInvitation(ctx, setup.User, auth.RoleViewer)
+	requestContext := observability.WithRequestID(ctx, "integration-request-id")
+	invitationToken, err := service.CreateInvitation(
+		requestContext,
+		setup.User,
+		auth.RoleViewer,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,6 +171,17 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 	}
 	if auditCount < 5 {
 		t.Fatalf("audit event count = %d, want at least 5", auditCount)
+	}
+	var auditRequestID string
+	if err := db.SQL().QueryRow(
+		`SELECT request_id FROM audit_events
+		  WHERE action = 'identity.invitation.create'
+		  ORDER BY created_at DESC LIMIT 1`,
+	).Scan(&auditRequestID); err != nil {
+		t.Fatal(err)
+	}
+	if auditRequestID != "integration-request-id" {
+		t.Fatalf("audit request ID = %q", auditRequestID)
 	}
 
 	backup := filepath.Join(directory, "backups", "control-plane.db")

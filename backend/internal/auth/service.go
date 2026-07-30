@@ -7,8 +7,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
+
+	"github.com/ipetinate/glass-stack/backend/internal/observability"
 )
 
 const (
@@ -27,6 +30,7 @@ type Service struct {
 	store           Store
 	masterKey       []byte
 	passwordChecker PasswordCompromiseChecker
+	logger          *slog.Logger
 	now             func() time.Time
 }
 
@@ -88,6 +92,7 @@ func NewService(
 	store Store,
 	masterKey []byte,
 	passwordChecker PasswordCompromiseChecker,
+	logger *slog.Logger,
 ) (*Service, error) {
 	if len(masterKey) != 32 {
 		return nil, fmt.Errorf("master key has invalid length")
@@ -95,10 +100,14 @@ func NewService(
 	if passwordChecker == nil {
 		return nil, fmt.Errorf("password compromise checker is required")
 	}
+	if logger == nil {
+		return nil, fmt.Errorf("logger is required")
+	}
 	return &Service{
 		store:           store,
 		masterKey:       append([]byte(nil), masterKey...),
 		passwordChecker: passwordChecker,
+		logger:          logger,
 		now:             time.Now,
 	}, nil
 }
@@ -902,20 +911,38 @@ func (service *Service) recordAudit(
 ) {
 	id, err := newID()
 	if err != nil {
+		service.logger.ErrorContext(
+			ctx,
+			"failed to create authentication audit event",
+			"action", action,
+			"error", err,
+		)
 		return
 	}
 	if metadata == nil {
 		metadata = map[string]any{}
 	}
-	_ = service.store.AppendAudit(ctx, AuditEvent{
+	err = service.store.AppendAudit(ctx, AuditEvent{
 		ID:          id,
 		ActorUserID: actorUserID,
 		Action:      action,
 		Target:      target,
 		Result:      result,
+		RequestID:   observability.RequestID(ctx),
 		Metadata:    metadata,
 		CreatedAt:   service.now().UTC(),
 	})
+	if err != nil {
+		service.logger.ErrorContext(
+			ctx,
+			"failed to persist authentication audit event",
+			"request_id", observability.RequestID(ctx),
+			"action", action,
+			"target", target,
+			"result", result,
+			"error", err,
+		)
+	}
 }
 
 func sanitizePreferencesJSON(value string) string {

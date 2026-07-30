@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ipetinate/glass-stack/backend/internal/observability"
 	"github.com/ipetinate/glass-stack/backend/internal/settings"
 )
 
@@ -204,6 +205,6 @@ func writeSettingsError(
 	writeJSON(response, status, map[string]any{
 		"code":      code,
 		"message":   message,
-		"requestId": request.Header.Get("X-Request-ID"),
+		"requestId": observability.RequestID(request.Context()),
 	})
 }

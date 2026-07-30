@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/ipetinate/glass-stack/backend/internal/observability"
 )
 
 func RequestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
@@ -17,6 +19,7 @@ func RequestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 			next.ServeHTTP(writer, request)
 
 			logger.Info("http request",
+				"request_id", observability.RequestID(request.Context()),
 				"method", request.Method,
 				"path", request.URL.Path,
 				"status", writer.status,
@@ -97,6 +100,7 @@ func CORS(allowedOrigins ...string) func(http.Handler) http.Handler {
 			response.Header().Add("Vary", "Origin")
 			response.Header().Set("Access-Control-Allow-Origin", origin)
 			response.Header().Set("Access-Control-Allow-Credentials", "true")
+			response.Header().Set("Access-Control-Expose-Headers", RequestIDHeader)
 
 			if request.Method == http.MethodOptions &&
 				request.Header.Get("Access-Control-Request-Method") != "" {

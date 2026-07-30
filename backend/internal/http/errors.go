@@ -3,6 +3,8 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/ipetinate/glass-stack/backend/internal/observability"
 )
 
 type errorEnvelope struct {
@@ -23,6 +25,6 @@ func writeHTTPError(
 	_ = json.NewEncoder(response).Encode(errorEnvelope{
 		Code:      code,
 		Message:   message,
-		RequestID: request.Header.Get("X-Request-ID"),
+		RequestID: observability.RequestID(request.Context()),
 	})
 }

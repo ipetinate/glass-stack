@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -48,6 +50,7 @@ func TestCheckPasswordResponse(t *testing.T) {
 				nil,
 				make([]byte, 32),
 				handlerPasswordChecker{result: test.result},
+				slog.New(slog.NewTextHandler(io.Discard, nil)),
 			)
 			if err != nil {
 				t.Fatal(err)

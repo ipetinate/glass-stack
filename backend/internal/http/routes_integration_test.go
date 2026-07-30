@@ -5,6 +5,8 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/json"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -30,6 +32,7 @@ func TestPreferencesHTTPContract(t *testing.T) {
 			t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
 		}
 		assertErrorCode(t, response, "authentication_required")
+		assertResponseRequestID(t, response)
 	})
 
 	t.Run("authenticated read", func(t *testing.T) {
@@ -232,6 +235,7 @@ func newAuthenticatedTestRouter(
 		database.NewAuthStore(db),
 		make([]byte, 32),
 		safeHTTPPasswordChecker{},
+		slog.New(slog.NewTextHandler(io.Discard, nil)),
 	)
 	if err != nil {
 		t.Fatal(err)
@@ -285,5 +289,25 @@ func assertErrorCode(
 	}
 	if envelope.Code != expected {
 		t.Fatalf("error code = %q, want %q", envelope.Code, expected)
+	}
+}
+
+func assertResponseRequestID(
+	t *testing.T,
+	response *httptest.ResponseRecorder,
+) {
+	t.Helper()
+	requestID := response.Header().Get(RequestIDHeader)
+	if requestID == "" {
+		t.Fatal("response has no request ID header")
+	}
+	var envelope struct {
+		RequestID string `json:"requestId"`
+	}
+	if err := json.Unmarshal(response.Body.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	if envelope.RequestID != requestID {
+		t.Fatalf("error request ID = %q, want %q", envelope.RequestID, requestID)
 	}
 }

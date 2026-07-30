@@ -1,6 +1,9 @@
 package httpserver
 
 import (
+	"bytes"
+	"encoding/json"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -66,6 +69,35 @@ func TestCORSHandlesPreflight(t *testing.T) {
 
 	if headers := response.Header().Get("Access-Control-Allow-Headers"); !strings.Contains(headers, "Accept") {
 		t.Fatalf("expected allowed headers to contain Accept, got %q", headers)
+	}
+	if exposed := response.Header().Get("Access-Control-Expose-Headers"); !strings.Contains(exposed, RequestIDHeader) {
+		t.Fatalf("expected exposed headers to contain %s, got %q", RequestIDHeader, exposed)
+	}
+}
+
+func TestRequestIDIsGeneratedAndLogged(t *testing.T) {
+	t.Parallel()
+
+	var logs bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logs, nil))
+	runtime := NewRuntime()
+	runtime.Logger = logger
+	request := httptest.NewRequest(http.MethodGet, "/api/health", nil)
+	request.Header.Set(RequestIDHeader, "client-controlled-value")
+	response := httptest.NewRecorder()
+
+	NewRouterWithRuntime(runtime).ServeHTTP(response, request)
+
+	requestID := response.Header().Get(RequestIDHeader)
+	if requestID == "" || requestID == "client-controlled-value" {
+		t.Fatalf("generated request ID = %q", requestID)
+	}
+	var entry map[string]any
+	if err := json.Unmarshal(logs.Bytes(), &entry); err != nil {
+		t.Fatal(err)
+	}
+	if entry["request_id"] != requestID {
+		t.Fatalf("logged request ID = %v, want %q", entry["request_id"], requestID)
 	}
 }
 

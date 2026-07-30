@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/ipetinate/glass-stack/backend/internal/auth"
+	"github.com/ipetinate/glass-stack/backend/internal/observability"
 )
 
 type AuthCookies interface {
@@ -444,6 +445,6 @@ func writeError(response http.ResponseWriter, request *http.Request, err error) 
 	writeJSON(response, status, map[string]any{
 		"code":      code,
 		"message":   message,
-		"requestId": request.Header.Get("X-Request-ID"),
+		"requestId": observability.RequestID(request.Context()),
 	})
 }
