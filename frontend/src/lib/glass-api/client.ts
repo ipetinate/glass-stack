@@ -1,5 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
+export function glassAPIURL(path: string) {
+  const normalizedBase = API_BASE_URL.replace(/\/+$/, '')
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return new URL(`${normalizedBase}${normalizedPath}`, window.location.origin)
+}
+
 export class GlassAPIError extends Error {
   status: number
   code: string
@@ -32,7 +38,7 @@ export async function glassRequest<T>(
   if (csrf && !['GET', 'HEAD', 'OPTIONS'].includes(init.method ?? 'GET')) {
     headers.set('X-CSRF-Token', decodeURIComponent(csrf))
   }
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(glassAPIURL(path), {
     ...init,
     credentials: 'include',
     headers,

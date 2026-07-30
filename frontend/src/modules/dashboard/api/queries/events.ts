@@ -51,13 +51,11 @@ export interface GPUEvent {
 
 export type DashboardEvent = TemperatureEvent | IOEvent | CPUEvent | GPUEvent
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
-
 export async function* streamEvents(
   signal: AbortSignal,
   intervalSeconds = 1,
 ): AsyncGenerator<DashboardEvent> {
-  const endpoint = new URL(BASE_URL + '/api/v1/events')
+  const endpoint = glassAPIURL('/api/v1/events')
   endpoint.searchParams.set('interval', String(intervalSeconds))
 
   const response = await fetch(endpoint, {
@@ -111,3 +109,4 @@ export async function* streamEvents(
     reader.releaseLock()
   }
 }
+import { glassAPIURL } from '@/lib/glass-api'
