@@ -85,6 +85,7 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
   const requestedIndex = requested ? stages.indexOf(requested) : -1
   const firstIndex = stages.indexOf(firstIncomplete)
   const current = requested ?? firstIncomplete
+  const [presentedStage, setPresentedStage] = useState(current)
   const previousStageRef = useRef(current)
   const [settledDirection, setSettledDirection] =
     useState<Exclude<TransitionDirection, 0>>(1)
@@ -118,8 +119,9 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
     return <Navigate to={paths[firstIncomplete]} replace />
   }
 
-  const currentIndex = current === 'welcome' ? -1 : stages.indexOf(current)
-  const isWelcome = current === 'welcome'
+  const presentedStageIndex =
+    presentedStage === 'welcome' ? -1 : stages.indexOf(presentedStage)
+  const isPresentedWelcome = presentedStage === 'welcome'
   const goStage = (stage: OnboardingStage) => {
     if (stage === 'welcome') {
       state.setStage('welcome')
@@ -138,23 +140,31 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
       style={{ backgroundImage: 'url("/images/onboarding/background.jpg")' }}
     >
       <OnboardingActionsProvider setAction={setAction}>
-        <div className="relative flex min-h-[min(800px,calc(100dvh-32px))] w-[min(1000px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl bg-white/35 p-6 shadow-2xl backdrop-blur-[5px] dark:bg-black/35 sm:p-8">
-          {!isWelcome ? (
+        <div
+          className="relative flex h-[min(800px,calc(100dvh-32px))] w-[min(1000px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl bg-white/35 p-6 shadow-2xl backdrop-blur-[5px] dark:bg-black/35 sm:p-8"
+          data-testid="onboarding-shell"
+        >
+          {!isPresentedWelcome ? (
             <>
               <header className="flex shrink-0 items-center gap-3">
                 <img src="/images/onboarding/logo.png" alt="" className="size-16 object-contain sm:size-20" />
                 <span className="font-encode text-3xl font-thin sm:text-4xl">Glass Stack</span>
               </header>
               <h1 ref={headingRef} tabIndex={-1} className="sr-only">Onboarding</h1>
-              <OnboardingTimeline current={current} completed={state.completedStages} onSelect={goStage} />
+              <OnboardingTimeline current={presentedStage} completed={state.completedStages} onSelect={goStage} />
             </>
           ) : null}
 
-          <div className={`relative min-h-0 flex-1 ${isWelcome ? '' : 'mt-8'}`}>
+          <div
+            className={`relative min-h-0 flex-1 overflow-x-hidden overflow-y-auto ${
+              isPresentedWelcome ? '' : 'mt-8'
+            }`}
+          >
             <AnimatePresence
               custom={motionDirection}
               initial={false}
               mode="wait"
+              onExitComplete={() => setPresentedStage(current)}
             >
               <motion.div
                 key={current}
@@ -179,8 +189,8 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
           </div>
 
           <footer className="mt-8 flex shrink-0 items-center justify-between gap-4 border-t border-black/10 pt-5 dark:border-white/10">
-            {!isWelcome ? (
-              <Button type="button" aria-label="Voltar" onClick={() => goStage(currentIndex === 0 ? 'welcome' : stages[Math.max(0, currentIndex - 1)])}>
+            {!isPresentedWelcome ? (
+              <Button type="button" aria-label="Voltar" onClick={() => goStage(presentedStageIndex === 0 ? 'welcome' : stages[Math.max(0, presentedStageIndex - 1)])}>
                 <ArrowLeft aria-hidden="true" size={18} />
                 <span className="sr-only">Voltar</span>
               </Button>

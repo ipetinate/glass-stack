@@ -1,13 +1,14 @@
 import {
   AlertTriangleIcon,
   ClipboardPasteIcon,
+  CopyCheckIcon,
   CopyIcon,
   FileKey2,
   FolderOpen,
   Shield,
 } from 'lucide-react'
 import type { FormEvent } from 'react'
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { GlassInput } from '@/core/components/form'
@@ -15,9 +16,12 @@ import { useOnboardingAction } from '../components/OnboardingActions'
 import { StageError } from '../components/OnboardingShell'
 import { useOnboardingStore } from '../stores/onboardingStore'
 
+const bootstrapTokenPath = 'GLASS_DATA_DIR/secrets/bootstrap-token'
+
 export function ConnectPage() {
   const navigate = useNavigate()
   const state = useOnboardingStore()
+  const [pathCopied, setPathCopied] = useState(false)
   useOnboardingAction({
     label: 'Continuar',
     type: 'submit',
@@ -25,6 +29,26 @@ export function ConnectPage() {
     disabled: !state.bootstrapToken.trim(),
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!pathCopied) return
+
+    const timeout = window.setTimeout(() => setPathCopied(false), 2_000)
+
+    return () => window.clearTimeout(timeout)
+  }, [pathCopied])
+
+  const copyBootstrapTokenPath = async () => {
+    try {
+      await window.navigator.clipboard.writeText(bootstrapTokenPath)
+      setPathCopied(true)
+    } catch {
+      state.setField(
+        'error',
+        'Não foi possível copiar o caminho para a área de transferência.',
+      )
+    }
+  }
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -101,6 +125,7 @@ export function ConnectPage() {
               event.currentTarget.value = ''
             }}
           />
+
           <button
             type="button"
             className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-black/10 bg-white/25 px-4 text-sm font-medium text-[#151A21]/80 shadow-sm backdrop-blur-md transition hover:bg-white/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 dark:border-white/15 dark:bg-white/10 dark:text-white/90 dark:hover:bg-white/15"
@@ -109,15 +134,35 @@ export function ConnectPage() {
             <FolderOpen aria-hidden="true" size={17} />
             Procurar arquivo
           </button>
+
           <span className="inline-flex items-center gap-2 text-xs opacity-70">
             <FileKey2 aria-hidden="true" className="size-4" />
             <span className="inline-flex items-center">
               O servidor informa o caminho exato no log (normalmente em{' '}
-              <code className=" inline-flex items-center gap-2 rounded bg-black/10 px-1 dark:bg-white/10 backdrop-blur-md">
-                GLASS_DATA_DIR/secrets/bootstrap-token
-                <CopyIcon className="size-3" />
+              <code className="inline-flex items-center gap-1 rounded bg-black/10 py-0.5 pl-1.5 pr-0.5 backdrop-blur-md dark:bg-white/10">
+                {bootstrapTokenPath}
+                <button
+                  type="button"
+                  aria-label={
+                    pathCopied ? 'Caminho copiado' : 'Copiar caminho do token'
+                  }
+                  className="grid size-5 place-items-center rounded transition-colors hover:bg-black/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-400 dark:hover:bg-white/10"
+                  onClick={() => void copyBootstrapTokenPath()}
+                >
+                  {!pathCopied ? (
+                    <CopyIcon aria-hidden="true" className="size-3" />
+                  ) : (
+                    <CopyCheckIcon aria-hidden="true" className="size-3" />
+                  )}
+                </button>
               </code>
               ).
+            </span>
+
+            <span aria-live="polite" className="sr-only">
+              {pathCopied
+                ? 'Caminho copiado para a área de transferência.'
+                : ''}
             </span>
           </span>
         </div>

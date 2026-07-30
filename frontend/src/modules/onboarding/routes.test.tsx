@@ -29,6 +29,9 @@ describe('onboarding route transitions', () => {
 
     expect(screen.getByRole('heading', { name: 'Glass Stack' })).toBeInTheDocument()
     expect(screen.queryByLabelText('Bootstrap token')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('navigation', { name: 'Etapas do onboarding' }),
+    ).not.toBeInTheDocument()
 
     expect(await screen.findByLabelText('Bootstrap token')).toBeInTheDocument()
     expect(
@@ -38,6 +41,9 @@ describe('onboarding route transitions', () => {
       'data-transition-direction',
       'forward',
     )
+    expect(
+      screen.getByRole('navigation', { name: 'Etapas do onboarding' }),
+    ).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Voltar' }))
 
@@ -45,6 +51,9 @@ describe('onboarding route transitions', () => {
     expect(
       screen.queryByRole('heading', { name: 'Glass Stack' }),
     ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('navigation', { name: 'Etapas do onboarding' }),
+    ).toBeInTheDocument()
 
     expect(
       await screen.findByRole('heading', { name: 'Glass Stack' }),
@@ -53,5 +62,8 @@ describe('onboarding route transitions', () => {
       'data-transition-direction',
       'backward',
     )
+    expect(
+      screen.queryByRole('navigation', { name: 'Etapas do onboarding' }),
+    ).not.toBeInTheDocument()
   })
 })

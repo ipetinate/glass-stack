@@ -1,15 +1,29 @@
+import {
+  KeyRound,
+  Palette,
+  PlugZap,
+  RotateCcwKey,
+  ShieldCheck,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react'
 import { motion } from 'motion/react'
 import type { OnboardingStage } from '../stores/onboardingStore'
 
-const labels: Record<OnboardingStage, string> = {
-  welcome: 'Início',
-  connect: 'Conexão',
-  account: 'Conta',
-  theme: 'Aparência',
-  security: 'Segurança',
-  mfa: 'MFA',
-  recovery: 'Recuperação',
-}
+type TimelineStage = Exclude<OnboardingStage, 'welcome'>
+
+const stages: Array<{
+  stage: TimelineStage
+  label: string
+  Icon: LucideIcon
+}> = [
+  { stage: 'connect', label: 'Conexão', Icon: PlugZap },
+  { stage: 'account', label: 'Conta', Icon: UserRound },
+  { stage: 'theme', label: 'Aparência', Icon: Palette },
+  { stage: 'security', label: 'Segurança', Icon: ShieldCheck },
+  { stage: 'mfa', label: 'MFA', Icon: KeyRound },
+  { stage: 'recovery', label: 'Recuperação', Icon: RotateCcwKey },
+]
 
 export function OnboardingTimeline({
   current,
@@ -20,16 +34,13 @@ export function OnboardingTimeline({
   completed: OnboardingStage[]
   onSelect: (stage: OnboardingStage) => void
 }) {
-  const stages = (Object.keys(labels) as OnboardingStage[]).filter(
-    (stage) => stage !== 'welcome',
-  )
   return (
     <nav
       aria-label="Etapas do onboarding"
       className="mx-auto mt-6 w-full max-w-3xl"
     >
       <ol className="flex items-center justify-center gap-1 sm:gap-2">
-        {stages.map((stage, index) => {
+        {stages.map(({ stage, label, Icon }, index) => {
           const isCurrent = stage === current
           const isCompleted = completed.includes(stage)
           const isAvailable = isCurrent || isCompleted
@@ -40,7 +51,7 @@ export function OnboardingTimeline({
                 type="button"
                 disabled={!isAvailable}
                 aria-current={isCurrent ? 'step' : undefined}
-                aria-label={`${labels[stage]}${isCompleted ? ' concluída' : ''}`}
+                aria-label={`${label}${isCompleted ? ' concluída' : ''}`}
                 onClick={() => isAvailable && onSelect(stage)}
                 className={`group relative flex items-center gap-1.5 px-2 py-1 text-[11px] transition focus-visible:outline-none sm:px-2.5 ${
                   isCurrent
@@ -59,12 +70,16 @@ export function OnboardingTimeline({
                   />
                 ) : null}
 
-                <span className="relative z-10 grid size-4 place-items-center text-[9px]">
-                  {isCompleted ? '✓' : index + 1}
+                <span className="relative z-10 grid size-4 place-items-center">
+                  <Icon
+                    aria-hidden="true"
+                    className="size-3"
+                    strokeWidth={1.75}
+                  />
                 </span>
 
                 <span className="relative z-10 hidden sm:inline">
-                  {labels[stage]}
+                  {label}
                 </span>
               </button>
 
