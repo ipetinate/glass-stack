@@ -112,7 +112,7 @@ export function AvatarPicker({
 
       {source ? (
         <div className="mx-auto flex max-w-xs items-center gap-2 rounded-xl border border-black/10 bg-white/25 px-3 py-2 shadow-sm backdrop-blur-md dark:border-white/15 dark:bg-black/25">
-          <div className="relative min-w-0 flex-1 py-2">
+          <div className="relative flex h-8 min-w-0 flex-1 items-center">
             <input
               aria-label="Crop zoom"
               type="range"
@@ -121,7 +121,7 @@ export function AvatarPicker({
               step={0.1}
               value={zoom}
               onChange={(event) => setZoom(Number(event.target.value))}
-              className="relative z-10 m-0 w-full cursor-pointer appearance-none bg-transparent accent-cyan-300 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-900/20 dark:[&::-webkit-slider-runnable-track]:bg-white/20 [&::-webkit-slider-thumb]:size-0 [&::-webkit-slider-thumb]:appearance-none"
+              className="relative z-10 m-0 h-8 w-full cursor-pointer appearance-none bg-transparent accent-cyan-300 [&::-webkit-slider-runnable-track]:h-1 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-slate-900/20 dark:[&::-webkit-slider-runnable-track]:bg-white/20 [&::-webkit-slider-thumb]:size-0 [&::-webkit-slider-thumb]:appearance-none"
             />
             <span
               aria-hidden="true"
