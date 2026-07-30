@@ -14,8 +14,12 @@ import { useNavigate } from 'react-router'
 import { GlassInput } from '@/core/components/form'
 import { useOnboardingAction } from '../components/OnboardingActions'
 import { StageError } from '../components/OnboardingShell'
+import {
+  OnboardingStage,
+  OnboardingStageTitle,
+} from '../components/OnboardingStage'
 import { useOnboardingStore } from '../stores/onboardingStore'
-import { OnboardingStage, OnboardingStageTitle } from '../components/OnboardingStage'
+import { validateSetupToken } from '../api/onboarding'
 
 const bootstrapTokenPath = 'GLASS_DATA_DIR/secrets/bootstrap-token'
 
@@ -23,11 +27,12 @@ export function ConnectPage() {
   const navigate = useNavigate()
   const state = useOnboardingStore()
   const [pathCopied, setPathCopied] = useState(false)
+  const [validating, setValidating] = useState(false)
   useOnboardingAction({
     label: 'Continuar',
     type: 'submit',
     form: 'onboarding-connect-form',
-    disabled: !state.bootstrapToken.trim(),
+    disabled: !state.bootstrapToken.trim() || validating,
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -51,13 +56,21 @@ export function ConnectPage() {
     }
   }
 
-  const submit = (event: FormEvent) => {
+  const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (!state.bootstrapToken.trim()) return
-    state.markCompleted('connect')
-    state.setStage('account')
-
-    navigate('/onboarding/account')
+    setValidating(true)
+    state.setField('error', '')
+    try {
+      await validateSetupToken(state.bootstrapToken.trim())
+      state.markCompleted('connect')
+      state.setStage('account')
+      navigate('/onboarding/account')
+    } catch {
+      state.setField('error', 'O token de configuração é inválido ou expirou.')
+    } finally {
+      setValidating(false)
+    }
   }
 
   const readTokenFile = async (file: File) => {
@@ -139,9 +152,12 @@ export function ConnectPage() {
           <span className="inline-flex items-center gap-2 text-xs opacity-70">
             <FileKey2 aria-hidden="true" className="size-4" />
             <span className="inline-flex items-center">
-              O servidor informa o caminho exato no log (normalmente em{' '}
-              <code className="inline-flex items-center gap-1 rounded bg-slate-900/10 py-0.5 pl-1.5 pr-0.5 backdrop-blur-md dark:bg-white/10">
+              <span className="mr-2">
+                O servidor informa o caminho exato no log (normalmente em:
+              </span>
+              <code className="inline-flex items-center gap-1 rounded bg-slate-900/10 pl-1.5 backdrop-blur-md dark:bg-white/10">
                 {bootstrapTokenPath}
+
                 <button
                   type="button"
                   aria-label={

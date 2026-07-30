@@ -10,9 +10,8 @@ export type OnboardingStage =
   | 'connect'
   | 'account'
   | 'theme'
-  | 'security'
   | 'mfa'
-  | 'recovery'
+  | 'security'
 
 type OnboardingState = {
   currentStage: OnboardingStage

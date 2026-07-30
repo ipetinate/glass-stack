@@ -95,6 +95,7 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 	passwordCheckLimit := RateLimit(20, time.Minute)
 	router.Route("/api/v1", func(api chi.Router) {
 		api.Get("/setup/status", authHandler.SetupStatus)
+		api.With(publicAuthLimit).Post("/setup/token/validate", authHandler.ValidateSetupToken)
 		api.With(passwordCheckLimit).Post(
 			"/auth/password/check",
 			authHandler.CheckPassword,

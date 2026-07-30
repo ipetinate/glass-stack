@@ -19,6 +19,12 @@ export const beginSetupTOTP = (input: { bootstrapToken: string; username: string
     body: JSON.stringify(input),
   })
 
+export const validateSetupToken = (bootstrapToken: string) =>
+  glassRequest<{ valid: boolean }>('/api/v1/setup/token/validate', {
+    method: 'POST',
+    body: JSON.stringify({ bootstrapToken }),
+  })
+
 export const completeSetup = (input: {
   bootstrapToken: string
   challengeToken: string

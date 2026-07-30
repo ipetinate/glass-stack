@@ -860,6 +860,12 @@ func (service *Service) validateBootstrap(ctx context.Context, token string) err
 	return nil
 }
 
+// ValidateSetupToken verifies that setup is still pending and the bootstrap
+// token is valid without consuming it.
+func (service *Service) ValidateSetupToken(ctx context.Context, token string) error {
+	return service.validateBootstrap(ctx, token)
+}
+
 func (service *Service) createEnrollmentChallenge(
 	ctx context.Context,
 	purpose string,

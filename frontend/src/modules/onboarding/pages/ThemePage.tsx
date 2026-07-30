@@ -10,7 +10,7 @@ import { OnboardingStage, OnboardingStageTitle } from '../components/OnboardingS
 export function ThemePage() {
   const navigate = useNavigate()
   const state = useOnboardingStore()
-  useOnboardingAction({ label: 'Próximo', onClick: () => { state.markCompleted('theme'); state.setStage('security'); navigate('/onboarding/security') } })
+  useOnboardingAction({ label: 'Próximo', onClick: () => { state.markCompleted('theme'); state.setStage('mfa'); navigate('/onboarding/mfa') } })
 
   const select = (theme: 'light' | 'dark') => {
     state.setField('theme', theme)

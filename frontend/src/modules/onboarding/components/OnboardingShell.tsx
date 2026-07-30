@@ -13,7 +13,6 @@ import { OnboardingActionsProvider, type OnboardingAction } from './OnboardingAc
 import { AccountPage } from '../pages/AccountPage'
 import { ConnectPage } from '../pages/ConnectPage'
 import { MfaPage } from '../pages/MfaPage'
-import { RecoveryPage } from '../pages/RecoveryPage'
 import { SecurityPage } from '../pages/SecurityPage'
 import { ThemePage } from '../pages/ThemePage'
 import { WelcomePage } from '../pages/WelcomePage'
@@ -29,10 +28,9 @@ const paths: Record<OnboardingStage, string> = {
   theme: '/onboarding/theme',
   security: '/onboarding/security',
   mfa: '/onboarding/mfa',
-  recovery: '/onboarding/recovery',
 }
 
-const stages: OnboardingStage[] = ['connect', 'account', 'theme', 'security', 'mfa', 'recovery']
+const stages: OnboardingStage[] = ['connect', 'account', 'theme', 'mfa', 'security']
 const transitionStages: OnboardingStage[] = ['welcome', ...stages]
 
 type TransitionDirection = -1 | 0 | 1
@@ -84,9 +82,8 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
     if (!state.bootstrapToken.trim()) return 'connect' as const
     if (!state.completedStages.includes('account')) return 'account' as const
     if (!state.completedStages.includes('theme')) return 'theme' as const
-    if (!state.completedStages.includes('security')) return 'security' as const
     if (!state.completedStages.includes('mfa')) return 'mfa' as const
-    return 'recovery' as const
+    return 'security' as const
   }, [state.bootstrapToken, state.completedStages])
 
   const requested = location.pathname === '/onboarding'
@@ -231,9 +228,8 @@ function StandaloneStage({ stage }: { stage: OnboardingStage }) {
     case 'connect': return <ConnectPage />
     case 'account': return <AccountPage />
     case 'theme': return <ThemePage />
-    case 'security': return <SecurityPage />
     case 'mfa': return <MfaPage />
-    case 'recovery': return <RecoveryPage />
+    case 'security': return <SecurityPage />
   }
 }
 

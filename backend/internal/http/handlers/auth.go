@@ -107,6 +107,21 @@ func (handler *AuthHandler) BeginSetupTOTP(response http.ResponseWriter, request
 	writeJSON(response, http.StatusOK, enrollment)
 }
 
+func (handler *AuthHandler) ValidateSetupToken(response http.ResponseWriter, request *http.Request) {
+	var input struct {
+		BootstrapToken string `json:"bootstrapToken"`
+	}
+	if err := decodeJSON(request, &input); err != nil {
+		writeError(response, request, auth.ErrInvalidInput)
+		return
+	}
+	if err := handler.service.ValidateSetupToken(request.Context(), input.BootstrapToken); err != nil {
+		writeError(response, request, err)
+		return
+	}
+	writeJSON(response, http.StatusOK, map[string]bool{"valid": true})
+}
+
 func (handler *AuthHandler) CompleteSetup(response http.ResponseWriter, request *http.Request) {
 	var input struct {
 		BootstrapToken string          `json:"bootstrapToken"`

@@ -2,8 +2,7 @@ import {
   KeyRound,
   Palette,
   PlugZap,
-  RotateCcwKey,
-  ShieldCheck,
+  PartyPopper,
   UserRound,
   type LucideIcon,
 } from 'lucide-react'
@@ -20,9 +19,8 @@ const stages: Array<{
   { stage: 'connect', label: 'Conexão', Icon: PlugZap },
   { stage: 'account', label: 'Conta', Icon: UserRound },
   { stage: 'theme', label: 'Aparência', Icon: Palette },
-  { stage: 'security', label: 'Segurança', Icon: ShieldCheck },
+  { stage: 'security', label: 'Recomendações', Icon: PartyPopper },
   { stage: 'mfa', label: 'MFA', Icon: KeyRound },
-  { stage: 'recovery', label: 'Recuperação', Icon: RotateCcwKey },
 ]
 
 export function OnboardingTimeline({
