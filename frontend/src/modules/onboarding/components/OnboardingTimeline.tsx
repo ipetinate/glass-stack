@@ -64,7 +64,7 @@ export function OnboardingTimeline({
                 {isCurrent ? (
                   <motion.span
                     layoutId="onboarding-current-stage"
-                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                    transition={{ duration: 0.18, ease: 'easeOut' }}
                     className="absolute inset-0 z-0 rounded-lg bg-white/35 dark:bg-black/30"
                     aria-hidden="true"
                   />
