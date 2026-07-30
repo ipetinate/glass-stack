@@ -64,13 +64,66 @@ docker info
 
 If this command fails, start Docker Desktop or the Docker daemon on your system.
 
-4. **Run the server**
+4. **Run the development stack**
+
+Run the backend and frontend in separate terminals.
 
 ```bash
-go run ./cmd/glassd
+cd backend
+cp .env.example .env
+go tool air -c .air.toml
+```
+
+In another terminal:
+
+```bash
+pnpm --dir frontend dev
+```
+
+The frontend is available at `http://localhost:5173` and proxies `/api` to
+the backend at `http://localhost:8080`. Vite provides HMR for the frontend and
+Air rebuilds the backend whenever Go files change.
+
+On first start, the backend logs the path of a mode-0600 bootstrap-token file
+and the onboarding URL. Read the token locally and enter it when the onboarding
+screen requests it; the token itself is never written to ordinary logs.
+
+Key configuration:
+
+- `GLASS_DATA_DIR` controls the SQLite, secrets, media and backup root.
+- `GLASS_PUBLIC_URL` controls the browser-facing onboarding URL.
+- `GLASS_ALLOWED_ORIGINS` lists comma-separated trusted frontend origins.
+- `GLASS_PASSWORD_COMPROMISE_MODE` selects `hybrid` (default) or `local`
+  compromised-password checks. Hybrid mode sends only a padded five-character
+  SHA-1 prefix to the free HIBP Pwned Passwords range API; local checking
+  always remains active.
+- `GLASS_UNSPLASH_ACCESS_KEY` stays server-side and enables wallpaper search.
+- `GLASS_UNSPLASH_SELF_HOST=true` stores provider image bytes only when the
+  deployment has compatible rights; the default API mode hotlinks Unsplash.
+
+In development, the backend reads `backend/.env` without overriding variables
+already exported by the shell. This file is ignored by Git. Production does
+not load a local environment file.
+
+To run only the backend directly:
+
+```bash
+go tool air -c .air.toml
 ```
 
 The API will be available at `http://localhost:8080`.
+
+### System monitoring endpoints
+
+`GET /api/events?interval=1` opens an SSE stream. `interval` accepts values from
+1 to 5 seconds and defaults to 1. The stream emits `temperature`, `cpu`, `gpu`,
+and `io` events. CPU events contain overall and per-core utilization; GPU
+events contain `usagePercent` when the operating system exposes a supported
+counter, otherwise the value is `null`.
+
+`GET /api/host` returns a fixed JSON snapshot with hostname, operating system,
+kernel, architecture, CPU model/core details, total memory, and best-effort GPU
+hardware information.
 
 ### Build
 

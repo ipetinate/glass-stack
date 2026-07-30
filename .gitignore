@@ -1,7 +1,16 @@
 client/.env
+backend/.env
+frontend/.env
+bin/
+backend/tmp/
 
 # ai junk
 
 .codex/*
+!.codex/skills/
+!.codex/skills/glass-stack-architecture/
+!.codex/skills/glass-stack-architecture/**
 CLAUDE*
 AGENTS*
+!.codex/skills/glass-stack-architecture/agents/
+!.codex/skills/glass-stack-architecture/agents/**

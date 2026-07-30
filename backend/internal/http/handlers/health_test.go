@@ -9,8 +9,8 @@ import (
 	"github.com/ipetinate/glass-stack/backend/internal/http/handlers"
 )
 
-func TestHealthHandlerGet(t *testing.T) {
-	request := httptest.NewRequest(http.MethodGet, "/health", nil)
+func TestHealthHandler(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/api/health", nil)
 	response := httptest.NewRecorder()
 
 	handlers.Health(response, request)

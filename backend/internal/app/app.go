@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+
 	httpserver "github.com/ipetinate/glass-stack/backend/internal/http"
 )
 
@@ -8,12 +10,14 @@ type App struct {
 	server *httpserver.Server
 }
 
-func New() *App {
-	return &App{
-		server: httpserver.NewServer(),
+func New() (*App, error) {
+	runtime, err := newRuntime()
+	if err != nil {
+		return nil, err
 	}
+	return &App{server: httpserver.NewServerWithRuntime(runtime)}, nil
 }
 
-func (app *App) Run() error {
-	return app.server.Start()
+func (app *App) Run(ctx context.Context) error {
+	return app.server.Start(ctx)
 }
