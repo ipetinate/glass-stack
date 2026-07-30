@@ -151,7 +151,7 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
     >
       <OnboardingActionsProvider setAction={setAction}>
         <div
-          className="relative flex h-[min(800px,calc(100dvh-32px))] w-[min(1000px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl p-6 shadow-2xl backdrop-blur-[5px] sm:p-8"
+          className="relative isolate flex h-[min(800px,calc(100dvh-32px))] w-[min(1000px,calc(100vw-32px))] flex-col overflow-hidden rounded-2xl border border-white/55 bg-white/58 p-6 text-[#151A21] shadow-2xl backdrop-blur-xl backdrop-saturate-150 dark:border-white/10 dark:bg-black/35 dark:text-white sm:p-8"
           data-testid="onboarding-shell"
         >
           {!isPresentedWelcome ? (
