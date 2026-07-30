@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"time"
@@ -11,23 +12,31 @@ import (
 	"github.com/ipetinate/glass-stack/backend/internal/events"
 	"github.com/ipetinate/glass-stack/backend/internal/host"
 	"github.com/ipetinate/glass-stack/backend/internal/http/handlers"
-	"github.com/ipetinate/glass-stack/backend/internal/platform/database"
 	"github.com/ipetinate/glass-stack/backend/internal/settings"
 	systeminfo "github.com/ipetinate/glass-stack/backend/internal/system"
 )
 
 type Runtime struct {
 	Broker         *events.Broker
-	Metrics        *host.MetricsService
+	Metrics        MetricsRunner
 	Host           *systeminfo.HostCollector
 	Storage        handlers.StorageReader
 	MetricPeriod   time.Duration
 	Logger         *slog.Logger
 	Auth           *auth.Service
 	Settings       *settings.Service
-	Database       *database.Database
+	Database       ControlPlaneDatabase
 	Address        string
 	AllowedOrigins []string
+}
+
+type MetricsRunner interface {
+	Run(context.Context, events.Publisher, time.Duration) error
+}
+
+type ControlPlaneDatabase interface {
+	QuickCheck(context.Context) error
+	Close() error
 }
 
 func NewRuntime() *Runtime {

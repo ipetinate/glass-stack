@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -35,23 +36,38 @@ func NewServerWithRuntime(runtime *Runtime) *Server {
 	}
 }
 
-func (server *Server) Start(parent context.Context) error {
+func (server *Server) Start(parent context.Context) (result error) {
 	logger := server.runtime.Logger
 	if logger == nil {
 		logger = slog.Default()
 	}
+	defer func() {
+		if server.runtime.Database == nil {
+			return
+		}
+		if err := server.runtime.Database.Close(); err != nil {
+			result = errors.Join(result, fmt.Errorf("close control-plane database: %w", err))
+		}
+	}()
 
 	metricsContext, cancelMetrics := context.WithCancel(parent)
 	defer cancelMetrics()
 	metricsDone := make(chan struct{})
-	go func() {
-		defer close(metricsDone)
-		_ = server.runtime.Metrics.Run(
-			metricsContext,
-			server.runtime.Broker,
-			server.runtime.MetricPeriod,
-		)
-	}()
+	var metricsErrors <-chan error
+	if server.runtime.Metrics != nil && server.runtime.Broker != nil {
+		channel := make(chan error, 1)
+		metricsErrors = channel
+		go func() {
+			defer close(metricsDone)
+			channel <- server.runtime.Metrics.Run(
+				metricsContext,
+				server.runtime.Broker,
+				server.runtime.MetricPeriod,
+			)
+		}()
+	} else {
+		close(metricsDone)
+	}
 
 	serverErrors := make(chan error, 1)
 	go func() {
@@ -63,30 +79,54 @@ func (server *Server) Start(parent context.Context) error {
 	case err := <-serverErrors:
 		cancelMetrics()
 		<-metricsDone
-		if server.runtime.Database != nil {
-			_ = server.runtime.Database.Close()
-		}
 		if errors.Is(err, http.ErrServerClosed) {
 			return nil
 		}
-		return err
-	case <-parent.Done():
-		shutdownContext, cancelShutdown := context.WithTimeout(
-			context.Background(),
-			10*time.Second,
+		return fmt.Errorf("serve HTTP: %w", err)
+	case err := <-metricsErrors:
+		if errors.Is(err, context.Canceled) && parent.Err() != nil {
+			return server.shutdown(logger, parent.Err(), cancelMetrics, metricsDone, serverErrors)
+		}
+		if err == nil {
+			err = errors.New("host metrics pipeline stopped unexpectedly")
+		}
+		logger.Error("host metrics pipeline stopped", "error", err)
+		shutdownError := server.shutdown(
+			logger,
+			err,
+			cancelMetrics,
+			metricsDone,
+			serverErrors,
 		)
-		defer cancelShutdown()
-
-		logger.Info("shutting down http server", "reason", parent.Err())
-		shutdownError := server.httpServer.Shutdown(shutdownContext)
-		cancelMetrics()
-		<-metricsDone
-		if shutdownError != nil {
-			return shutdownError
-		}
-		if server.runtime.Database != nil {
-			return server.runtime.Database.Close()
-		}
-		return nil
+		return errors.Join(
+			fmt.Errorf("run host metrics pipeline: %w", err),
+			shutdownError,
+		)
+	case <-parent.Done():
+		return server.shutdown(logger, parent.Err(), cancelMetrics, metricsDone, serverErrors)
 	}
+}
+
+func (server *Server) shutdown(
+	logger *slog.Logger,
+	reason error,
+	cancelMetrics context.CancelFunc,
+	metricsDone <-chan struct{},
+	serverErrors <-chan error,
+) error {
+	shutdownContext, cancelShutdown := context.WithTimeout(
+		context.Background(),
+		10*time.Second,
+	)
+	defer cancelShutdown()
+
+	logger.Info("shutting down http server", "reason", reason)
+	shutdownError := server.httpServer.Shutdown(shutdownContext)
+	cancelMetrics()
+	<-metricsDone
+	serverError := <-serverErrors
+	if errors.Is(serverError, http.ErrServerClosed) {
+		serverError = nil
+	}
+	return errors.Join(shutdownError, serverError)
 }
