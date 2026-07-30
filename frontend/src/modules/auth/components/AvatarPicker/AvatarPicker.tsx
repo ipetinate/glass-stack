@@ -121,7 +121,7 @@ export function AvatarPicker({
             />
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 z-20 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/70 bg-white/35 p-1 shadow-lg backdrop-blur-md dark:border-white/30 dark:bg-white/15"
+              className="pointer-events-none absolute top-1/2 z-20 grid h-7 w-8 -translate-x-1/2 -translate-y-1/2 place-items-center"
               style={{ left: `${((zoom - 1) / 2) * 100}%` }}
             >
               <GlassIndicator size="sm" />
