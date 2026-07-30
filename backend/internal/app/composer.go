@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -85,7 +86,15 @@ func newRuntime() (*httpserver.Runtime, error) {
 		Address:        configuration.Address,
 		AllowedOrigins: configuration.AllowedOrigins,
 	}
-	bootstrapToken, err := authService.EnsureBootstrap(context.Background())
+	previousBootstrapToken, err := readBootstrapToken(configuration.BootstrapTokenPath)
+	if err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("read bootstrap token: %w", err)
+	}
+	bootstrapToken, err := authService.EnsureBootstrap(
+		context.Background(),
+		previousBootstrapToken,
+	)
 	if err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("prepare bootstrap: %w", err)
@@ -99,11 +108,17 @@ func newRuntime() (*httpserver.Runtime, error) {
 			_ = db.Close()
 			return nil, fmt.Errorf("write bootstrap token: %w", err)
 		}
-		runtime.Logger.Warn(
-			"initial administrator setup is required",
-			"bootstrap_token_file", configuration.BootstrapTokenPath,
-			"setup_url", strings.TrimSuffix(configuration.PublicURL, "/")+"/onboarding",
+		runtime.Logger.Warn("🔐 Glass Stack — configuração inicial necessária")
+		runtime.Logger.Info(
+			"🔒 Token de bootstrap disponível",
+			"arquivo", configuration.BootstrapTokenPath,
 		)
+		runtime.Logger.Info(
+			"🌐 Onboarding disponível",
+			"url", strings.TrimSuffix(configuration.PublicURL, "/")+"/onboarding",
+		)
+		runtime.Logger.Info("⏳ Token válido por 24 horas")
+		runtime.Logger.Warn("⚠️ Não compartilhe o conteúdo do token")
 	} else if err := os.Remove(configuration.BootstrapTokenPath); err != nil &&
 		!os.IsNotExist(err) {
 		_ = db.Close()
@@ -117,4 +132,15 @@ func environment() string {
 		return value
 	}
 	return logging.Development
+}
+
+func readBootstrapToken(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(string(content)), nil
 }
