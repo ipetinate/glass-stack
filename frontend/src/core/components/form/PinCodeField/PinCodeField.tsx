@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { Minus } from 'lucide-react'
 
 import { cn } from '@/core/functions/class-name'
 
@@ -81,7 +82,7 @@ export function PinCodeField({
                   distribute(index, event.clipboardData.getData('text'))
                 }}
               />
-              {isGroupEnd ? <span aria-hidden="true" className="text-current/60">{separator ? '-' : null}</span> : null}
+              {isGroupEnd && separator ? <Minus aria-hidden="true" className="size-4 shrink-0 text-current/60" strokeWidth={2.5} /> : null}
             </span>
           )
         })}
