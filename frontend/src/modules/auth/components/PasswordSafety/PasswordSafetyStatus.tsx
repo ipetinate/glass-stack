@@ -2,7 +2,6 @@ import {
   AlertTriangle,
   Check,
   LoaderCircle,
-  ShieldQuestion,
   X,
 } from 'lucide-react'
 
@@ -44,26 +43,26 @@ export function PasswordSafetyStatus({
         ? Check
         : assessment.status === 'compromised'
           ? X
-          : assessment.status === 'unavailable'
-            ? AlertTriangle
-            : ShieldQuestion
+      : assessment.status === 'unavailable'
+        ? AlertTriangle
+        : X
 
   return (
     <p
       role="status"
       aria-live="polite"
       className={cn(
-        'flex items-center gap-2',
+        'flex items-center gap-2 text-xs',
         assessment.status === 'safe' && 'text-emerald-500 dark:text-emerald-300',
         assessment.status === 'compromised' && 'text-rose-300',
         assessment.status === 'unavailable' && 'text-amber-300',
+        assessment.status === 'idle' && 'opacity-60',
         className,
       )}
     >
       <Icon
         aria-hidden="true"
-        size={15}
-        className={assessment.status === 'checking' ? 'animate-spin' : undefined}
+        className={cn('size-3.5 shrink-0', assessment.status === 'checking' && 'animate-spin')}
       />
       <span>
         {message}

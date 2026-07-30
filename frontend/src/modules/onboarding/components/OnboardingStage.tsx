@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Check } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 
 import { cn } from '@/core/functions/class-name'
 
@@ -18,7 +18,7 @@ export function OnboardingStageTitle({ children }: { children: ReactNode }) {
 export function OnboardingCheck({ children, valid }: { children: ReactNode; valid: boolean }) {
   return (
     <p className={cn('flex items-center gap-2 text-xs', valid ? 'text-emerald-500 dark:text-emerald-300' : 'opacity-60')}>
-      <Check aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.5} />
+      {valid ? <Check aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.5} /> : <X aria-hidden="true" className="size-3.5 shrink-0" strokeWidth={2.5} />}
       {children}
     </p>
   )
