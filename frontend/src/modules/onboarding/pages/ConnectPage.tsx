@@ -1,43 +1,94 @@
-import { FileKey2, FolderOpen, Shield } from 'lucide-react'
+import {
+  AlertTriangleIcon,
+  ClipboardPasteIcon,
+  CopyIcon,
+  FileKey2,
+  FolderOpen,
+  Shield,
+} from 'lucide-react'
+import type { FormEvent } from 'react'
 import { useRef } from 'react'
 import { useNavigate } from 'react-router'
-import type { FormEvent } from 'react'
 
 import { GlassInput } from '@/core/components/form'
-import { useOnboardingStore } from '../stores/onboardingStore'
-import { StageError } from '../components/OnboardingShell'
 import { useOnboardingAction } from '../components/OnboardingActions'
+import { StageError } from '../components/OnboardingShell'
+import { useOnboardingStore } from '../stores/onboardingStore'
 
 export function ConnectPage() {
   const navigate = useNavigate()
   const state = useOnboardingStore()
-  useOnboardingAction({ label: 'Continuar', type: 'submit', form: 'onboarding-connect-form', disabled: !state.bootstrapToken.trim() })
+  useOnboardingAction({
+    label: 'Continuar',
+    type: 'submit',
+    form: 'onboarding-connect-form',
+    disabled: !state.bootstrapToken.trim(),
+  })
   const fileInputRef = useRef<HTMLInputElement>(null)
+
   const submit = (event: FormEvent) => {
     event.preventDefault()
     if (!state.bootstrapToken.trim()) return
     state.markCompleted('connect')
     state.setStage('account')
+
     navigate('/onboarding/account')
   }
+
   const readTokenFile = async (file: File) => {
     const token = (await file.text()).trim()
+
     if (token) {
       state.setField('bootstrapToken', token)
       state.setField('error', '')
     } else {
-      state.setField('error', 'O arquivo selecionado não contém um token válido.')
+      state.setField(
+        'error',
+        'O arquivo selecionado não contém um token válido.',
+      )
     }
   }
   return (
-    <form id="onboarding-connect-form" onSubmit={submit} className="mx-auto max-w-3xl">
-      <h2 className="text-3xl font-extralight sm:text-4xl">Conecte este navegador ao servidor</h2>
-      <div className="mt-10 rounded-2xl border border-black/10 bg-white/30 p-6 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/30 sm:p-8">
+    <form
+      id="onboarding-connect-form"
+      onSubmit={submit}
+      className="mx-auto max-w-3xl"
+    >
+      <h2 className="text-3xl font-light sm:text-4xl">
+        Conecte este navegador ao servidor
+      </h2>
+
+      <div className="mt-10 space-y-8 rounded-2xl border border-black/10 bg-white/30 p-6 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/30 sm:p-8">
         <div className="flex items-start gap-4">
-          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-cyan-300/15 text-cyan-500 dark:text-cyan-200"><Shield aria-hidden="true" size={24} /></span>
-          <div><h3 className="text-lg font-medium">Verificação de primeiro acesso</h3><p className="mt-1 text-sm leading-6 opacity-75">Cole o token de uso único mostrado no log do servidor.</p></div>
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-cyan-300/15 text-cyan-500 dark:text-cyan-200">
+            <Shield aria-hidden="true" size={24} />
+          </span>
+
+          <div>
+            <h3 className="text-lg font-medium">
+              Verificação de primeiro acesso
+            </h3>
+
+            <p className="mt-1 text-sm leading-6 opacity-75 flex flex-row gap-2 items-center">
+              <ClipboardPasteIcon className="size-4" /> Cole o token de uso
+              único mostrado no log do servidor.
+            </p>
+          </div>
         </div>
-        <GlassInput autoFocus label="Token de configuração" aria-label="Bootstrap token" value={state.bootstrapToken} onChange={(e) => state.setField('bootstrapToken', e.target.value)} autoComplete="off" spellCheck={false} className="mt-7 font-mono" />
+
+        <GlassInput
+          autoFocus
+          allowPaste
+          label="Token de configuração"
+          aria-label="Bootstrap token"
+          value={state.bootstrapToken}
+          onChange={(e) => state.setField('bootstrapToken', e.target.value)}
+          onPasteValue={(token) => state.setField('bootstrapToken', token)}
+          autoComplete="off"
+          spellCheck={false}
+          className="font-mono w-full"
+        />
+
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <input
             ref={fileInputRef}
@@ -59,11 +110,25 @@ export function ConnectPage() {
             Procurar arquivo
           </button>
           <span className="inline-flex items-center gap-2 text-xs opacity-70">
-            <FileKey2 aria-hidden="true" size={15} />
-            O servidor informa o caminho exato no log (normalmente em <code className="rounded bg-black/10 px-1 dark:bg-white/10">GLASS_DATA_DIR/secrets/bootstrap-token</code>).
+            <FileKey2 aria-hidden="true" className="size-4" />
+            <span className="inline-flex items-center">
+              O servidor informa o caminho exato no log (normalmente em{' '}
+              <code className=" inline-flex items-center gap-2 rounded bg-black/10 px-1 dark:bg-white/10 backdrop-blur-md">
+                GLASS_DATA_DIR/secrets/bootstrap-token
+                <CopyIcon className="size-3" />
+              </code>
+              ).
+            </span>
           </span>
         </div>
-        <p className="mt-4 text-xs leading-5 opacity-65">O token expira em 24 horas e é removido depois da configuração.</p>
+
+        <span className="inline-flex items-center gap-2 text-xs opacity-70">
+          <AlertTriangleIcon className="size-4 text-black/60" />
+          <p className="text-xs leading-5 text-black/60">
+            O token expira em 24 horas e é removido depois da configuração.
+          </p>
+        </span>
+
         {state.error ? <StageError>{state.error}</StageError> : null}
       </div>
     </form>

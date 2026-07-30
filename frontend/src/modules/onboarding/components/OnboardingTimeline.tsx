@@ -5,7 +5,7 @@ const labels: Record<OnboardingStage, string> = {
   welcome: 'Início',
   connect: 'Conexão',
   account: 'Conta',
-  theme: 'Tema',
+  theme: 'Aparência',
   security: 'Segurança',
   mfa: 'MFA',
   recovery: 'Recuperação',

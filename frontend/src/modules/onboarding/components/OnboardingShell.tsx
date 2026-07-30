@@ -1,9 +1,10 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Navigate, Outlet, useLocation, useNavigate } from 'react-router'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Navigate, useLocation, useNavigate, useOutlet } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 
 import { Button } from '@/core/components/ui/Button'
+import { GlassStackLoader } from '@/core/components/ui/GlassStackLoader'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { GlassAPIError } from '@/lib/glass-api'
 import { getSetupStatus } from '@/modules/auth/api/auth'
@@ -32,10 +33,29 @@ const paths: Record<OnboardingStage, string> = {
 }
 
 const stages: OnboardingStage[] = ['connect', 'account', 'theme', 'security', 'mfa', 'recovery']
+const transitionStages: OnboardingStage[] = ['welcome', ...stages]
+
+type TransitionDirection = -1 | 0 | 1
+
+const stageTransitionVariants = {
+  enter: (direction: TransitionDirection) => ({
+    opacity: 0,
+    x: direction * 40,
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+  },
+  exit: (direction: TransitionDirection) => ({
+    opacity: 0,
+    x: direction * -32,
+  }),
+}
 
 export function OnboardingShell({ standalone = false }: { standalone?: boolean }) {
   const location = useLocation()
   const navigate = useNavigate()
+  const outlet = useOutlet()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const shouldReduceMotion = useReducedMotion()
   const [action, setAction] = useState<OnboardingAction | null>(null)
@@ -64,10 +84,32 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
     : stages.find((stage) => location.pathname === paths[stage])
   const requestedIndex = requested ? stages.indexOf(requested) : -1
   const firstIndex = stages.indexOf(firstIncomplete)
+  const current = requested ?? firstIncomplete
+  const previousStageRef = useRef(current)
+  const [settledDirection, setSettledDirection] =
+    useState<Exclude<TransitionDirection, 0>>(1)
+  const previousStageIndex = transitionStages.indexOf(previousStageRef.current)
+  const currentStageIndex = transitionStages.indexOf(current)
+  const transitionDirection: Exclude<TransitionDirection, 0> =
+    currentStageIndex === previousStageIndex
+      ? settledDirection
+      : currentStageIndex > previousStageIndex
+        ? 1
+        : -1
+  const motionDirection: TransitionDirection = shouldReduceMotion
+    ? 0
+    : transitionDirection
 
   useEffect(() => {
     headingRef.current?.focus()
   }, [location.pathname])
+
+  useLayoutEffect(() => {
+    if (previousStageRef.current === current) return
+
+    previousStageRef.current = current
+    setSettledDirection(transitionDirection)
+  }, [current, transitionDirection])
 
   if (!standalone && setup.isPending) return <ShellLoading />
   if (!standalone && setup.isError) return <ShellError message={errorMessage(setup.error)} />
@@ -76,7 +118,6 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
     return <Navigate to={paths[firstIncomplete]} replace />
   }
 
-  const current = requested ?? firstIncomplete
   const currentIndex = current === 'welcome' ? -1 : stages.indexOf(current)
   const isWelcome = current === 'welcome'
   const goStage = (stage: OnboardingStage) => {
@@ -110,16 +151,29 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
           ) : null}
 
           <div className={`relative min-h-0 flex-1 ${isWelcome ? '' : 'mt-8'}`}>
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence
+              custom={motionDirection}
+              initial={false}
+              mode="wait"
+            >
               <motion.div
                 key={current}
                 className="h-full"
-                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: shouldReduceMotion ? 0.1 : 0.25 }}
+                animate="center"
+                custom={motionDirection}
+                data-testid="onboarding-stage-transition"
+                data-transition-direction={
+                  transitionDirection === 1 ? 'forward' : 'backward'
+                }
+                exit="exit"
+                initial="enter"
+                transition={{
+                  duration: shouldReduceMotion ? 0.12 : 0.28,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                variants={stageTransitionVariants}
               >
-                {standalone ? <StandaloneStage stage={current} /> : <Outlet />}
+                {standalone ? <StandaloneStage stage={current} /> : outlet}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -187,7 +241,14 @@ export function StageError({ children }: { children: React.ReactNode }) {
 }
 
 function ShellLoading() {
-  return <main className="grid min-h-dvh place-items-center bg-[#071525] text-white" role="status">Conectando ao Glass Stack…</main>
+  return (
+    <main className="grid min-h-dvh place-items-center bg-[#071525] text-white">
+      <GlassStackLoader
+        label="Conectando ao Glass Stack…"
+        size={96}
+      />
+    </main>
+  )
 }
 
 function ShellError({ message }: { message: string }) {
