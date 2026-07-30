@@ -1,10 +1,10 @@
-import type { PropsWithChildren } from 'react'
-import { useEffect, useState } from 'react'
 import {
   QueryClient,
   QueryClientProvider,
   type QueryClient as QueryClientInstance,
 } from '@tanstack/react-query'
+import type { PropsWithChildren } from 'react'
+import { useEffect, useState } from 'react'
 
 import { useThemeStore } from '@/core/stores/theme/theme'
 import { useWallpaperStore } from '@/core/stores/wallpaper'
@@ -25,8 +25,10 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
         },
       }),
   )
+
   const activeQueryClient = queryClient ?? defaultQueryClient
   const theme = useThemeStore((state) => state.theme)
+
   const syncTheme = useThemeStore((state) => state.syncTheme)
   const applyWallpaper = useWallpaperStore((state) => state.applyWallpaper)
 
