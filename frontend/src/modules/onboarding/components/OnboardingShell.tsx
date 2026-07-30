@@ -188,8 +188,8 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
                 exit="exit"
                 initial="enter"
                 transition={{
-                  duration: shouldReduceMotion ? 0.12 : 0.28,
-                  ease: [0.22, 1, 0.36, 1],
+                  duration: shouldReduceMotion ? 0.1 : 0.2,
+                  ease: [0.33, 1, 0.68, 1],
                 }}
                 variants={stageTransitionVariants}
               >
