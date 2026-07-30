@@ -1,4 +1,4 @@
-import type { NormalizedChartAnimation } from '../types'
+import type { NormalizedChartAnimation } from '@/core/components/charts/types'
 
 export const DEFAULT_CHART_ANIMATION: NormalizedChartAnimation = {
   enabled: true,

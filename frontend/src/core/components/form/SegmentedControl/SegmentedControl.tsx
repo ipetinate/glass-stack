@@ -1,0 +1,72 @@
+import { useId, useState, type ChangeEvent } from 'react'
+
+import { cn } from '@/core/functions/class-name'
+
+export type SegmentedControlOption<T extends string> = {
+  value: T
+  label: string
+}
+
+export type SegmentedControlProps<T extends string> = {
+  options: SegmentedControlOption<T>[]
+  value?: T
+  defaultValue?: T
+  onValueChange?: (value: T) => void
+  name?: string
+  className?: string
+  size?: 'xs' | 'md' | 'lg'
+  'aria-label'?: string
+}
+
+export function SegmentedControl<T extends string>({
+  options,
+  value,
+  defaultValue,
+  onValueChange,
+  name,
+  className,
+  size = 'md',
+  'aria-label': ariaLabel,
+}: SegmentedControlProps<T>) {
+  const generatedName = useId()
+  const [internalValue, setInternalValue] = useState<T>(value ?? defaultValue ?? options[0]?.value)
+  const selectedValue = value ?? internalValue
+
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextValue = event.target.value as T
+    if (value === undefined) setInternalValue(nextValue)
+    onValueChange?.(nextValue)
+  }
+
+  return (
+    <div className={cn('inline-flex rounded-xl border border-white/20 bg-black/10', size === 'xs' ? 'gap-0.5 p-0.5' : size === 'lg' ? 'gap-1.5 p-1.5' : 'gap-1 p-1', className)} role="group" aria-label={ariaLabel}>
+      {options.map((option) => {
+        const id = `${generatedName}-${option.value}`
+        const selected = selectedValue === option.value
+        return (
+          <span key={option.value} className="relative">
+            <input
+              id={id}
+              type="radio"
+              name={name ?? generatedName}
+              value={option.value}
+              checked={selected}
+              onChange={handleChange}
+              className="peer sr-only"
+            />
+            <label
+              htmlFor={id}
+              className={cn(
+                'block cursor-pointer rounded-lg transition-colors',
+                size === 'xs' ? 'px-2 py-1 text-xs' : size === 'lg' ? 'px-4 py-2 text-base' : 'px-3 py-1.5 text-sm',
+                selected ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white/85',
+              )}
+            >
+              {option.label}
+            </label>
+          </span>
+        )
+      })}
+    </div>
+  )
+}

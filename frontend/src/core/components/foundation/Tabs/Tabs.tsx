@@ -1,12 +1,12 @@
-import { useMemo, useState, type ReactNode } from 'react'
 import { useUnsavedChanges } from '@/core/hooks/useUnsavedChanges'
+import { useMemo, useState, type ReactNode } from 'react'
 
 import { BackgroundBlur } from '@/core/components/ui/BackgroundBlur'
 
-import { cn } from '@/core/functions/class-name'
-import { sortTabs } from './Tabs.functions'
 import type { IconName } from '@/core/types'
+import { cn } from '@/core/functions/class-name'
 import { TabTrigger } from './TabTrigger'
+import { sortTabs } from './Tabs.functions'
 
 export type TabItem = {
   id: string

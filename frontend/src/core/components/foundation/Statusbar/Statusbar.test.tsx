@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { PropsWithChildren } from 'react'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
 import { Statusbar } from './Statusbar'
@@ -15,7 +16,9 @@ const renderWithQueryClient = (children: React.ReactNode) => {
     },
   })
   const wrapper = ({ children: wrapperChildren }: PropsWithChildren) => (
-    <QueryClientProvider client={queryClient}>{wrapperChildren}</QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={queryClient}>{wrapperChildren}</QueryClientProvider>
+    </MemoryRouter>
   )
 
   return render(children, { wrapper })
@@ -74,7 +77,7 @@ describe('Statusbar', () => {
     await user.click(screen.getByRole('button', { name: 'Open profile settings' }))
 
     expect(screen.getByText('Profile')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Manage password' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Gerenciar perfil' })).toBeInTheDocument()
   })
 
   it('closes the active dropdown when clicking outside', async () => {

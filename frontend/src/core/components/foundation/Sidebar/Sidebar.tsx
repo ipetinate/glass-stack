@@ -31,8 +31,8 @@ export function Sidebar() {
               icon="SquareTerminal"
             />
             <SidebarButton
-              to="/store"
-              active={isActive('/store')}
+              to="/app-store"
+              active={isActive('/app-store')}
               description="Store"
               icon="ShoppingBag"
             />

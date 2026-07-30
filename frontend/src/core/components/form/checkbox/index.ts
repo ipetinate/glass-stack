@@ -1,1 +1,1 @@
-export * from './GlassCheckbox'
+export * from './Checkbox'

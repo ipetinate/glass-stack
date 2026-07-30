@@ -3,7 +3,7 @@ import { useId } from 'react'
 
 import { cn } from '@/core/functions/class-name'
 
-import { CHART_COLORS, DEFAULT_CHART_GRADIENT } from '../constants'
+import { CHART_COLORS, DEFAULT_CHART_GRADIENT } from '@/core/constants/charts'
 import {
   getChartPaint,
   getGradientId,
@@ -11,7 +11,7 @@ import {
   polarToCartesian,
   renderGradientDefinition,
   useAnimatedNumber,
-} from '../functions'
+} from '@/core/functions/charts'
 import type { ChartAnimation, ChartColor } from '../types'
 
 export type RadialDonutProps = {
@@ -47,8 +47,8 @@ const DEFAULT_THICKNESS = 32
 const DEFAULT_MAX = 100
 const FULL_CIRCLE_START_ANGLE = 0
 const FULL_CIRCLE_END_ANGLE = 360
-const STRIPE_PATTERN_SIZE = 24
-const STRIPE_WIDTH = 11
+const STRIPE_PATTERN_SIZE = 15
+const STRIPE_WIDTH = 16
 const DEFAULT_RADIAL_TRACK_GRADIENT: ChartColor = {
   type: 'radial',
   cx: '32%',
@@ -76,8 +76,8 @@ export function RadialDonut({
   centerDotColor = '#4A627A',
   centerDotRingColor = 'transparent',
   striped = false,
-  stripeColor = '#7894ad',
-  stripeBaseColor = '#5f7892',
+  stripeColor = '#212121',
+  stripeBaseColor = '#67839f',
   roundedCaps = false,
   showIndicator = false,
   indicatorRadius = 4,
@@ -107,7 +107,7 @@ export function RadialDonut({
   const createArc = arc<unknown>()
     .innerRadius(innerRadius)
     .outerRadius(outerRadius)
-    .cornerRadius(roundedCaps ? thickness / 2 : 0)
+    .cornerRadius(roundedCaps ? Math.min(thickness / 2, 6) : 0)
   const trackArcPath =
     createArc({
       startAngle: (startAngle * Math.PI) / 180,
@@ -125,7 +125,10 @@ export function RadialDonut({
       endAngle: (displayedEndAngle * Math.PI) / 180,
     }) ?? ''
   const stripedDiskPath =
-    arc<unknown>().innerRadius(0).outerRadius(outerRadius).cornerRadius(0)({
+    arc<unknown>()
+      .innerRadius(Math.max(centerDotRadius + 4, 8))
+      .outerRadius(outerRadius)
+      .cornerRadius(0)({
       startAngle: 0,
       endAngle: Math.PI * 2,
     }) ?? ''
@@ -153,7 +156,7 @@ export function RadialDonut({
           id={stripePatternId}
           width={STRIPE_PATTERN_SIZE}
           height={STRIPE_PATTERN_SIZE}
-          patternTransform="rotate(45)"
+          patternTransform="rotate(45) translate(4 10)"
           patternUnits="userSpaceOnUse"
         >
           <rect
@@ -167,6 +170,7 @@ export function RadialDonut({
             y1="0"
             y2={STRIPE_PATTERN_SIZE}
             stroke={stripeColor}
+            strokeOpacity={0.32}
             strokeWidth={STRIPE_WIDTH}
           />
         </pattern>
@@ -175,11 +179,7 @@ export function RadialDonut({
         <path
           data-testid="radial-donut-track"
           d={trackPath}
-          fill={
-            striped
-              ? CHART_COLORS.trackNavy
-              : getChartPaint(trackColor, trackGradientId)
-          }
+          fill={getChartPaint(trackColor, trackGradientId)}
         />
         {striped ? (
           <path

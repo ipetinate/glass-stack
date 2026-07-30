@@ -1,4 +1,4 @@
-import type { ChartColor } from '../types'
+import type { ChartColor } from '@/core/components/charts/types'
 
 export const CHART_COLORS = {
   iceBlue: '#bfefff',

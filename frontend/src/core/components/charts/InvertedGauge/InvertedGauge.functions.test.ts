@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { getGaugeTicks, getGaugeValueAngle } from './InvertedGauge.functions'
+import {
+  getGaugeIndicatorColor,
+  getGaugeTicks,
+  getGaugeValueAngle,
+} from './InvertedGauge.functions'
 
 describe('InvertedGauge functions', () => {
   it('generates gauge ticks with major ticks', () => {
@@ -22,5 +26,20 @@ describe('InvertedGauge functions', () => {
 
   it('maps gauge values into angles', () => {
     expect(getGaugeValueAngle(50, 0, 100, 235, 485)).toBe(360)
+  })
+
+  it('interpolates the indicator color from the gauge gradient', () => {
+    const gradient = {
+      type: 'linear' as const,
+      stops: [
+        { offset: '0%', color: '#ffffff' },
+        { offset: '100%', color: '#ff0000' },
+      ],
+    }
+
+    expect(getGaugeIndicatorColor('value', gradient, 50, 0, 100)).toBe(
+      'rgb(255, 128, 128)',
+    )
+    expect(getGaugeIndicatorColor('#fff', gradient, 50, 0, 100)).toBe('#fff')
   })
 })

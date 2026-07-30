@@ -1,8 +1,11 @@
 import { easeCubicOut, easeLinear, interpolateNumber } from 'd3'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import { DEFAULT_CHART_ANIMATION } from '../constants'
-import type { ChartAnimation, NormalizedChartAnimation } from '../types'
+import type {
+  ChartAnimation,
+  NormalizedChartAnimation,
+} from '@/core/components/charts/types'
+import { DEFAULT_CHART_ANIMATION } from '@/core/constants/charts'
 
 export function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -41,17 +44,25 @@ export function useAnimatedNumber(value: number, animation?: ChartAnimation) {
     normalizedAnimation.enabled && !prefersReducedMotion() ? 0 : value,
   )
   const previousValueRef = useRef(displayValue)
+  const hasMountedRef = useRef(false)
 
   useEffect(() => {
     if (!normalizedAnimation.enabled || prefersReducedMotion()) {
       setDisplayValue(value)
       previousValueRef.current = value
+      hasMountedRef.current = true
       return
     }
 
     let frameId = 0
     let timeoutId = 0
-    const fromValue = previousValueRef.current
+    const fromValue = hasMountedRef.current ? previousValueRef.current : 0
+    hasMountedRef.current = true
+
+    if (fromValue === value) {
+      return
+    }
+
     const interpolate = interpolateNumber(fromValue, value)
     const ease = getChartEase(normalizedAnimation.easing)
     const startAnimation = () => {

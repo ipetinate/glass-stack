@@ -1,7 +1,7 @@
-import { useState } from 'react'
 import { ChevronDown, MapPin } from 'lucide-react'
+import { useState } from 'react'
 
-import { GlassCheckbox } from '@/core/components/form/checkbox'
+import { GlassCheckbox } from '@/core/components/form/Checkbox'
 import { cn } from '@/core/functions/class-name'
 import {
   useSearchWeatherLocation,
@@ -41,11 +41,7 @@ export function WeatherDropdownContent() {
 
   const submitAdvancedSearch = () => {
     setSearch(
-      [
-        advancedSearch.city,
-        advancedSearch.state,
-        advancedSearch.country,
-      ]
+      [advancedSearch.city, advancedSearch.state, advancedSearch.country]
         .map((value) => value.trim())
         .filter(Boolean)
         .join(', '),

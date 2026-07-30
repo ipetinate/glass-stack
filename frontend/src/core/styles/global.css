@@ -1,3 +1,27 @@
+@font-face {
+    font-family: "Encode Sans";
+    src: url("/fonts/encode-sans-regular.ttf") format("truetype");
+    font-display: swap;
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Instrument Sans";
+    src: url("/fonts/instrument-sans-regular.ttf") format("truetype");
+    font-display: swap;
+    font-style: normal;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Instrument Sans";
+    src: url("/fonts/instrument-sans-bold.ttf") format("truetype");
+    font-display: swap;
+    font-style: normal;
+    font-weight: 700;
+}
+
 * {
     box-sizing: border-box;
     scrollbar-color: rgb(21 26 33 / 0.22) transparent;

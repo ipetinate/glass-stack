@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 import { ComponentErrorBoundary } from '@/core/components/structure/ComponentErrorBoundary'
 import { Avatar } from '@/core/components/ui/Avatar'
+import { useAppStore } from '@/core/stores/app'
 import { BackgroundBlur } from '@/core/components/ui/BackgroundBlur'
 import { Clock } from '@/core/components/ui/Clock'
 import { Weather, useWeatherStore } from '@/lib/weather'
@@ -25,6 +26,7 @@ export function Statusbar() {
   const showWeatherCondition = useWeatherStore((state) => state.showCondition)
   const showWeatherGreeting = useWeatherStore((state) => state.showGreeting)
   const showWeatherIcon = useWeatherStore((state) => state.showIcon)
+  const user = useAppStore((state) => state.user)
 
   const toggleDropdown = (dropdown: StatusbarDropdown) => {
     setActiveDropdown((currentDropdown) =>
@@ -109,10 +111,27 @@ export function Statusbar() {
         onClick={() => toggleDropdown('avatar')}
         dropdown={<AvatarDropdownContent />}
       >
-        <Avatar size="md" image="/images/user-placeholder.webp" />
+        {user?.avatarUrl || user?.avatarPresetId ? (
+          <Avatar
+            size="md"
+            image={resolveAvatarImage(user.avatarUrl, user.avatarPresetId)}
+          />
+        ) : (
+          <Avatar size="md" initials={user?.username.slice(0, 2).toUpperCase() ?? 'GS'} />
+        )}
       </StatusbarDropdownTrigger>
     </BackgroundBlur>
   )
+}
+
+function avatarPresetImage(presetId?: string) {
+  if (presetId === 'placeholder') return '/images/user-placeholder.webp'
+  return '/images/onboarding/avatar.png'
+}
+
+function resolveAvatarImage(avatarUrl?: string, presetId?: string) {
+  if (avatarUrl && !avatarUrl.includes('/images/avatars/')) return avatarUrl
+  return avatarPresetImage(presetId)
 }
 
 function WeatherStatusFallback() {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import type { ChartColor } from '../types'
+import type { ChartColor } from '@/core/components/charts/types'
 import {
   getChartPaint,
   getGradientId,

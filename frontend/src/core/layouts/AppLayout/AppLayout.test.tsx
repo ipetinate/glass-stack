@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import {
   createMemoryRouter,
   Route,
@@ -7,22 +7,20 @@ import {
 } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 
-import { AppProviders } from '@/core/providers/AppProviders'
 import { ErrorBoundary } from '@/core/components/structure/ErrorBoundary'
 import { renderWithRouter } from '@/test/renderWithRouter'
+import { customRender } from '@/test/test-utils'
 
 import { AppLayout } from './AppLayout'
 
 describe('AppLayout', () => {
   it('renders shell navigation and nested route content', () => {
     const { container } = renderWithRouter(
-      <AppProviders>
-        <Routes>
-          <Route element={<AppLayout />}>
-            <Route index element={<div>Nested page</div>} />
-          </Route>
-        </Routes>
-      </AppProviders>,
+      <Routes>
+        <Route element={<AppLayout />}>
+          <Route index element={<div>Nested page</div>} />
+        </Route>
+      </Routes>,
     )
 
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
@@ -56,11 +54,7 @@ describe('AppLayout', () => {
       },
     ])
 
-    render(
-      <AppProviders>
-        <RouterProvider router={router} />
-      </AppProviders>,
-    )
+    customRender(<RouterProvider router={router} />)
 
     expect(screen.getByRole('link', { name: 'Dashboard' })).toBeInTheDocument()
     expect(

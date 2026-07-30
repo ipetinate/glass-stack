@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-import type { ChartColor, ChartGradient } from '../types'
+import type { ChartColor, ChartGradient } from '@/core/components/charts/types'
 
 export function isChartGradient(color: ChartColor): color is ChartGradient {
   return typeof color !== 'string'

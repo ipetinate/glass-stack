@@ -2,17 +2,18 @@ import { useId } from 'react'
 
 import { cn } from '@/core/functions/class-name'
 
-import { CHART_COLORS, DEFAULT_CHART_GRADIENT } from '../constants'
+import { CHART_COLORS, DEFAULT_CHART_GRADIENT } from '@/core/constants/charts'
 import {
   getChartPaint,
   getGradientId,
   polarToCartesian,
   renderGradientDefinition,
   useAnimatedNumber,
-} from '../functions'
+} from '@/core/functions/charts'
 import type { ChartAnimation, ChartColor } from '../types'
 import {
   getGaugeArcPath,
+  getGaugeIndicatorColor,
   getGaugeTicks,
   getGaugeValueAngle,
 } from './InvertedGauge.functions'
@@ -36,7 +37,7 @@ export type InvertedGaugeProps = {
   majorTickColor?: string
   showIndicator?: boolean
   indicatorRadius?: number
-  indicatorColor?: string
+  indicatorColor?: string | 'value'
   showValue?: boolean
   unit?: string
   statusLabel?: string
@@ -109,6 +110,13 @@ export function InvertedGauge({
     max,
     startAngle,
     endAngle,
+  )
+  const displayedIndicatorColor = getGaugeIndicatorColor(
+    indicatorColor,
+    color,
+    displayedValue,
+    min,
+    max,
   )
 
   const trackPath = getGaugeArcPath({
@@ -197,7 +205,7 @@ export function InvertedGauge({
           cx={indicatorPoint.x}
           cy={indicatorPoint.y}
           r={indicatorRadius}
-          fill={indicatorColor}
+          fill={displayedIndicatorColor}
         />
       ) : null}
 
