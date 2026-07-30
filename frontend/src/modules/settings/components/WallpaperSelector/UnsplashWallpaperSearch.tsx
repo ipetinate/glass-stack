@@ -27,7 +27,12 @@ export function UnsplashWallpaperSearch({
 }: UnsplashWallpaperSearchProps) {
   const search = useWallpaperSearchStore((state) => state.search)
   const setSearch = useWallpaperSearchStore((state) => state.setSearch)
-  const { debouncedQuery, isConfigured, query } = useUnsplashWallpapers(search)
+  const {
+    debouncedQuery,
+    isConfigurationLoading,
+    isConfigured,
+    query,
+  } = useUnsplashWallpapers(search)
   const wallpapers = query.data?.pages?.flatMap((page) => page.wallpapers) ?? []
   const trimmedSearch = search.trim()
   const isWaitingForDebounce =
@@ -35,11 +40,22 @@ export function UnsplashWallpaperSearch({
   const shouldShowInitialSkeleton =
     (isWaitingForDebounce || query.isFetching) && wallpapers.length === 0
 
+  if (isConfigurationLoading) {
+    return (
+      <div
+        role="status"
+        className="rounded-xl border border-black/10 bg-white/35 p-4 text-sm text-[#151A21]/60 dark:border-white/10 dark:bg-white/5 dark:text-white/55"
+      >
+        Checking wallpaper provider…
+      </div>
+    )
+  }
+
   if (!isConfigured) {
     return (
       <div className="rounded-xl border border-black/10 bg-white/35 p-4 text-sm text-[#151A21]/60 dark:border-white/10 dark:bg-white/5 dark:text-white/55">
-        Unsplash search is unavailable. Configure VITE_UNSPLASH_ACCESS_KEY to
-        enable it.
+        Unsplash wallpapers are unavailable. Configure
+        GLASS_UNSPLASH_ACCESS_KEY on the GlassStack server to enable them.
       </div>
     )
   }

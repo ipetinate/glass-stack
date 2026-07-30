@@ -6,6 +6,7 @@ export type WallpaperSource =
   | 'solid'
   | 'gradient'
   | 'unsplash'
+  | 'upload'
   | 'local-coming-soon'
 
 export type Wallpaper = {

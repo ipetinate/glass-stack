@@ -10,5 +10,8 @@ describe('ServicesSettings', () => {
     expect(
       screen.getByRole('heading', { name: 'Services' }),
     ).toBeInTheDocument()
+    expect(
+      screen.getByRole('combobox', { name: 'Event sampling interval' }),
+    ).toHaveValue('1')
   })
 })

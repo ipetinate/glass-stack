@@ -1,4 +1,1 @@
-export {
-  getUnsplashAuthorizationHeader,
-  searchUnsplashWallpapersQuery,
-} from './search-wallpapers.query'
+export { searchUnsplashWallpapersQuery } from './search-wallpapers.query'

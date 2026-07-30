@@ -8,6 +8,7 @@ import { useUnsavedChanges } from '@/core/hooks/useUnsavedChanges'
 import { useWallpaperSearchStore } from '@/core/stores/wallpaper-search'
 import { AppearanceSettings } from '@/modules/settings/pages/AppearanceSettings'
 import { GeneralSettings } from '@/modules/settings/pages/GeneralSettings'
+import { SecuritySettings } from '@/modules/settings/pages/SecuritySettings'
 import { ServicesSettings } from '@/modules/settings/pages/ServicesSettings'
 
 export function SettingsPage() {
@@ -60,6 +61,12 @@ export function SettingsPage() {
             title: 'Services',
             icon: 'Server',
             content: <ServicesSettings />,
+          },
+          {
+            id: 'security',
+            title: 'Security',
+            icon: 'ShieldCheck',
+            content: <SecuritySettings />,
           },
         ]}
       />

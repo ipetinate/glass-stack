@@ -1,12 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 describe('trackUnsplashDownloadMutation', () => {
-  beforeEach(() => {
-    vi.resetModules()
-    vi.stubEnv('VITE_UNSPLASH_ACCESS_KEY', 'test-key')
-  })
-
-  it('tracks wallpaper selection through the download location', async () => {
+  it('leaves provider tracking to the backend', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true })
 
     vi.stubGlobal('fetch', fetchMock)
@@ -17,11 +12,6 @@ describe('trackUnsplashDownloadMutation', () => {
 
     await trackUnsplashDownloadMutation('https://api.unsplash.com/photos/1/download')
 
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://api.unsplash.com/photos/1/download',
-      {
-        headers: { Authorization: 'Client-ID test-key' },
-      },
-    )
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })

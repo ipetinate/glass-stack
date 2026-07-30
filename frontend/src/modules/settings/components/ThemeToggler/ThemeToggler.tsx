@@ -48,7 +48,7 @@ export function ThemeToggler() {
   )
 }
 
-function ThemePreview({
+export function ThemePreview({
   theme,
 }: {
   theme: 'light' | 'dark'

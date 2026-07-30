@@ -1,7 +1,7 @@
-import { GlassCheckbox } from '@/core/components/form/checkbox'
+import { GlassCheckbox } from '@/core/components/form/Checkbox'
 import {
-  type WindowBackgroundMode,
   useWindowAppearanceStore,
+  type WindowBackgroundMode,
 } from '@/core/stores/window-appearance'
 import { SelectableCard } from '@/modules/settings/components/SelectableCard'
 

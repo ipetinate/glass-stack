@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 describe('searchUnsplashWallpapersQuery', () => {
   beforeEach(() => {
     vi.resetModules()
-    vi.stubEnv('VITE_UNSPLASH_ACCESS_KEY', 'test-key')
   })
 
   it('searches wallpapers with required parameters and maps response', async () => {
@@ -44,13 +43,15 @@ describe('searchUnsplashWallpapersQuery', () => {
     const result = await searchUnsplashWallpapersQuery({
       query: 'mountains',
     })
-    const request = fetchMock.mock.calls[0][0] as URL
+    const request = new URL(
+      fetchMock.mock.calls[0][0] as string,
+      'http://localhost',
+    )
 
-    expect(request.searchParams.get('query')).toBe('mountains')
-    expect(request.searchParams.get('orientation')).toBe('landscape')
-    expect(request.searchParams.get('per_page')).toBe('12')
+    expect(request.searchParams.get('q')).toBe('mountains')
+    expect(request.pathname).toBe('/api/v1/wallpapers/search')
     expect(fetchMock.mock.calls[0][1]).toMatchObject({
-      headers: { Authorization: 'Client-ID test-key' },
+      credentials: 'include',
     })
     expect(result).toMatchObject({
       nextPage: 2,

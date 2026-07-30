@@ -16,6 +16,7 @@ vi.mock('@/lib/unsplash', async (importOriginal) => {
     trackUnsplashDownload: vi.fn(),
     useUnsplashWallpapers: () => ({
       debouncedQuery: 'glass',
+      isConfigurationLoading: false,
       isConfigured: true,
       query: {
         data: {
@@ -49,6 +50,21 @@ vi.mock('@/lib/unsplash', async (importOriginal) => {
   }
 })
 
+vi.mock('@/modules/settings/api/preferences', () => ({
+  saveUnsplashWallpaper: vi.fn().mockResolvedValue({
+    id: 'stored-unsplash-1',
+    mediaAssetId: 'asset-1',
+    source: 'unsplash',
+    providerId: 'unsplash-1',
+    title: 'Glass mountain',
+    description: 'Photo by Ada',
+    authorName: 'Ada',
+    authorUrl: 'https://unsplash.com/@ada',
+    metadata: {},
+  }),
+  uploadWallpaper: vi.fn(),
+}))
+
 const renderWithQueryClient = (children: React.ReactNode) => {
   const queryClient = new QueryClient()
   const wrapper = ({ children: wrapperChildren }: PropsWithChildren) => (
@@ -61,13 +77,15 @@ const renderWithQueryClient = (children: React.ReactNode) => {
 }
 
 describe('WallpaperSelector', () => {
-  it('renders presets, coming soon upload, and unsplash search', () => {
+  it('renders presets, local upload, and unsplash search', () => {
     renderWithQueryClient(<WallpaperSelector />)
 
     expect(
       screen.getByRole('button', { name: 'Select Night Alps' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Select Computer' })).toBeDisabled()
+    expect(
+      screen.getByLabelText('Upload wallpaper from computer'),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Search Unsplash')).toBeInTheDocument()
     expect(screen.getByLabelText('Selected wallpaper preview')).toHaveClass(
       'aspect-video',
@@ -94,6 +112,8 @@ describe('WallpaperSelector', () => {
     await user.click(screen.getByRole('button', { name: 'Select Glass mountain' }))
 
     expect(screen.getByText('Ada on Unsplash')).toBeInTheDocument()
-    expect(screen.getByText('Optimized to 1920px')).toBeInTheDocument()
+    expect(useWallpaperStore.getState().selectedWallpaper.id).toBe(
+      'stored-unsplash-1',
+    )
   })
 })

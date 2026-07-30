@@ -1,13 +1,4 @@
-import { getUnsplashAuthorizationHeader } from '../../queries'
-
-export async function trackUnsplashDownloadMutation(downloadLocation: string) {
-  const response = await fetch(downloadLocation, {
-    headers: {
-      Authorization: getUnsplashAuthorizationHeader(),
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error('Unable to track Unsplash wallpaper selection.')
-  }
+export async function trackUnsplashDownloadMutation(_downloadLocation: string) {
+  // Selection tracking now happens on the GlassStack backend together with
+  // the durable wallpaper record, keeping the provider key out of the SPA.
 }

@@ -1,4 +1,5 @@
-import { unsplashConfig } from '../../../unsplash.config'
+import { glassRequest } from '@/lib/glass-api'
+
 import type {
   SearchUnsplashWallpapersParams,
   UnsplashSearchResponse,
@@ -8,7 +9,7 @@ import type {
 const buildOptimizedWallpaperUrl = (rawUrl: string) => {
   const url = new URL(rawUrl)
 
-  url.searchParams.set('w', String(unsplashConfig.wallpaperWidth))
+  url.searchParams.set('w', '1920')
   url.searchParams.set('fit', 'crop')
   url.searchParams.set('crop', 'entropy')
   url.searchParams.set('auto', 'format')
@@ -40,36 +41,17 @@ const mapUnsplashWallpaper = (
   source: 'unsplash',
 })
 
-export const getUnsplashAuthorizationHeader = () => {
-  if (!unsplashConfig.accessKey) {
-    throw new Error('Unsplash access key is not configured.')
-  }
-
-  return `Client-ID ${unsplashConfig.accessKey}`
-}
-
 export async function searchUnsplashWallpapersQuery({
   page = 1,
   query,
 }: SearchUnsplashWallpapersParams) {
-  const url = new URL('/search/photos', unsplashConfig.apiUrl)
-
-  url.searchParams.set('query', query)
-  url.searchParams.set('page', String(page))
-  url.searchParams.set('per_page', String(unsplashConfig.perPage))
-  url.searchParams.set('orientation', 'landscape')
-
-  const response = await fetch(url, {
-    headers: {
-      Authorization: getUnsplashAuthorizationHeader(),
-    },
+  const parameters = new URLSearchParams({
+    q: query,
+    page: String(page),
   })
-
-  if (!response.ok) {
-    throw new Error('Unable to search Unsplash wallpapers.')
-  }
-
-  const data = (await response.json()) as UnsplashSearchResponse
+  const data = await glassRequest<UnsplashSearchResponse>(
+    `/api/v1/wallpapers/search?${parameters}`,
+  )
 
   return {
     nextPage: page < data.total_pages ? page + 1 : undefined,

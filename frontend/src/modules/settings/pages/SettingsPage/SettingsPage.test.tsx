@@ -4,7 +4,6 @@ import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router'
 import { describe, expect, it } from 'vitest'
 
-import { AppProviders } from '@/core/providers/AppProviders'
 import { useWallpaperSearchStore } from '@/core/stores/wallpaper-search'
 import { renderWithRouter } from '@/test/renderWithRouter'
 
@@ -13,11 +12,9 @@ import { SettingsPage } from './SettingsPage'
 describe('SettingsPage', () => {
   it('renders the settings window with tabs', () => {
     renderWithRouter(
-      <AppProviders>
-        <Routes>
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
-      </AppProviders>,
+      <Routes>
+        <Route path="/settings" element={<SettingsPage />} />
+      </Routes>,
       { route: '/settings' },
     )
 
@@ -48,13 +45,11 @@ describe('SettingsPage', () => {
     })
 
     renderWithRouter(
-      <AppProviders queryClient={queryClient}>
-        <Routes>
-          <Route path="/" element={<div>Dashboard</div>} />
-          <Route path="/settings" element={<SettingsPage />} />
-        </Routes>
-      </AppProviders>,
-      { route: '/settings' },
+      <Routes>
+        <Route path="/" element={<div>Dashboard</div>} />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Routes>,
+      { route: '/settings', queryClient },
     )
 
     await user.click(screen.getByRole('button', { name: 'Close window' }))

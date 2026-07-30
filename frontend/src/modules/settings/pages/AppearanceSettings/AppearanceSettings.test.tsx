@@ -1,17 +1,13 @@
-import { render, screen } from '@testing-library/react'
+import { screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
-import { AppProviders } from '@/core/providers/AppProviders'
+import { customRender } from '@/test/test-utils'
 
 import { AppearanceSettings } from './AppearanceSettings'
 
 describe('AppearanceSettings', () => {
   it('renders theme, windows, and background choices', () => {
-    render(
-      <AppProviders>
-        <AppearanceSettings />
-      </AppProviders>,
-    )
+    customRender(<AppearanceSettings />)
 
     expect(screen.getByRole('heading', { name: 'Theme' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Windows' })).toBeInTheDocument()

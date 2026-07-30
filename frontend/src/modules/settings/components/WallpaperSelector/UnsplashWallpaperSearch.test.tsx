@@ -9,6 +9,7 @@ import { UnsplashWallpaperSearch } from './UnsplashWallpaperSearch'
 
 type UnsplashMockState = {
   debouncedQuery: string
+  isConfigurationLoading: boolean
   isConfigured: boolean
   query: {
     data?:
@@ -40,6 +41,7 @@ type UnsplashMockState = {
 
 let unsplashMockState: UnsplashMockState = {
   debouncedQuery: '',
+  isConfigurationLoading: false,
   isConfigured: true,
   query: {
     data: undefined,
@@ -64,6 +66,7 @@ describe('UnsplashWallpaperSearch', () => {
   beforeEach(() => {
     unsplashMockState = {
       debouncedQuery: '',
+      isConfigurationLoading: false,
       isConfigured: true,
       query: {
         data: undefined,
@@ -136,6 +139,26 @@ describe('UnsplashWallpaperSearch', () => {
     )
   })
 
+  it('explains the server configuration when Unsplash is unavailable', () => {
+    unsplashMockState = {
+      ...unsplashMockState,
+      isConfigured: false,
+    }
+
+    render(
+      <UnsplashWallpaperSearch
+        selectedWallpaper={defaultWallpaper}
+        onPreview={vi.fn()}
+        onSelect={vi.fn()}
+      />,
+    )
+
+    expect(
+      screen.getByText(/GLASS_UNSPLASH_ACCESS_KEY/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Developer suggestions')).not.toBeInTheDocument()
+  })
+
   it('selects developer suggested wallpapers', async () => {
     const user = userEvent.setup()
     const onSelect = vi.fn()
@@ -163,6 +186,7 @@ describe('UnsplashWallpaperSearch', () => {
   it('renders a stable two-row skeleton while searching', () => {
     unsplashMockState = {
       debouncedQuery: 'city',
+      isConfigurationLoading: false,
       isConfigured: true,
       query: {
         data: undefined,
@@ -234,6 +258,7 @@ describe('UnsplashWallpaperSearch', () => {
 
     unsplashMockState = {
       debouncedQuery: 'glass',
+      isConfigurationLoading: false,
       isConfigured: true,
       query: {
         data: {
