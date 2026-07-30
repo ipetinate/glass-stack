@@ -1,6 +1,6 @@
 import type { IconName } from '@/core/types'
 import type { LucideIcon } from 'lucide-react'
-import type { PropsWithChildren } from 'react'
+import type { PropsWithChildren, ReactNode } from 'react'
 
 import { BackgroundBlur } from '@/core/components/ui/BackgroundBlur'
 import { cn } from '@/core/functions/class-name/class-name'
@@ -11,9 +11,16 @@ type WidgetProps = PropsWithChildren<{
   className?: string
   icon?: IconName
   title: string
+  action?: ReactNode
 }>
 
-export function Widget({ children, className, icon, title }: WidgetProps) {
+export function Widget({
+  children,
+  className,
+  icon,
+  title,
+  action,
+}: WidgetProps) {
   const Icon = icon ? (Icons[icon] as LucideIcon) : null
 
   return (
@@ -26,7 +33,10 @@ export function Widget({ children, className, icon, title }: WidgetProps) {
       <div className="w-full flex flex-row justify-between items-center">
         <p className="text-lg uppercase font-extralight">{title}</p>
 
-        {Icon && <Icon className="stroke-1 w-6 h-6" />}
+        <div className="flex items-center gap-3">
+          {action}
+          {Icon && <Icon className="stroke-1 w-6 h-6" />}
+        </div>
       </div>
       {children}
     </BackgroundBlur>
