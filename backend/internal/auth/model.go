@@ -126,34 +126,57 @@ type AuditEvent struct {
 }
 
 type Store interface {
+	SetupStore
+	ChallengeStore
+	UserStore
+	SessionStore
+	MFAStore
+	InvitationStore
+	AuditStore
+}
+
+type SetupStore interface {
 	CountUsers(context.Context) (int, error)
-	CountAdmins(context.Context) (int, error)
 	ReplaceBootstrapToken(context.Context, []byte, time.Time, time.Time) error
 	BootstrapTokenValid(context.Context, []byte, time.Time) (bool, error)
 	CreateFirstAdmin(context.Context, FirstAdmin, []byte, time.Time) error
+}
+
+type ChallengeStore interface {
 	CreateAuthChallenge(context.Context, AuthChallenge) error
 	ConsumeAuthChallenge(context.Context, []byte, string, time.Time) (AuthChallenge, error)
+}
 
+type UserStore interface {
+	CountAdmins(context.Context) (int, error)
 	FindUserByUsername(context.Context, string) (User, error)
 	FindUserByID(context.Context, string) (User, error)
 	ListUsers(context.Context) ([]User, error)
 	SetUserRole(context.Context, string, Role, time.Time) error
-	SetUserStatus(context.Context, string, string, time.Time) error
 	UpdatePassword(context.Context, string, string, time.Time) error
+}
 
+type SessionStore interface {
 	CreateSession(context.Context, Session) error
 	FindSession(context.Context, []byte) (Session, error)
 	TouchSession(context.Context, []byte, time.Time, time.Time) error
 	RevokeSession(context.Context, []byte, time.Time) error
 	RevokeUserSessions(context.Context, string, time.Time) error
+}
 
+type MFAStore interface {
 	FindTOTP(context.Context, string) (TOTPCredential, error)
 	UpdateTOTPCounter(context.Context, string, int64) error
 	UseRecoveryCode(context.Context, string, []byte, time.Time) (bool, error)
 	ReplaceTOTP(context.Context, TOTPCredential, [][]byte) error
+}
 
+type InvitationStore interface {
 	CreateInvitation(context.Context, Invitation) error
 	InvitationByToken(context.Context, []byte, time.Time) (Invitation, error)
 	AcceptInvitation(context.Context, Invitation, User, *TOTPCredential, [][]byte, string, time.Time) error
+}
+
+type AuditStore interface {
 	AppendAudit(context.Context, AuditEvent) error
 }

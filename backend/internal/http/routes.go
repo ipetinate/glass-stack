@@ -19,7 +19,7 @@ import (
 type Runtime struct {
 	Broker         *events.Broker
 	Metrics        MetricsRunner
-	Host           *systeminfo.HostCollector
+	Host           handlers.HostReader
 	Storage        handlers.StorageReader
 	MetricPeriod   time.Duration
 	Logger         *slog.Logger
