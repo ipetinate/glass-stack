@@ -1,4 +1,5 @@
 export * from './Checkbox'
 export * from './Input'
+export * from './PinCodeField'
 export * from './SegmentedControl'
 export * from './Select'
