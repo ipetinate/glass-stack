@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
 
 import { Avatar } from '@/core/components/ui/Avatar'
+import { GlassIndicator } from '@/core/components/ui/GlassIndicator'
 
 export type AvatarSelection = {
   presetId?: string
@@ -79,7 +80,7 @@ export function AvatarPicker({
               setArea(croppedAreaPixels)
             }
             classes={{
-              containerClassName: 'rounded-full !overflow-visible',
+              containerClassName: 'size-52 rounded-full !overflow-hidden',
               cropAreaClassName: 'rounded-full border-2 border-white/85 shadow-[0_0_0_9999px_rgb(7_21_37_/_0.28)]',
             }}
           />
@@ -122,7 +123,7 @@ export function AvatarPicker({
               className="pointer-events-none absolute top-1/2 z-20 grid size-7 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-white/70 bg-white/35 p-1 shadow-lg backdrop-blur-md dark:border-white/30 dark:bg-white/15"
               style={{ left: `${((zoom - 1) / 2) * 100}%` }}
             >
-              <img src="/images/logo.png" alt="" className="size-full object-contain" />
+              <GlassIndicator size="sm" />
             </span>
           </div>
           <button

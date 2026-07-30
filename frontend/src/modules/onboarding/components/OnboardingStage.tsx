@@ -9,7 +9,7 @@ export function OnboardingStage({ children, className }: { children: ReactNode; 
 
 export function OnboardingStageTitle({ children }: { children: ReactNode }) {
   return (
-    <h2 className="sticky top-0 z-10 -mx-2 px-2 pb-3 text-3xl font-extralight sm:text-4xl">
+    <h2 className="text-3xl font-extralight sm:text-4xl">
       {children}
     </h2>
   )
