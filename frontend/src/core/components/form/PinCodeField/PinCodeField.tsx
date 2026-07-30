@@ -50,7 +50,7 @@ export function PinCodeField({
   return (
     <div className={cn('space-y-2', className)}>
       {label ? <span className="block text-sm text-[#151A21]/80 dark:text-white/80">{label}</span> : null}
-      <div className="flex items-center justify-center gap-2" role="group" aria-label={label}>
+      <div className="flex items-center justify-start gap-2" role="group" aria-label={label}>
         {digits.map((digit, index) => {
           const isGroupEnd = (index + 1) % groupSize === 0 && index < count - 1
           return (
