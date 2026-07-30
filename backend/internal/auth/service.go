@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -18,6 +17,10 @@ const (
 	challengeTTL       = 15 * time.Minute
 	bootstrapTTL       = 24 * time.Hour
 	invitationTTL      = 24 * time.Hour
+
+	challengePurposeSetup      = "setup"
+	challengePurposeInvitation = "invitation"
+	challengePurposeLoginMFA   = "login_mfa"
 )
 
 type Service struct {
@@ -25,23 +28,12 @@ type Service struct {
 	masterKey       []byte
 	passwordChecker PasswordCompromiseChecker
 	now             func() time.Time
-
-	pendingMu       sync.Mutex
-	enrollments     map[string]pendingEnrollment
-	loginChallenges map[string]pendingLogin
 }
 
-type pendingEnrollment struct {
-	Secret    string
-	Username  string
-	UserID    string
-	Purpose   string
-	ExpiresAt time.Time
-}
-
-type pendingLogin struct {
-	UserID    string
-	ExpiresAt time.Time
+type enrollmentChallengePayload struct {
+	Username         string `json:"username"`
+	SecretCiphertext []byte `json:"secretCiphertext"`
+	Nonce            []byte `json:"nonce"`
 }
 
 type SetupStatus struct {
@@ -108,8 +100,6 @@ func NewService(
 		masterKey:       append([]byte(nil), masterKey...),
 		passwordChecker: passwordChecker,
 		now:             time.Now,
-		enrollments:     make(map[string]pendingEnrollment),
-		loginChallenges: make(map[string]pendingLogin),
 	}, nil
 }
 
@@ -167,25 +157,20 @@ func (service *Service) BeginSetupTOTP(
 	if err != nil {
 		return TOTPEnrollment{}, err
 	}
-	challenge, _, err := randomToken(32)
-	if err != nil {
-		return TOTPEnrollment{}, err
-	}
 	uri := totpURI("GlassStack", normalized, secret)
 	qr, err := qrDataURI(uri)
 	if err != nil {
 		return TOTPEnrollment{}, err
 	}
-
-	service.pendingMu.Lock()
-	service.removeExpiredChallengesLocked(service.now().UTC())
-	service.enrollments[challenge] = pendingEnrollment{
-		Secret:    secret,
-		Username:  normalized,
-		Purpose:   "setup",
-		ExpiresAt: service.now().UTC().Add(challengeTTL),
+	challenge, err := service.createEnrollmentChallenge(
+		ctx,
+		challengePurposeSetup,
+		normalized,
+		secret,
+	)
+	if err != nil {
+		return TOTPEnrollment{}, err
 	}
-	service.pendingMu.Unlock()
 
 	return TOTPEnrollment{
 		ChallengeToken: challenge,
@@ -219,23 +204,20 @@ func (service *Service) BeginInvitationTOTP(
 	if err != nil {
 		return TOTPEnrollment{}, err
 	}
-	challenge, _, err := randomToken(32)
-	if err != nil {
-		return TOTPEnrollment{}, err
-	}
 	uri := totpURI("GlassStack", normalized, secret)
 	qr, err := qrDataURI(uri)
 	if err != nil {
 		return TOTPEnrollment{}, err
 	}
-	service.pendingMu.Lock()
-	service.enrollments[challenge] = pendingEnrollment{
-		Secret:    secret,
-		Username:  normalized,
-		Purpose:   "invitation",
-		ExpiresAt: service.now().UTC().Add(challengeTTL),
+	challenge, err := service.createEnrollmentChallenge(
+		ctx,
+		challengePurposeInvitation,
+		normalized,
+		secret,
+	)
+	if err != nil {
+		return TOTPEnrollment{}, err
 	}
-	service.pendingMu.Unlock()
 	return TOTPEnrollment{
 		ChallengeToken: challenge,
 		Secret:         secret,
@@ -307,21 +289,21 @@ func (service *Service) AcceptInvitation(
 	var recoveryCodes []string
 	var recoveryHashes [][]byte
 	if invitation.Role == RoleAdmin {
-		service.pendingMu.Lock()
-		enrollment, found := service.enrollments[input.ChallengeToken]
-		if found {
-			delete(service.enrollments, input.ChallengeToken)
+		secret, err := service.consumeEnrollmentChallenge(
+			ctx,
+			input.ChallengeToken,
+			challengePurposeInvitation,
+			normalized,
+			now,
+		)
+		if err != nil {
+			return LoginResult{}, nil, err
 		}
-		service.pendingMu.Unlock()
-		if !found || enrollment.Purpose != "invitation" ||
-			enrollment.Username != normalized || now.After(enrollment.ExpiresAt) {
-			return LoginResult{}, nil, ErrInvalidToken
-		}
-		counter, valid := validateTOTP(enrollment.Secret, input.TOTPCode, now, -1)
+		counter, valid := validateTOTP(secret, input.TOTPCode, now, -1)
 		if !valid {
 			return LoginResult{}, nil, ErrAuthentication
 		}
-		ciphertext, nonce, err := encryptSecret(service.masterKey, []byte(enrollment.Secret))
+		ciphertext, nonce, err := encryptSecret(service.masterKey, []byte(secret))
 		if err != nil {
 			return LoginResult{}, nil, err
 		}
@@ -391,22 +373,22 @@ func (service *Service) CompleteSetup(
 		return LoginResult{}, nil, err
 	}
 
-	service.pendingMu.Lock()
-	enrollment, found := service.enrollments[input.ChallengeToken]
-	if found {
-		delete(service.enrollments, input.ChallengeToken)
-	}
-	service.pendingMu.Unlock()
 	now := service.now().UTC()
-	if !found || enrollment.Purpose != "setup" ||
-		now.After(enrollment.ExpiresAt) || enrollment.Username != normalized {
-		return LoginResult{}, nil, ErrInvalidToken
+	secret, err := service.consumeEnrollmentChallenge(
+		ctx,
+		input.ChallengeToken,
+		challengePurposeSetup,
+		normalized,
+		now,
+	)
+	if err != nil {
+		return LoginResult{}, nil, err
 	}
-	counter, valid := validateTOTP(enrollment.Secret, input.TOTPCode, now, -1)
+	counter, valid := validateTOTP(secret, input.TOTPCode, now, -1)
 	if !valid {
 		return LoginResult{}, nil, ErrAuthentication
 	}
-	ciphertext, nonce, err := encryptSecret(service.masterKey, []byte(enrollment.Secret))
+	ciphertext, nonce, err := encryptSecret(service.masterKey, []byte(secret))
 	if err != nil {
 		return LoginResult{}, nil, err
 	}
@@ -492,17 +474,21 @@ func (service *Service) Login(
 	}
 	_, totpErr := service.store.FindTOTP(ctx, user.ID)
 	if totpErr == nil || user.Role == RoleAdmin {
-		challenge, _, err := randomToken(32)
+		challenge, hash, err := randomToken(32)
 		if err != nil {
 			return LoginResult{}, err
 		}
-		service.pendingMu.Lock()
-		service.removeExpiredChallengesLocked(service.now().UTC())
-		service.loginChallenges[challenge] = pendingLogin{
-			UserID:    user.ID,
-			ExpiresAt: service.now().UTC().Add(challengeTTL),
+		now := service.now().UTC()
+		if err := service.store.CreateAuthChallenge(ctx, AuthChallenge{
+			TokenHash:   hash,
+			Purpose:     challengePurposeLoginMFA,
+			UserID:      user.ID,
+			PayloadJSON: "{}",
+			CreatedAt:   now,
+			ExpiresAt:   now.Add(challengeTTL),
+		}); err != nil {
+			return LoginResult{}, fmt.Errorf("store login challenge: %w", err)
 		}
-		service.pendingMu.Unlock()
 		service.recordAudit(ctx, user.ID, "identity.login.password", user.ID, "challenge", map[string]any{
 			"mfa": true,
 		})
@@ -525,14 +511,14 @@ func (service *Service) CompleteLoginMFA(
 	ctx context.Context,
 	input CompleteMFAInput,
 ) (LoginResult, error) {
-	service.pendingMu.Lock()
-	challenge, found := service.loginChallenges[input.ChallengeToken]
-	if found {
-		delete(service.loginChallenges, input.ChallengeToken)
-	}
-	service.pendingMu.Unlock()
 	now := service.now().UTC()
-	if !found || now.After(challenge.ExpiresAt) {
+	challenge, err := service.store.ConsumeAuthChallenge(
+		ctx,
+		hashToken(input.ChallengeToken),
+		challengePurposeLoginMFA,
+		now,
+	)
+	if err != nil {
 		service.recordAudit(ctx, "", "identity.login.mfa", "", "denied", nil)
 		return LoginResult{}, ErrInvalidToken
 	}
@@ -833,17 +819,73 @@ func (service *Service) validateBootstrap(ctx context.Context, token string) err
 	return nil
 }
 
-func (service *Service) removeExpiredChallengesLocked(now time.Time) {
-	for token, enrollment := range service.enrollments {
-		if now.After(enrollment.ExpiresAt) {
-			delete(service.enrollments, token)
-		}
+func (service *Service) createEnrollmentChallenge(
+	ctx context.Context,
+	purpose string,
+	username string,
+	secret string,
+) (string, error) {
+	ciphertext, nonce, err := encryptSecret(service.masterKey, []byte(secret))
+	if err != nil {
+		return "", err
 	}
-	for token, challenge := range service.loginChallenges {
-		if now.After(challenge.ExpiresAt) {
-			delete(service.loginChallenges, token)
-		}
+	payload, err := json.Marshal(enrollmentChallengePayload{
+		Username:         username,
+		SecretCiphertext: ciphertext,
+		Nonce:            nonce,
+	})
+	if err != nil {
+		return "", fmt.Errorf("encode enrollment challenge: %w", err)
 	}
+	token, hash, err := randomToken(32)
+	if err != nil {
+		return "", err
+	}
+	now := service.now().UTC()
+	if err := service.store.CreateAuthChallenge(ctx, AuthChallenge{
+		TokenHash:   hash,
+		Purpose:     purpose,
+		PayloadJSON: string(payload),
+		CreatedAt:   now,
+		ExpiresAt:   now.Add(challengeTTL),
+	}); err != nil {
+		return "", fmt.Errorf("store enrollment challenge: %w", err)
+	}
+	return token, nil
+}
+
+func (service *Service) consumeEnrollmentChallenge(
+	ctx context.Context,
+	token string,
+	purpose string,
+	username string,
+	now time.Time,
+) (string, error) {
+	challenge, err := service.store.ConsumeAuthChallenge(
+		ctx,
+		hashToken(token),
+		purpose,
+		now,
+	)
+	if err != nil {
+		return "", ErrInvalidToken
+	}
+	var payload enrollmentChallengePayload
+	if err := json.Unmarshal([]byte(challenge.PayloadJSON), &payload); err != nil {
+		return "", fmt.Errorf("decode enrollment challenge: %w", err)
+	}
+	if payload.Username != username {
+		return "", ErrInvalidToken
+	}
+	secret, err := decryptSecret(
+		service.masterKey,
+		payload.SecretCiphertext,
+		payload.Nonce,
+	)
+	if err != nil {
+		return "", fmt.Errorf("decrypt enrollment challenge: %w", err)
+	}
+	return string(secret), nil
 }
 
 func (service *Service) consumeDummyPassword(password string) {

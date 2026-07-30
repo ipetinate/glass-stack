@@ -136,6 +136,106 @@ func (store *AuthStore) CreateFirstAdmin(
 	})
 }
 
+func (store *AuthStore) CreateAuthChallenge(
+	ctx context.Context,
+	challenge auth.AuthChallenge,
+) error {
+	return store.database.Write(ctx, func(transaction *sql.Tx) error {
+		if _, err := transaction.ExecContext(
+			ctx,
+			`DELETE FROM auth_challenges
+			  WHERE expires_at <= ? OR consumed_at IS NOT NULL`,
+			formatTime(challenge.CreatedAt),
+		); err != nil {
+			return err
+		}
+		_, err := transaction.ExecContext(
+			ctx,
+			`INSERT INTO auth_challenges(
+				token_hash, purpose, user_id, payload_json, created_at, expires_at
+			) VALUES(?, ?, ?, ?, ?, ?)`,
+			challenge.TokenHash,
+			challenge.Purpose,
+			nullableString(challenge.UserID),
+			challenge.PayloadJSON,
+			formatTime(challenge.CreatedAt),
+			formatTime(challenge.ExpiresAt),
+		)
+		return err
+	})
+}
+
+func (store *AuthStore) ConsumeAuthChallenge(
+	ctx context.Context,
+	hash []byte,
+	purpose string,
+	consumedAt time.Time,
+) (auth.AuthChallenge, error) {
+	var challenge auth.AuthChallenge
+	err := store.database.Write(ctx, func(transaction *sql.Tx) error {
+		var userID sql.NullString
+		var createdAt, expiresAt string
+		if err := transaction.QueryRowContext(
+			ctx,
+			`SELECT token_hash, purpose, user_id, payload_json, created_at, expires_at
+			   FROM auth_challenges
+			  WHERE token_hash = ? AND purpose = ?
+			    AND consumed_at IS NULL AND expires_at > ?`,
+			hash,
+			purpose,
+			formatTime(consumedAt),
+		).Scan(
+			&challenge.TokenHash,
+			&challenge.Purpose,
+			&userID,
+			&challenge.PayloadJSON,
+			&createdAt,
+			&expiresAt,
+		); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return auth.ErrInvalidToken
+			}
+			return err
+		}
+		challenge.UserID = userID.String
+		var err error
+		challenge.CreatedAt, err = parseTime(createdAt)
+		if err != nil {
+			return err
+		}
+		challenge.ExpiresAt, err = parseTime(expiresAt)
+		if err != nil {
+			return err
+		}
+		result, err := transaction.ExecContext(
+			ctx,
+			`UPDATE auth_challenges
+			    SET consumed_at = ?
+			  WHERE token_hash = ? AND purpose = ?
+			    AND consumed_at IS NULL AND expires_at > ?`,
+			formatTime(consumedAt),
+			hash,
+			purpose,
+			formatTime(consumedAt),
+		)
+		if err != nil {
+			return err
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if affected != 1 {
+			return auth.ErrInvalidToken
+		}
+		return nil
+	})
+	if err != nil {
+		return auth.AuthChallenge{}, err
+	}
+	return challenge, nil
+}
+
 func (store *AuthStore) FindUserByUsername(
 	ctx context.Context,
 	normalized string,

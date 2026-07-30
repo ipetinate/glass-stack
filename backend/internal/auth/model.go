@@ -105,6 +105,15 @@ type Invitation struct {
 	ExpiresAt time.Time
 }
 
+type AuthChallenge struct {
+	TokenHash   []byte
+	Purpose     string
+	UserID      string
+	PayloadJSON string
+	CreatedAt   time.Time
+	ExpiresAt   time.Time
+}
+
 type AuditEvent struct {
 	ID          string
 	ActorUserID string
@@ -122,6 +131,8 @@ type Store interface {
 	ReplaceBootstrapToken(context.Context, []byte, time.Time, time.Time) error
 	BootstrapTokenValid(context.Context, []byte, time.Time) (bool, error)
 	CreateFirstAdmin(context.Context, FirstAdmin, []byte, time.Time) error
+	CreateAuthChallenge(context.Context, AuthChallenge) error
+	ConsumeAuthChallenge(context.Context, []byte, string, time.Time) (AuthChallenge, error)
 
 	FindUserByUsername(context.Context, string) (User, error)
 	FindUserByID(context.Context, string) (User, error)

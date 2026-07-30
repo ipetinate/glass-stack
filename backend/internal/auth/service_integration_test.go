@@ -51,6 +51,14 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	service, err = auth.NewService(
+		database.NewAuthStore(db),
+		masterKey,
+		safePasswordChecker{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 	setup, recoveryCodes, err := service.CompleteSetup(ctx, auth.CompleteSetupInput{
 		BootstrapToken: bootstrapToken,
 		ChallengeToken: enrollment.ChallengeToken,
@@ -87,6 +95,14 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 	if err != nil || !login.MFARequired {
 		t.Fatalf("Login() result=%+v err=%v", login, err)
 	}
+	service, err = auth.NewService(
+		database.NewAuthStore(db),
+		masterKey,
+		safePasswordChecker{},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
 	completed, err := service.CompleteLoginMFA(ctx, auth.CompleteMFAInput{
 		ChallengeToken: login.ChallengeToken,
 		Code:           recoveryCodes[0],
@@ -96,6 +112,12 @@ func TestAuthenticationLifecycleWithSQLite(t *testing.T) {
 	}
 	if completed.SessionToken == "" || completed.CSRFToken == "" {
 		t.Fatal("MFA login did not issue session credentials")
+	}
+	if _, err := service.CompleteLoginMFA(ctx, auth.CompleteMFAInput{
+		ChallengeToken: login.ChallengeToken,
+		Code:           recoveryCodes[1],
+	}); !errors.Is(err, auth.ErrInvalidToken) {
+		t.Fatalf("replayed MFA challenge err = %v, want ErrInvalidToken", err)
 	}
 
 	invitationToken, err := service.CreateInvitation(ctx, setup.User, auth.RoleViewer)
