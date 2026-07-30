@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -22,17 +23,22 @@ var migrationFiles embed.FS
 
 type Database struct {
 	db      *sql.DB
+	path    string
 	writeMu sync.Mutex
 }
 
 func Open(ctx context.Context, path string) (*Database, error) {
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+	absolutePath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, fmt.Errorf("resolve database path: %w", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(absolutePath), 0o700); err != nil {
 		return nil, fmt.Errorf("create database directory: %w", err)
 	}
 
 	dsn := fmt.Sprintf(
 		"file:%s?_busy_timeout=5000&_foreign_keys=on&_journal_mode=WAL&_synchronous=FULL&_secure_delete=FAST",
-		path,
+		absolutePath,
 	)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
@@ -42,12 +48,12 @@ func Open(ctx context.Context, path string) (*Database, error) {
 	db.SetMaxIdleConns(2)
 	db.SetConnMaxLifetime(0)
 
-	database := &Database{db: db}
+	database := &Database{db: db, path: absolutePath}
 	if err := database.initialize(ctx); err != nil {
 		_ = db.Close()
 		return nil, err
 	}
-	if err := os.Chmod(path, 0o600); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := os.Chmod(absolutePath, 0o600); err != nil && !errors.Is(err, os.ErrNotExist) {
 		_ = db.Close()
 		return nil, fmt.Errorf("protect database file: %w", err)
 	}
@@ -91,17 +97,89 @@ func (database *Database) Backup(ctx context.Context, destination string) error 
 	database.writeMu.Lock()
 	defer database.writeMu.Unlock()
 
-	if err := os.MkdirAll(filepath.Dir(destination), 0o700); err != nil {
+	absoluteDestination, err := filepath.Abs(destination)
+	if err != nil {
+		return fmt.Errorf("resolve backup destination: %w", err)
+	}
+	if absoluteDestination == database.path {
+		return fmt.Errorf("backup destination must differ from the active database")
+	}
+	backupDirectory := filepath.Dir(absoluteDestination)
+	if err := os.MkdirAll(backupDirectory, 0o700); err != nil {
 		return fmt.Errorf("create backup directory: %w", err)
 	}
-	_ = os.Remove(destination)
-	if _, err := database.db.ExecContext(ctx, "VACUUM INTO ?", destination); err != nil {
+	temporary, err := os.CreateTemp(backupDirectory, ".glass-stack-backup-*.db")
+	if err != nil {
+		return fmt.Errorf("create temporary database backup: %w", err)
+	}
+	temporaryPath := temporary.Name()
+	if err := temporary.Close(); err != nil {
+		_ = os.Remove(temporaryPath)
+		return fmt.Errorf("close temporary database backup: %w", err)
+	}
+	if err := os.Remove(temporaryPath); err != nil {
+		return fmt.Errorf("prepare temporary database backup: %w", err)
+	}
+	defer os.Remove(temporaryPath)
+
+	if _, err := database.db.ExecContext(ctx, "VACUUM INTO ?", temporaryPath); err != nil {
 		return fmt.Errorf("backup sqlite database: %w", err)
 	}
-	if err := os.Chmod(destination, 0o600); err != nil {
+	if err := os.Chmod(temporaryPath, 0o600); err != nil {
 		return fmt.Errorf("protect database backup: %w", err)
 	}
+	if err := syncFile(temporaryPath); err != nil {
+		return fmt.Errorf("sync database backup: %w", err)
+	}
+	if err := quickCheckFile(ctx, temporaryPath); err != nil {
+		return fmt.Errorf("validate database backup: %w", err)
+	}
+	if err := os.Rename(temporaryPath, absoluteDestination); err != nil {
+		return fmt.Errorf("publish database backup: %w", err)
+	}
+	if err := syncDirectory(backupDirectory); err != nil {
+		return fmt.Errorf("sync backup directory: %w", err)
+	}
 	return nil
+}
+
+func quickCheckFile(ctx context.Context, path string) error {
+	dsn := (&url.URL{
+		Scheme:   "file",
+		Path:     path,
+		RawQuery: "mode=ro&_foreign_keys=on",
+	}).String()
+	db, err := sql.Open("sqlite3", dsn)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	var result string
+	if err := db.QueryRowContext(ctx, "PRAGMA quick_check").Scan(&result); err != nil {
+		return err
+	}
+	if result != "ok" {
+		return fmt.Errorf("sqlite quick check failed: %s", result)
+	}
+	return nil
+}
+
+func syncFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	return file.Sync()
+}
+
+func syncDirectory(path string) error {
+	directory, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer directory.Close()
+	return directory.Sync()
 }
 
 func (database *Database) Close() error {
