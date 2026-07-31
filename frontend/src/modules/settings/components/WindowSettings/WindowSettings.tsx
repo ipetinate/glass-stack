@@ -1,4 +1,4 @@
-import { GlassCheckbox } from '@/core/components/form/Checkbox'
+import { Checkbox } from '@/core/components/form/Checkbox'
 import {
   useWindowAppearanceStore,
   type WindowBackgroundMode,
@@ -63,21 +63,21 @@ export function WindowSettings() {
         <h2 className="text-sm font-semibold">Actions</h2>
 
         <div className="mt-4 flex flex-col gap-3">
-          <GlassCheckbox
+          <Checkbox
             checked={actionVisibility.verticalExpand}
             label="Expand up"
             onChange={(event) =>
               setActionVisibility('verticalExpand', event.currentTarget.checked)
             }
           />
-          <GlassCheckbox
+          <Checkbox
             checked={actionVisibility.maximize}
             label="Maximize"
             onChange={(event) =>
               setActionVisibility('maximize', event.currentTarget.checked)
             }
           />
-          <GlassCheckbox
+          <Checkbox
             checked={actionVisibility.close}
             label="Close"
             onChange={(event) =>

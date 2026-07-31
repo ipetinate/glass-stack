@@ -15,7 +15,7 @@ describe('OnboardingTimeline', () => {
       />,
     )
 
-    expect(container.querySelectorAll('svg.size-3')).toHaveLength(6)
+    expect(container.querySelectorAll('svg.size-3')).toHaveLength(5)
     expect(screen.queryByText('1')).not.toBeInTheDocument()
     expect(screen.queryByText('6')).not.toBeInTheDocument()
   })

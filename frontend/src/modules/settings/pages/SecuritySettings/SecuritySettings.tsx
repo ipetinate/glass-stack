@@ -3,7 +3,7 @@ import { Copy, KeyRound, UserPlus, Users } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-import { GlassInput } from '@/core/components/form'
+import { Input, Select } from '@/core/components/form'
 import {
   authKeys,
   changePassword,
@@ -79,9 +79,9 @@ function PasswordSection() {
           <p className="text-sm opacity-65">Changing your password signs out every active session.</p>
         </div>
         <div className="grid gap-3">
-          <GlassInput label="Current password" type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required autoComplete="current-password" />
-          <GlassInput label="New password" type="password" value={newPassword} onBlur={() => void passwordSafety.check()} onChange={(event) => setNewPassword(event.target.value)} required autoComplete="new-password" />
-          <GlassInput label="Confirm new password" type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} required autoComplete="new-password" />
+          <Input label="Current password" type="password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required autoComplete="current-password" />
+          <Input label="New password" type="password" value={newPassword} onBlur={() => void passwordSafety.check()} onChange={(event) => setNewPassword(event.target.value)} required autoComplete="new-password" />
+          <Input label="Confirm new password" type="password" value={confirmation} onChange={(event) => setConfirmation(event.target.value)} required autoComplete="new-password" />
         </div>
         <PasswordSafetyStatus
           assessment={passwordSafety.assessment}
@@ -127,18 +127,12 @@ function InvitationSection() {
           <UserPlus size={20} />
           <p className="text-sm opacity-65">Invitation links expire after 24 hours and can be used once.</p>
         </div>
-        <label className="mt-5 block text-sm">
-          Role
-          <select
-            value={role}
-            onChange={(event) => setRole(event.target.value as AuthUser['role'])}
-            className="mt-2 w-full rounded-xl border border-black/10 bg-white/70 px-4 py-3 dark:border-white/10 dark:bg-black/25"
-          >
-            <option value="viewer">Viewer</option>
-            <option value="operator">Operator</option>
-            <option value="admin">Administrator</option>
-          </select>
-        </label>
+        <Select
+          label="Role"
+          value={role}
+          onValueChange={(next) => setRole(String(next) as AuthUser['role'])}
+          options={[{ value: 'viewer', label: 'Viewer' }, { value: 'operator', label: 'Operator' }, { value: 'admin', label: 'Administrator' }]}
+        />
         <ActionButton
           disabled={mutation.isPending}
           onClick={() => {
@@ -195,23 +189,20 @@ function UsersSection({ currentUser }: { currentUser: AuthUser }) {
                 <p className="font-medium">{user.username}</p>
                 <p className="text-xs opacity-50">{user.status}</p>
               </div>
-              <select
+              <Select
                 aria-label={`Role for ${user.username}`}
                 value={user.role}
                 disabled={user.id === currentUser.id || mutation.isPending}
-                onChange={(event) => {
+                onValueChange={(next) => {
                   setMessage('')
                   mutation.mutate({
                     userId: user.id,
-                    role: event.target.value as AuthUser['role'],
+                    role: String(next) as AuthUser['role'],
                   })
                 }}
-                className="rounded-lg border border-black/10 bg-white/70 px-3 py-2 text-sm dark:border-white/10 dark:bg-black/25"
-              >
-                <option value="viewer">Viewer</option>
-                <option value="operator">Operator</option>
-                <option value="admin">Administrator</option>
-              </select>
+                options={[{ value: 'viewer', label: 'Viewer' }, { value: 'operator', label: 'Operator' }, { value: 'admin', label: 'Administrator' }]}
+                containerClassName="min-w-40"
+              />
             </div>
           ))}
         </div>

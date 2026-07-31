@@ -3,7 +3,7 @@ import { UserRound } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-import { GlassInput } from '@/core/components/form'
+import { Input } from '@/core/components/form'
 import { Window } from '@/core/components/foundation/Window'
 import { useAppStore } from '@/core/stores/app'
 import { AvatarPicker, type AvatarSelection } from '@/modules/auth/components/AvatarPicker'
@@ -65,8 +65,8 @@ export function ProfilePage() {
             <p className="text-sm text-[#151A21]/55 dark:text-white/55">Role</p>
             <p className="mt-1 text-lg font-medium">{user?.role ?? 'viewer'}</p>
           </div>
-          <GlassInput label="Nome de exibição" value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="name" />
-          <GlassInput label="Username" value={user?.username ?? ''} readOnly />
+          <Input label="Nome de exibição" value={displayName} onChange={(event) => setDisplayName(event.target.value)} autoComplete="name" />
+          <Input label="Username" value={user?.username ?? ''} readOnly />
           <button type="button" disabled={!isDirty || mutation.isPending || preferences.isPending} onClick={() => mutation.mutate()} className="rounded-xl bg-cyan-300 px-5 py-3 font-medium text-[#071525] disabled:cursor-not-allowed disabled:opacity-50">
             {mutation.isPending ? 'Salvando…' : 'Salvar alterações'}
           </button>

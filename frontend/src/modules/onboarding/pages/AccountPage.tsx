@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 
-import { GlassInput } from '@/core/components/form'
+import { Input } from '@/core/components/form'
 import { AvatarPicker } from '@/modules/auth/components/AvatarPicker'
 import { PasswordSafetyStatus, usePasswordSafety } from '@/modules/auth/components/PasswordSafety'
 import { useOnboardingStore } from '../stores/onboardingStore'
@@ -33,11 +33,11 @@ export function AccountPage() {
       <OnboardingStageTitle>Agora crie uma conta de acesso</OnboardingStageTitle>
       <div className="mx-auto mt-10 max-w-md space-y-4">
         <AvatarPicker value={state.avatar} onChange={(value) => state.setField('avatar', value)} showPresets={false} />
-        <GlassInput label="Nome de exibição" value={state.displayName} onChange={(e) => state.setField('displayName', e.target.value)} autoComplete="name" />
-        <GlassInput label="Username" aria-label="username" value={state.username} onChange={(e) => state.setField('username', e.target.value)} autoComplete="username" required />
-        <GlassInput label="Senha" aria-label="password" type="password" value={state.password} onChange={(e) => state.setField('password', e.target.value)} onBlur={() => void safety.check()} autoComplete="new-password" required />
+        <Input label="Nome de exibição" value={state.displayName} onChange={(e) => state.setField('displayName', e.target.value)} autoComplete="name" />
+        <Input label="Username" aria-label="username" value={state.username} onChange={(e) => state.setField('username', e.target.value)} autoComplete="username" required />
+        <Input label="Senha" aria-label="password" type="password" value={state.password} onChange={(e) => state.setField('password', e.target.value)} onBlur={() => void safety.check()} autoComplete="new-password" required />
         <div className="space-y-1 px-1"><OnboardingCheck valid={valid}>mínimo de 15 caracteres</OnboardingCheck><PasswordSafetyStatus assessment={safety.assessment} locale="pt-BR" /></div>
-        <GlassInput label="Confirmar senha" aria-label="confirm password" type="password" value={state.confirmation} onChange={(e) => state.setField('confirmation', e.target.value)} autoComplete="new-password" required />
+        <Input label="Confirmar senha" aria-label="confirm password" type="password" value={state.confirmation} onChange={(e) => state.setField('confirmation', e.target.value)} autoComplete="new-password" required />
         <OnboardingCheck valid={state.password === state.confirmation && Boolean(state.confirmation)}>confirmação de senha confere</OnboardingCheck>
         {state.error ? <StageError>{state.error}</StageError> : null}
       </div>

@@ -11,7 +11,7 @@ import type { FormEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 
-import { GlassInput } from '@/core/components/form'
+import { Input } from '@/core/components/form'
 import { useOnboardingAction } from '../components/OnboardingActions'
 import { StageError } from '../components/OnboardingShell'
 import {
@@ -114,7 +114,7 @@ export function ConnectPage() {
           </div>
         </div>
 
-        <GlassInput
+        <Input
           autoFocus
           allowPaste
           label="Token de configuração"

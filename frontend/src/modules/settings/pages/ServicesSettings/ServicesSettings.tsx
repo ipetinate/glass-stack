@@ -2,7 +2,7 @@ import {
   type EventSamplingInterval,
   useEventSamplingStore,
 } from '@/core/stores/event-sampling'
-import { GlassSelect } from '@/core/components/form'
+import { Select } from '@/core/components/form'
 import { SettingsSection } from '@/modules/settings/components/SettingsSection'
 
 export function ServicesSettings() {
@@ -22,21 +22,12 @@ export function ServicesSettings() {
             </div>
 
             <div className="w-36 shrink-0">
-              <GlassSelect
+              <Select
                 aria-label="Event sampling interval"
-                value={intervalSeconds}
-                onChange={(event) =>
-                  setIntervalSeconds(
-                    Number(event.currentTarget.value) as EventSamplingInterval,
-                  )
-                }
-              >
-                {[1, 2, 3, 4, 5].map((seconds) => (
-                  <option key={seconds} value={seconds}>
-                    {seconds} {seconds === 1 ? 'second' : 'seconds'}
-                  </option>
-                ))}
-              </GlassSelect>
+                value={String(intervalSeconds)}
+                onValueChange={(next) => setIntervalSeconds(Number(next) as EventSamplingInterval)}
+                options={[1, 2, 3, 4, 5].map((seconds) => ({ value: String(seconds), label: `${seconds} ${seconds === 1 ? 'second' : 'seconds'}` }))}
+              />
             </div>
           </div>
         </div>

@@ -16,6 +16,11 @@ vi.mock('../api/auth', async () => {
   }
 })
 
+vi.mock('@/modules/onboarding/api/onboarding', async () => {
+  const actual = await vi.importActual<typeof import('@/modules/onboarding/api/onboarding')>('@/modules/onboarding/api/onboarding')
+  return { ...actual, validateSetupToken: vi.fn().mockResolvedValue({ valid: true }) }
+})
+
 describe('OnboardingPage', () => {
   beforeEach(() => {
     window.history.replaceState(null, '', '/onboarding')

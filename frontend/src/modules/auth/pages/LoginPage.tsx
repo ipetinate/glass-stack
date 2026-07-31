@@ -3,7 +3,7 @@ import { LockKeyhole, ShieldCheck } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router'
 
-import { GlassInput } from '@/core/components/form'
+import { Input } from '@/core/components/form'
 import { GlassAPIError } from '@/lib/glass-api'
 import { useAppStore } from '@/core/stores/app'
 
@@ -145,5 +145,5 @@ export function AuthInput({
   type?: string
   value: string
 }) {
-  return <GlassInput label={label} autoComplete={autoComplete} type={type} value={value} onBlur={onBlur} onChange={(event) => onChange(event.target.value)} required />
+  return <Input label={label} autoComplete={autoComplete} type={type} value={value} onBlur={onBlur} onChange={(event) => onChange(event.target.value)} required />
 }

@@ -1,7 +1,7 @@
 import { ChevronDown, MapPin } from 'lucide-react'
 import { useState } from 'react'
 
-import { GlassCheckbox } from '@/core/components/form/Checkbox'
+import { Checkbox } from '@/core/components/form/Checkbox'
 import { cn } from '@/core/functions/class-name'
 import {
   useSearchWeatherLocation,
@@ -158,7 +158,7 @@ export function WeatherDropdownContent() {
 
       <label className="flex items-center justify-between gap-4">
         Show icon
-        <GlassCheckbox
+        <Checkbox
           checked={showIcon}
           onChange={(event) =>
             setDisplayOption('showIcon', event.target.checked)
@@ -167,7 +167,7 @@ export function WeatherDropdownContent() {
       </label>
       <label className="flex items-center justify-between gap-4">
         Show condition
-        <GlassCheckbox
+        <Checkbox
           checked={showCondition}
           onChange={(event) =>
             setDisplayOption('showCondition', event.target.checked)
@@ -177,7 +177,7 @@ export function WeatherDropdownContent() {
 
       <label className="flex items-center justify-between gap-4">
         Show greeting
-        <GlassCheckbox
+        <Checkbox
           checked={showGreeting}
           onChange={(event) =>
             setDisplayOption('showGreeting', event.target.checked)
