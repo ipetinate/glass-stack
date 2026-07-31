@@ -44,12 +44,12 @@ export function SegmentedControl<T extends string>({
   return (
     <div
       className={cn(
-        'inline-flex rounded-xl border border-white/20 bg-black/10',
+        'inline-flex border border-white/20 bg-black/10',
         size === 'xs'
-          ? 'gap-0.5 p-0.5'
+          ? 'gap-0.5 rounded-lg p-0.5'
           : size === 'lg'
-            ? 'gap-1.5 p-1.5'
-            : 'gap-1 p-1',
+            ? 'gap-1.5 rounded-xl p-1.5'
+            : 'gap-1 rounded-xl p-1',
         className,
       )}
       role="group"
@@ -64,7 +64,10 @@ export function SegmentedControl<T extends string>({
               <motion.span
                 layoutId={`segmented-control-${generatedName}`}
                 transition={{ duration: 0.18, ease: 'easeOut' }}
-                className="absolute inset-0 rounded-lg bg-white/20 dark:bg-white/20"
+                className={cn(
+                  'absolute inset-0 bg-white/20 dark:bg-white/20',
+                  size === 'xs' ? 'rounded-md' : 'rounded-lg',
+                )}
                 aria-hidden="true"
               />
             ) : null}
@@ -80,12 +83,12 @@ export function SegmentedControl<T extends string>({
             <label
               htmlFor={id}
               className={cn(
-                'block cursor-pointer rounded-lg transition-colors',
+                'block cursor-pointer transition-colors',
                 size === 'xs'
-                  ? 'px-2 py-1 text-xs'
+                  ? 'rounded-md px-2 py-1 text-xs'
                   : size === 'lg'
-                    ? 'px-4 py-2 text-base'
-                    : 'px-3 py-1.5 text-sm',
+                    ? 'rounded-lg px-4 py-2 text-base'
+                    : 'rounded-lg px-3 py-1.5 text-sm',
                 selected
                   ? 'relative z-10 text-white'
                   : 'relative z-10 text-white/60 hover:text-white/85',
