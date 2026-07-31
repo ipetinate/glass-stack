@@ -22,12 +22,11 @@ export type GlassStackLoaderProps = {
 const platePath =
   'M45 10.5C48.1 8.7 51.9 8.7 55 10.5L87.5 29.2C91 31.2 91 34.8 87.5 36.8L55 55.5C51.9 57.3 48.1 57.3 45 55.5L12.5 36.8C9 34.8 9 31.2 12.5 29.2L45 10.5Z'
 
-const plateTransition = {
-  duration: 1.35,
-  ease: [0.34, 1.15, 0.64, 1] as const,
+const loaderTransition = {
+  duration: 3.6,
+  ease: 'easeInOut' as const,
   repeat: Infinity,
-  repeatDelay: 0.12,
-  times: [0, 0.5, 1],
+  repeatType: 'mirror' as const,
 }
 
 export function GlassStackLoader({
@@ -67,50 +66,46 @@ export function GlassStackLoader({
         </defs>
 
         <motion.g
-          animate={shouldReduceMotion ? undefined : { y: [0, 5, 0] }}
-          data-glass-stack-loader-layer="bottom"
-          transition={shouldReduceMotion ? undefined : plateTransition}
+          animate={
+            shouldReduceMotion
+              ? undefined
+              : { y: [0, -1.5, 0], rotate: [0, -0.45, 0, 0.45, 0] }
+          }
+          style={{ transformOrigin: '50% 50%' }}
+          transition={shouldReduceMotion ? undefined : loaderTransition}
         >
-          <path
-            d={platePath}
-            fill={`url(#${gradientId}-bottom)`}
-            fillOpacity="0.88"
-            stroke="#EAF8FF"
-            strokeOpacity="0.92"
-            strokeWidth="1.5"
-            transform="translate(0 30)"
-          />
-        </motion.g>
-
-        <motion.g
-          animate={shouldReduceMotion ? undefined : { y: [0, 0.75, 0] }}
-          data-glass-stack-loader-layer="middle"
-          transition={shouldReduceMotion ? undefined : plateTransition}
-        >
-          <path
-            d={platePath}
-            fill={`url(#${gradientId}-middle)`}
-            fillOpacity="0.86"
-            stroke="#F4FBFF"
-            strokeOpacity="0.94"
-            strokeWidth="1.5"
-            transform="translate(0 15)"
-          />
-        </motion.g>
-
-        <motion.g
-          animate={shouldReduceMotion ? undefined : { y: [0, -5, 0] }}
-          data-glass-stack-loader-layer="top"
-          transition={shouldReduceMotion ? undefined : plateTransition}
-        >
-          <path
-            d={platePath}
-            fill={`url(#${gradientId}-top)`}
-            fillOpacity="0.92"
-            stroke="#FFFFFF"
-            strokeOpacity="0.96"
-            strokeWidth="1.5"
-          />
+          <g data-glass-stack-loader-layer="bottom">
+            <path
+              d={platePath}
+              fill={`url(#${gradientId}-bottom)`}
+              fillOpacity="0.88"
+              stroke="#EAF8FF"
+              strokeOpacity="0.92"
+              strokeWidth="1.5"
+              transform="translate(0 30)"
+            />
+          </g>
+          <g data-glass-stack-loader-layer="middle">
+            <path
+              d={platePath}
+              fill={`url(#${gradientId}-middle)`}
+              fillOpacity="0.86"
+              stroke="#F4FBFF"
+              strokeOpacity="0.94"
+              strokeWidth="1.5"
+              transform="translate(0 15)"
+            />
+          </g>
+          <g data-glass-stack-loader-layer="top">
+            <path
+              d={platePath}
+              fill={`url(#${gradientId}-top)`}
+              fillOpacity="0.92"
+              stroke="#FFFFFF"
+              strokeOpacity="0.96"
+              strokeWidth="1.5"
+            />
+          </g>
         </motion.g>
       </svg>
     </span>
