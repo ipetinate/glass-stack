@@ -66,10 +66,12 @@ export function MultiRingGauge({
   className = '',
 }: MultiRingGaugeProps) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const [hoveredRing, setHoveredRing] = useState<MultiRingGaugeRing | null>(
-    null,
-  )
+  const [hoveredRingId, setHoveredRingId] = useState<string | null>(null)
+  const hoveredRing = hoveredRingId
+    ? rings.find((ring) => ring.id === hoveredRingId) ?? null
+    : null
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+  const [pointerPosition, setPointerPosition] = useState({ x: 0, y: 0 })
   const [tooltipSize, setTooltipSize] = useState({ width: 208, height: 104 })
   const tooltipRef = useRef<HTMLDivElement>(null)
   const tooltipLeaveTimeout = useRef<number | null>(null)
@@ -94,14 +96,14 @@ export function MultiRingGauge({
   const centerTextValue = centerValue ?? null
 
   const updateTooltipPosition = (event: PointerEvent) => {
-    void event
+    setPointerPosition({ x: event.clientX, y: event.clientY })
     const bounds = containerRef.current?.getBoundingClientRect()
     if (!bounds) return
     const tooltipWidth = tooltipRef.current?.offsetWidth ?? tooltipSize.width
     const tooltipHeight = tooltipRef.current?.offsetHeight ?? tooltipSize.height
     const padding = 12
-    const desiredX = bounds.left + (bounds.width - tooltipWidth) / 2
-    const desiredY = bounds.top - tooltipHeight - 8
+    const desiredX = event.clientX + 14
+    const desiredY = event.clientY + 14
 
     setTooltipPosition({
       x: Math.max(
@@ -111,7 +113,7 @@ export function MultiRingGauge({
       y: Math.max(
         padding,
         Math.min(
-          desiredY < padding ? bounds.top + 8 : desiredY,
+          desiredY,
           window.innerHeight - tooltipHeight - padding,
         ),
       ),
@@ -125,7 +127,7 @@ export function MultiRingGauge({
 
   const scheduleTooltipClose = () => {
     tooltipLeaveTimeout.current = window.setTimeout(
-      () => setHoveredRing(null),
+      () => setHoveredRingId(null),
       220,
     )
   }
@@ -138,27 +140,28 @@ export function MultiRingGauge({
     }
     setTooltipSize(nextSize)
     const bounds = containerRef.current?.getBoundingClientRect()
-    if (bounds) {
+    if (bounds && hoveredRing) {
       const padding = 12
-      const desiredY = bounds.top - nextSize.height + 8
+      const desiredX = pointerPosition.x + 14
+      const desiredY = pointerPosition.y + 14
       setTooltipPosition({
         x: Math.max(
           padding,
           Math.min(
-            bounds.left + (bounds.width - nextSize.width) / 2,
+            desiredX,
             window.innerWidth - nextSize.width - padding,
           ),
         ),
         y: Math.max(
           padding,
           Math.min(
-            desiredY < padding ? bounds.top + 8 : desiredY,
+            desiredY,
             window.innerHeight - nextSize.height - padding,
           ),
         ),
       })
     }
-  }, [hoveredRing])
+  }, [hoveredRing, pointerPosition])
 
   return (
     <div ref={containerRef} className="relative inline-block align-top">
@@ -240,7 +243,7 @@ export function MultiRingGauge({
             labelY={centerY - outerRadius + index * ringStep + ringThickness}
             onPointerEnter={(hovered) => {
               keepTooltipOpen()
-              setHoveredRing(hovered)
+              setHoveredRingId(hovered.id)
             }}
             onPointerMove={updateTooltipPosition}
             onPointerLeave={scheduleTooltipClose}
