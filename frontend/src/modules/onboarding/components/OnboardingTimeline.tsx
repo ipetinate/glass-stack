@@ -19,8 +19,8 @@ const stages: Array<{
   { stage: 'connect', label: 'Conexão', Icon: PlugZap },
   { stage: 'account', label: 'Conta', Icon: UserRound },
   { stage: 'theme', label: 'Aparência', Icon: Palette },
-  { stage: 'security', label: 'Recomendações', Icon: PartyPopper },
   { stage: 'mfa', label: 'MFA', Icon: KeyRound },
+  { stage: 'security', label: 'Recomendações', Icon: PartyPopper },
 ]
 
 export function OnboardingTimeline({
