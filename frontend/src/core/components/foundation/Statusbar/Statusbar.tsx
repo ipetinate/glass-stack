@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { ComponentErrorBoundary } from '@/core/components/structure/ComponentErrorBoundary'
 import { Avatar } from '@/core/components/ui/Avatar'
@@ -6,6 +6,7 @@ import { useAppStore } from '@/core/stores/app'
 import { BackgroundBlur } from '@/core/components/ui/BackgroundBlur'
 import { Clock } from '@/core/components/ui/Clock'
 import { Weather, useWeatherStore } from '@/lib/weather'
+import { useClickOutside } from '@/core/hooks/useClickOutside'
 
 import { AvatarDropdownContent } from './AvatarDropdownContent'
 import { ClockDropdownContent } from './ClockDropdownContent'
@@ -23,6 +24,16 @@ export function Statusbar() {
   const [clockVariant, setClockVariant] = useState<ClockVariant>('HH:mm:ss')
   const [hourVariant, setHourVariant] = useState<HourVariant>('24')
   const [showDate, setShowDate] = useState(true)
+  useClickOutside(
+    () => setActiveDropdown(null),
+    {
+      enabled: activeDropdown !== null,
+      refs: [statusbarRef],
+      isInside: (target) =>
+        target instanceof Element &&
+        Boolean(target.closest('[data-statusbar-popover="true"]')),
+    },
+  )
   const showWeatherCondition = useWeatherStore((state) => state.showCondition)
   const showWeatherGreeting = useWeatherStore((state) => state.showGreeting)
   const showWeatherIcon = useWeatherStore((state) => state.showIcon)
@@ -33,27 +44,6 @@ export function Statusbar() {
       currentDropdown === dropdown ? null : dropdown,
     )
   }
-
-  useEffect(() => {
-    if (!activeDropdown) return
-
-    const handlePointerDown = (event: PointerEvent) => {
-      const target = event.target as Node
-
-      if (statusbarRef.current?.contains(target)) return
-      if (
-        target instanceof Element &&
-        target.closest('[data-statusbar-popover="true"]')
-      )
-        return
-
-      setActiveDropdown(null)
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown)
-
-    return () => document.removeEventListener('pointerdown', handlePointerDown)
-  }, [activeDropdown])
 
   return (
     <BackgroundBlur

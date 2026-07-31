@@ -201,7 +201,7 @@ function UsersSection({ currentUser }: { currentUser: AuthUser }) {
                   })
                 }}
                 options={[{ value: 'viewer', label: 'Viewer' }, { value: 'operator', label: 'Operator' }, { value: 'admin', label: 'Administrator' }]}
-                containerClassName="min-w-40"
+                containerClassName="w-full max-w-xs"
               />
             </div>
           ))}
