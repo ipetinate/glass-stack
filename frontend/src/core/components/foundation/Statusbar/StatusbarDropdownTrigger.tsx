@@ -88,9 +88,11 @@ export function StatusbarDropdownTrigger({
         aria-expanded={active}
         aria-label={label}
         onClick={onClick}
-        className="group flex w-full min-w-0 cursor-pointer items-center gap-1 rounded-xl text-left transition-[filter,transform] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 active:scale-[0.99]"
+        className="group flex w-full min-w-0 cursor-pointer items-center justify-start gap-1 overflow-visible rounded-xl text-left transition-[filter,transform] hover:brightness-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 active:scale-[0.99]"
       >
-        {children}
+        <span className="inline-flex min-w-0 max-w-[calc(100%-1.25rem)] flex-none items-center">
+          {children}
+        </span>
 
         {hideIndicator || (
           <ChevronDown

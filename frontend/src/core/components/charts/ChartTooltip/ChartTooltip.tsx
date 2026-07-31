@@ -35,7 +35,7 @@ export const ChartTooltip = forwardRef<HTMLDivElement, ChartTooltipProps>(functi
   const tooltip = (
     <div
       className={cn(
-        'z-[100] rounded-xl border border-white/30 bg-white/20 text-[#151a21] shadow-2xl backdrop-blur-2xl backdrop-saturate-150 dark:border-white/15 dark:bg-[#0b1626]/55 dark:text-white',
+        'relative isolate z-[100] overflow-hidden rounded-2xl border border-white/55 bg-white/58 text-[#151a21] shadow-2xl before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-white/20 before:backdrop-blur-xl before:backdrop-saturate-150 dark:border-white/10 dark:bg-black/35 dark:text-white dark:before:bg-black/20',
         interactive ? 'pointer-events-auto' : 'pointer-events-none',
         compact ? 'rounded-md px-2 py-1 text-[10px] font-medium tabular-nums' : 'w-52 rounded-2xl p-4',
         className,

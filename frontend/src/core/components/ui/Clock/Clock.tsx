@@ -94,7 +94,7 @@ export function Clock({
         {period ? (
           <>
             {time}{' '}
-            <span className="ml-2 align-baseline text-[0.58em]">{period}</span>
+            <span className="ml-1 align-baseline text-[0.5em]">{period}</span>
           </>
         ) : (
           clock.time
