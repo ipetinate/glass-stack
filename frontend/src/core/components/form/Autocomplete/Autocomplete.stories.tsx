@@ -9,5 +9,5 @@ const meta = { title: 'Core/Form/Autocomplete', component: Autocomplete, tags: [
 export default meta
 type Story = StoryObj<typeof meta>
 
-export const Basic: Story = { render: (args) => <StoryCanvas><Autocomplete {...args} /></StoryCanvas>, args: { label: 'Aplicação', options, searchPlaceholder: 'Buscar aplicação' } }
-export const Controlled: Story = { render: () => { const [value, setValue] = useState(''); return <StoryCanvas><Autocomplete label="Aplicação" value={value} onValueChange={(next) => setValue(String(next))} options={options} /></StoryCanvas> } }
+export const Basic: Story = { render: (args) => <StoryCanvas><div className="max-w-[400px]"><Autocomplete {...args} /></div></StoryCanvas>, args: { label: 'Aplicação', options, searchPlaceholder: 'Buscar aplicação' } }
+export const Controlled: Story = { render: () => { const [value, setValue] = useState(''); return <StoryCanvas><div className="max-w-[400px]"><Autocomplete label="Aplicação" value={value} onValueChange={(next) => setValue(String(next))} options={options} /></div></StoryCanvas> } }
