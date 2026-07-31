@@ -152,7 +152,7 @@ export function DashboardPage() {
               220,
             )
           }}
-          className="fixed max-w-[min(420px,calc(100vw-24px))] overflow-x-auto whitespace-nowrap"
+          className="fixed w-max max-w-[min(420px,calc(100vw-24px))] overflow-x-auto whitespace-nowrap"
           style={{
             left: Math.max(
               12,
