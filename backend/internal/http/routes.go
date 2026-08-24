@@ -36,6 +36,7 @@ type MetricsRunner interface {
 
 type ControlPlaneDatabase interface {
 	QuickCheck(context.Context) error
+	DropAllTables(context.Context) error
 	Close() error
 }
 
@@ -93,6 +94,7 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 	authHandler := handlers.NewAuthHandler(runtime.Auth, setAuthCookies, clearAuthCookies)
 	publicAuthLimit := RateLimit(10, time.Minute)
 	passwordCheckLimit := RateLimit(20, time.Minute)
+	unlockLimit := RateLimit(10, time.Minute)
 	router.Route("/api/v1", func(api chi.Router) {
 		api.Get("/setup/status", authHandler.SetupStatus)
 		api.With(publicAuthLimit).Post("/setup/token/validate", authHandler.ValidateSetupToken)
@@ -105,6 +107,7 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 		api.With(publicAuthLimit).Post("/auth/login", authHandler.Login)
 		api.With(publicAuthLimit).Post("/auth/totp", authHandler.CompleteMFA)
 		api.Get("/auth/session", authHandler.Session)
+		api.With(publicAuthLimit).Get("/auth/identities", authHandler.Identities)
 		api.With(publicAuthLimit).Get("/invitations/status", authHandler.InvitationStatus)
 		api.With(publicAuthLimit).Post("/invitations/totp", authHandler.BeginInvitationTOTP)
 		api.With(publicAuthLimit).Post("/invitations/accept", authHandler.AcceptInvitation)
@@ -114,6 +117,10 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 			protected.Use(RequireCSRF(runtime.Auth, allowedOrigins(runtime)...))
 
 			protected.Post("/auth/logout", authHandler.Logout)
+			protected.With(unlockLimit).Post("/auth/unlock", func(response http.ResponseWriter, request *http.Request) {
+				session, _ := AuthenticatedSession(request.Context())
+				authHandler.Unlock(response, request, session)
+			})
 			protected.Put("/auth/password", func(response http.ResponseWriter, request *http.Request) {
 				session, _ := AuthenticatedSession(request.Context())
 				authHandler.ChangePassword(response, request, session.User)
@@ -179,18 +186,27 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 					authHandler.ListUsers(response, request, session.User)
 				},
 			)
-			protected.With(RequireRole(auth.RoleAdmin)).Patch(
-				"/users/{userID}/role",
-				func(response http.ResponseWriter, request *http.Request) {
-					session, _ := AuthenticatedSession(request.Context())
-					authHandler.ChangeUserRole(
-						response,
-						request,
-						session.User,
-						chi.URLParam(request, "userID"),
-					)
-				},
-			)
+		protected.With(RequireRole(auth.RoleAdmin)).Patch(
+			"/users/{userID}/role",
+			func(response http.ResponseWriter, request *http.Request) {
+				session, _ := AuthenticatedSession(request.Context())
+				authHandler.ChangeUserRole(
+					response,
+					request,
+					session.User,
+					chi.URLParam(request, "userID"),
+				)
+			},
+		)
+
+		adminHandler := handlers.NewAdminHandler(runtime.Database)
+		protected.With(RequireRole(auth.RoleAdmin)).Post(
+			"/admin/reset",
+			func(response http.ResponseWriter, request *http.Request) {
+				adminHandler.ResetSystem(response, request)
+				clearAuthCookies(response, request)
+			},
+		)
 		})
 	})
 

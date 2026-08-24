@@ -323,6 +323,57 @@ func (store *AuthStore) ListUsers(ctx context.Context) ([]auth.User, error) {
 	return users, rows.Err()
 }
 
+func (store *AuthStore) ListIdentities(ctx context.Context) ([]auth.Identity, error) {
+	rows, err := store.database.db.QueryContext(
+		ctx,
+		`SELECT u.id, u.username, u.role, p.preferences_json
+		   FROM users u
+		   LEFT JOIN user_preferences p ON p.user_id = u.id
+		  WHERE u.status = 'active'
+		  ORDER BY u.username_normalized`,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	identities := make([]auth.Identity, 0)
+	for rows.Next() {
+		var identity auth.Identity
+		var role string
+		var preferencesJSON sql.NullString
+		if err := rows.Scan(
+			&identity.ID,
+			&identity.Username,
+			&role,
+			&preferencesJSON,
+		); err != nil {
+			return nil, err
+		}
+		identity.Role = auth.Role(role)
+		parseIdentityPreferences(&identity, preferencesJSON.String)
+		identities = append(identities, identity)
+	}
+	return identities, rows.Err()
+}
+
+func parseIdentityPreferences(identity *auth.Identity, preferencesJSON string) {
+	if preferencesJSON == "" {
+		return
+	}
+	var preferences struct {
+		DisplayName    string `json:"displayName"`
+		AvatarURL      string `json:"avatarUrl"`
+		AvatarPresetID string `json:"avatarPresetId"`
+	}
+	if err := json.Unmarshal([]byte(preferencesJSON), &preferences); err != nil {
+		return
+	}
+	identity.DisplayName = preferences.DisplayName
+	identity.AvatarURL = preferences.AvatarURL
+	identity.AvatarPresetID = preferences.AvatarPresetID
+}
+
 func (store *AuthStore) SetUserRole(
 	ctx context.Context,
 	id string,

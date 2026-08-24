@@ -30,8 +30,12 @@ func NewServerWithRuntime(runtime *Runtime) *Server {
 			Handler:           NewRouterWithRuntime(runtime),
 			ReadHeaderTimeout: 5 * time.Second,
 			ReadTimeout:       30 * time.Second,
-			WriteTimeout:      30 * time.Second,
-			IdleTimeout:       60 * time.Second,
+			// SSE endpoints intentionally keep a response open for the
+			// lifetime of the browser session. A write deadline would close
+			// the metrics stream after 30 seconds even while the server is
+			// healthy.
+			WriteTimeout: 0,
+			IdleTimeout:  60 * time.Second,
 		},
 	}
 }

@@ -64,6 +64,15 @@ type User struct {
 	LastLoginAt        *time.Time
 }
 
+type Identity struct {
+	ID             string
+	Username       string
+	Role           Role
+	DisplayName    string
+	AvatarURL      string
+	AvatarPresetID string
+}
+
 type Session struct {
 	TokenHash         []byte
 	UserID            string
@@ -153,6 +162,7 @@ type UserStore interface {
 	FindUserByUsername(context.Context, string) (User, error)
 	FindUserByID(context.Context, string) (User, error)
 	ListUsers(context.Context) ([]User, error)
+	ListIdentities(context.Context) ([]Identity, error)
 	SetUserRole(context.Context, string, Role, time.Time) error
 	UpdatePassword(context.Context, string, string, time.Time) error
 }

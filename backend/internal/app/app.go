@@ -15,6 +15,7 @@ func New() (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &App{server: httpserver.NewServerWithRuntime(runtime)}, nil
 }
 

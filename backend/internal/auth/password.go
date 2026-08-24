@@ -45,8 +45,22 @@ func NormalizeUsername(username string) (string, error) {
 func NormalizePassword(password string, username string) (string, error) {
 	password = norm.NFC.String(password)
 	length := utf8.RuneCountInString(password)
-	if length < 15 || length > 128 {
-		return "", fmt.Errorf("%w: password must contain 15 to 128 characters", ErrInvalidInput)
+	if length < 8 || length > 128 {
+		return "", fmt.Errorf("%w: password must contain 8 to 128 characters", ErrInvalidInput)
+	}
+	hasLetter, hasDigit, hasSpecial := false, false, false
+	for _, r := range password {
+		switch {
+		case r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z':
+			hasLetter = true
+		case r >= '0' && r <= '9':
+			hasDigit = true
+		default:
+			hasSpecial = true
+		}
+	}
+	if !hasLetter || !hasDigit || !hasSpecial {
+		return "", fmt.Errorf("%w: password must contain letters, numbers, and special characters", ErrInvalidInput)
 	}
 	lower := strings.ToLower(password)
 	if username != "" && strings.Contains(lower, strings.ToLower(username)) {

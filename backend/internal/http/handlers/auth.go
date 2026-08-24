@@ -315,6 +315,54 @@ func (handler *AuthHandler) AcceptInvitation(
 	})
 }
 
+func (handler *AuthHandler) Identities(response http.ResponseWriter, request *http.Request) {
+	identities, err := handler.service.ListIdentities(request.Context())
+	if err != nil {
+		writeError(response, request, err)
+		return
+	}
+	result := make([]map[string]any, 0, len(identities))
+	for _, identity := range identities {
+		result = append(result, map[string]any{
+			"id":             identity.ID,
+			"username":       identity.Username,
+			"role":           identity.Role,
+			"displayName":    identity.DisplayName,
+			"avatarUrl":      identity.AvatarURL,
+			"avatarPresetId": identity.AvatarPresetID,
+		})
+	}
+	writeJSON(response, http.StatusOK, map[string]any{"identities": result})
+}
+
+func (handler *AuthHandler) Unlock(
+	response http.ResponseWriter,
+	request *http.Request,
+	session auth.SessionUser,
+) {
+	var input struct {
+		Password string `json:"password"`
+	}
+	if err := decodeJSON(request, &input); err != nil {
+		writeError(response, request, auth.ErrInvalidInput)
+		return
+	}
+	user, err := handler.service.Unlock(request.Context(), session.User, input.Password)
+	if err != nil {
+		writeError(response, request, err)
+		return
+	}
+	csrf := ""
+	if csrfCookie, err := request.Cookie("glass_csrf"); err == nil {
+		csrf = csrfCookie.Value
+	}
+	writeJSON(response, http.StatusOK, map[string]any{
+		"user":      userResponse(user),
+		"csrfToken": csrf,
+		"expiresAt": session.Session.AbsoluteExpiresAt,
+	})
+}
+
 func (handler *AuthHandler) CreateInvitation(
 	response http.ResponseWriter,
 	request *http.Request,

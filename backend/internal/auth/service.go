@@ -514,6 +514,7 @@ func (service *Service) Login(
 		return LoginResult{}, ErrAuthentication
 	}
 	_, totpErr := service.store.FindTOTP(ctx, user.ID)
+	service.logger.Error("login_totp_check", "user_id", user.ID, "role", user.Role, "totp_found", totpErr == nil, "totp_error", totpErr)
 	if totpErr == nil || user.Role == RoleAdmin {
 		challenge, hash, err := randomToken(32)
 		if err != nil {
@@ -565,10 +566,12 @@ func (service *Service) CompleteLoginMFA(
 	}
 	user, err := service.store.FindUserByID(ctx, challenge.UserID)
 	if err != nil || user.Status != "active" {
+		service.logger.Error("mfa_login_failed", "reason", "user_not_found_or_inactive", "user_id", challenge.UserID, "error", err)
 		return LoginResult{}, ErrAuthentication
 	}
 	credential, err := service.store.FindTOTP(ctx, user.ID)
 	if err != nil {
+		service.logger.Error("mfa_login_failed", "reason", "totp_not_found", "user_id", user.ID, "error", err)
 		return LoginResult{}, ErrAuthentication
 	}
 	secret, err := decryptSecret(service.masterKey, credential.SecretCiphertext, credential.Nonce)
@@ -576,6 +579,7 @@ func (service *Service) CompleteLoginMFA(
 		return LoginResult{}, err
 	}
 	counter, valid := validateTOTP(string(secret), input.Code, now, credential.LastCounter)
+	service.logger.Error("mfa_totp_validation", "user_id", user.ID, "valid", valid, "counter", counter, "last_counter", credential.LastCounter, "code_length", len(input.Code), "secret_length", len(secret))
 	if valid {
 		if err := service.store.UpdateTOTPCounter(ctx, user.ID, counter); err != nil {
 			return LoginResult{}, fmt.Errorf("record totp counter: %w", err)
@@ -588,6 +592,7 @@ func (service *Service) CompleteLoginMFA(
 			now,
 		)
 		if recoveryErr != nil || !used {
+			service.logger.Error("mfa_login_failed", "reason", "totp_invalid_and_recovery_failed", "user_id", user.ID, "totp_valid", valid, "recovery_error", recoveryErr, "recovery_used", used)
 			service.recordAudit(ctx, user.ID, "identity.login.mfa", user.ID, "denied", nil)
 			return LoginResult{}, ErrAuthentication
 		}
@@ -686,6 +691,24 @@ func (service *Service) ListUsers(ctx context.Context, actor User) ([]User, erro
 		return nil, ErrAuthorization
 	}
 	return service.store.ListUsers(ctx)
+}
+
+func (service *Service) ListIdentities(ctx context.Context) ([]Identity, error) {
+	return service.store.ListIdentities(ctx)
+}
+
+func (service *Service) Unlock(
+	ctx context.Context,
+	user User,
+	password string,
+) (User, error) {
+	stored, err := service.store.FindUserByID(ctx, user.ID)
+	if err != nil || stored.Status != "active" || !VerifyPassword(password, stored.PasswordHash) {
+		service.recordAudit(ctx, user.ID, "identity.unlock", user.ID, "denied", nil)
+		return User{}, ErrAuthentication
+	}
+	service.recordAudit(ctx, stored.ID, "identity.unlock", stored.ID, "success", nil)
+	return stored, nil
 }
 
 func (service *Service) ChangeUserRole(

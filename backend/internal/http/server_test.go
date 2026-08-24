@@ -53,6 +53,14 @@ func TestServerGracefullyStopsMetricsAndClosesDatabase(t *testing.T) {
 	}
 }
 
+func TestServerLeavesWriteTimeoutDisabledForSSE(t *testing.T) {
+	server := NewServerWithRuntime(NewRuntime())
+
+	if server.httpServer.WriteTimeout != 0 {
+		t.Fatalf("SSE write timeout = %s, want disabled", server.httpServer.WriteTimeout)
+	}
+}
+
 func TestServerStopsWhenMetricsPipelineFails(t *testing.T) {
 	t.Parallel()
 
@@ -95,6 +103,10 @@ type lifecycleDatabase struct {
 }
 
 func (*lifecycleDatabase) QuickCheck(context.Context) error {
+	return nil
+}
+
+func (*lifecycleDatabase) DropAllTables(context.Context) error {
 	return nil
 }
 

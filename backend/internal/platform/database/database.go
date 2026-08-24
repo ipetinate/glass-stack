@@ -186,6 +186,63 @@ func (database *Database) Close() error {
 	return database.db.Close()
 }
 
+func (database *Database) DropAllTables(ctx context.Context) error {
+	database.writeMu.Lock()
+
+	transaction, err := database.db.BeginTx(ctx, nil)
+	if err != nil {
+		database.writeMu.Unlock()
+		return fmt.Errorf("begin reset transaction: %w", err)
+	}
+
+	if _, err := transaction.ExecContext(ctx, "PRAGMA foreign_keys = OFF"); err != nil {
+		_ = transaction.Rollback()
+		database.writeMu.Unlock()
+		return fmt.Errorf("disable foreign keys: %w", err)
+	}
+
+	tables := []string{
+		"audit_events",
+		"wallpapers",
+		"media_assets",
+		"user_preferences",
+		"mfa_recovery_codes",
+		"totp_credentials",
+		"password_reset_tokens",
+		"invitations",
+		"auth_challenges",
+		"bootstrap_tokens",
+		"sessions",
+		"users",
+		"schema_migrations",
+	}
+	for _, table := range tables {
+		if _, err := transaction.ExecContext(ctx, "DROP TABLE IF EXISTS "+table); err != nil {
+			_ = transaction.Rollback()
+			database.writeMu.Unlock()
+			return fmt.Errorf("drop table %s: %w", table, err)
+		}
+	}
+
+	if _, err := transaction.ExecContext(ctx, "PRAGMA foreign_keys = ON"); err != nil {
+		_ = transaction.Rollback()
+		database.writeMu.Unlock()
+		return fmt.Errorf("re-enable foreign keys: %w", err)
+	}
+
+	if err := transaction.Commit(); err != nil {
+		database.writeMu.Unlock()
+		return fmt.Errorf("commit reset transaction: %w", err)
+	}
+
+	database.writeMu.Unlock()
+
+	if err := database.initialize(ctx); err != nil {
+		return fmt.Errorf("re-initialize database after reset: %w", err)
+	}
+	return nil
+}
+
 func (database *Database) initialize(ctx context.Context) error {
 	if _, err := database.db.ExecContext(ctx, `
 		PRAGMA journal_mode=WAL;
