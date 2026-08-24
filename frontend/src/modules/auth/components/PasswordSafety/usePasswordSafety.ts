@@ -31,7 +31,7 @@ export function usePasswordSafety(password: string) {
   )
 
   const check = useCallback(async (): Promise<PasswordSafetyResult | null> => {
-    if (Array.from(password.normalize('NFC')).length < 15) {
+    if (Array.from(password.normalize('NFC')).length < 8) {
       return null
     }
 

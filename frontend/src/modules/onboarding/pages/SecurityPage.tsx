@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { useThemeStore } from '@/core/stores/theme'
+import { useLockStore } from '@/core/stores/lock'
 import { onboardingKeys } from '../api/onboarding'
 import { useOnboardingAction } from '../components/OnboardingActions'
 import { OnboardingStage, OnboardingStageTitle } from '../components/OnboardingStage'
@@ -32,6 +33,7 @@ export function SecurityPage() {
       await queryClient.invalidateQueries({ queryKey: onboardingKeys.session })
       clearOnboardingSecrets()
       state.reset()
+      useLockStore.getState().unlock()
       navigate('/', { replace: true })
     } finally {
       setFinishing(false)

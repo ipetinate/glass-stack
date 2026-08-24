@@ -1,5 +1,5 @@
 import { Check, Copy } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 
 import { PinCodeField } from '@/core/components/form'
@@ -19,6 +19,9 @@ export function MfaPage() {
   const [preparing, setPreparing] = useState(Boolean(!state.enrollment))
   const [copied, setCopied] = useState(false)
   const completed = state.recoveryCodes.length > 0
+  const lastSubmittedCode = useRef('')
+  const totpCodeRef = useRef(state.totpCode)
+  totpCodeRef.current = state.totpCode
 
   useEffect(() => {
     if (state.enrollment || completed) return
@@ -32,22 +35,36 @@ export function MfaPage() {
 
   useEffect(() => { if (!copied) return; const timeout = window.setTimeout(() => setCopied(false), 2000); return () => window.clearTimeout(timeout) }, [copied])
 
+  useEffect(() => {
+    const code = totpCodeRef.current
+    if (completed || state.submitting || code.length !== 6) return
+    if (code === lastSubmittedCode.current) return
+    lastSubmittedCode.current = code
+    const form = document.getElementById('onboarding-mfa-form') as HTMLFormElement | null
+    form?.requestSubmit()
+  })
+
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (completed) { state.setStage('security'); navigate('/onboarding/security'); return }
     if (!state.enrollment || state.totpCode.length !== 6) return
     state.setField('submitting', true)
     state.setField('error', '')
     try {
       const wallpaper = useWallpaperStore.getState().selectedWallpaper
       const appearance = useWindowAppearanceStore.getState()
-      const result = await completeSetup({ bootstrapToken: state.bootstrapToken, challengeToken: state.enrollment.challengeToken, username: state.username, password: state.password, totpCode: state.totpCode, preferences: { schemaVersion: 1, locale: state.locale, theme: state.theme, avatarPresetId: state.avatar.presetId ?? 'custom', avatarUrl: state.avatar.imageUrl, displayName: state.displayName || undefined, wallpaperId: wallpaper.id, windowAppearance: { backgroundMode: appearance.backgroundMode, actionVisibility: appearance.actionVisibility }, eventSamplingSeconds: useEventSamplingStore.getState().intervalSeconds, dashboard: { version: 1 } } })
+      const result = await completeSetup({ bootstrapToken: state.bootstrapToken, challengeToken: state.enrollment.challengeToken, username: state.username, password: state.password, totpCode: state.totpCode, preferences: { schemaVersion: 1, locale: state.locale, theme: state.theme, avatarPresetId: state.avatar.presetId ?? 'custom', avatarUrl: state.avatar.imageUrl, displayName: state.displayName || undefined, wallpaperId: wallpaper.id, windowAppearance: { backgroundMode: appearance.backgroundMode, actionVisibility: appearance.actionVisibility }, lockScreen: { autoLockMinutes: 15 }, eventSamplingSeconds: useEventSamplingStore.getState().intervalSeconds, dashboard: { version: 1 } } })
       state.setField('recoveryCodes', result.recoveryCodes)
       state.markCompleted('mfa')
-    } catch { state.setField('error', 'O código informado não é válido.') } finally { state.setField('submitting', false) }
+    } catch { state.setField('error', 'O código informado não é válido.'); lastSubmittedCode.current = '' } finally { state.setField('submitting', false) }
   }
 
-  useOnboardingAction({ label: completed ? 'Continuar' : state.submitting ? 'Verificando…' : 'Próximo', type: 'submit', form: 'onboarding-mfa-form', disabled: preparing || state.submitting || (!completed && state.totpCode.length !== 6) })
+  useOnboardingAction({
+    label: completed ? 'Continuar' : state.submitting ? 'Verificando…' : 'Próximo',
+    type: completed ? 'button' : 'submit',
+    form: completed ? undefined : 'onboarding-mfa-form',
+    disabled: state.submitting || (!completed && (preparing || state.totpCode.length !== 6)),
+    onClick: completed ? () => { state.setStage('security'); navigate('/onboarding/security') } : undefined,
+  })
   if (preparing && !state.enrollment) return <OnboardingStage><OnboardingStageTitle>Proteja sua conta administradora</OnboardingStageTitle><p className="mt-8 text-lg">Preparando sua autenticação…</p></OnboardingStage>
   if (!state.enrollment && !completed) return <OnboardingStage><OnboardingStageTitle>Proteja sua conta administradora</OnboardingStageTitle>{state.error ? <StageError>{state.error}</StageError> : null}</OnboardingStage>
 

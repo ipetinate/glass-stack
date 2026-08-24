@@ -50,9 +50,10 @@ export function PinCodeField({
   return (
     <div className={cn('space-y-2', className)}>
       {label ? <span className="block text-sm text-[#151A21]/80 dark:text-white/80">{label}</span> : null}
-      <div className="flex items-center justify-start gap-2" role="group" aria-label={label}>
+      <div className="flex w-fit items-center justify-start gap-2" role="group" aria-label={label}>
         {digits.map((digit, index) => {
           const isGroupEnd = (index + 1) % groupSize === 0 && index < count - 1
+
           return (
             <span key={index} className={cn('flex items-center gap-2', isGroupEnd && 'mr-2')}>
               <input
@@ -82,7 +83,10 @@ export function PinCodeField({
                   distribute(index, event.clipboardData.getData('text'))
                 }}
               />
-              {isGroupEnd && separator ? <Minus aria-hidden="true" className="size-4 shrink-0 text-current/60" strokeWidth={2.5} /> : null}
+
+              {isGroupEnd && separator ? 
+					<Minus aria-hidden="true" className="size-4 shrink-0 text-current/60" strokeWidth={2.5} /> 
+				: null}
             </span>
           )
         })}

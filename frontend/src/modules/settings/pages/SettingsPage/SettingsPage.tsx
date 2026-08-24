@@ -6,6 +6,7 @@ import { Tabs } from '@/core/components/foundation/Tabs'
 import { Window } from '@/core/components/foundation/Window'
 import { useUnsavedChanges } from '@/core/hooks/useUnsavedChanges'
 import { useWallpaperSearchStore } from '@/core/stores/wallpaper-search'
+import { AdvancedSettings } from '@/modules/settings/pages/AdvancedSettings/AdvancedSettings'
 import { AppearanceSettings } from '@/modules/settings/pages/AppearanceSettings'
 import { GeneralSettings } from '@/modules/settings/pages/GeneralSettings'
 import { SecuritySettings } from '@/modules/settings/pages/SecuritySettings'
@@ -67,6 +68,12 @@ export function SettingsPage() {
             title: 'Security',
             icon: 'ShieldCheck',
             content: <SecuritySettings />,
+          },
+          {
+            id: 'advanced',
+            title: 'Advanced',
+            icon: 'AlertTriangle',
+            content: <AdvancedSettings />,
           },
         ]}
       />

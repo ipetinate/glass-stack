@@ -10,11 +10,22 @@ import { StageError } from '../components/OnboardingShell'
 import { useOnboardingAction } from '../components/OnboardingActions'
 import { OnboardingCheck, OnboardingStageTitle } from '../components/OnboardingStage'
 
+function hasLetters(s: string) {
+  return /[a-zA-Z]/.test(s)
+}
+function hasNumbers(s: string) {
+  return /[0-9]/.test(s)
+}
+function hasSpecial(s: string) {
+  return /[^a-zA-Z0-9]/.test(s)
+}
+
 export function AccountPage() {
   const navigate = useNavigate()
   const state = useOnboardingStore()
   const safety = usePasswordSafety(state.password)
-  const valid = useMemo(() => Array.from(state.password.normalize('NFC')).length >= 15, [state.password])
+  const lengthOk = useMemo(() => Array.from(state.password.normalize('NFC')).length >= 8, [state.password])
+  const valid = lengthOk && hasLetters(state.password) && hasNumbers(state.password) && hasSpecial(state.password)
   useOnboardingAction({ label: safety.isChecking ? 'Verificando…' : 'Próximo', type: 'submit', form: 'onboarding-account-form', disabled: !state.username || !state.password || !state.confirmation || safety.isChecking || safety.isCompromised })
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -36,7 +47,7 @@ export function AccountPage() {
         <Input label="Nome de exibição" value={state.displayName} onChange={(e) => state.setField('displayName', e.target.value)} autoComplete="name" />
         <Input label="Username" aria-label="username" value={state.username} onChange={(e) => state.setField('username', e.target.value)} autoComplete="username" required />
         <Input label="Senha" aria-label="password" type="password" value={state.password} onChange={(e) => state.setField('password', e.target.value)} onBlur={() => void safety.check()} autoComplete="new-password" required />
-        <div className="space-y-1 px-1"><OnboardingCheck valid={valid}>mínimo de 15 caracteres</OnboardingCheck><PasswordSafetyStatus assessment={safety.assessment} locale="pt-BR" /></div>
+        <div className="space-y-1 px-1"><OnboardingCheck valid={lengthOk}>mínimo de 8 caracteres</OnboardingCheck><OnboardingCheck valid={hasLetters(state.password)}>pelo menos uma letra</OnboardingCheck><OnboardingCheck valid={hasNumbers(state.password)}>pelo menos um número</OnboardingCheck><OnboardingCheck valid={hasSpecial(state.password)}>pelo menos um caractere especial</OnboardingCheck><PasswordSafetyStatus assessment={safety.assessment} locale="pt-BR" /></div>
         <Input label="Confirmar senha" aria-label="confirm password" type="password" value={state.confirmation} onChange={(e) => state.setField('confirmation', e.target.value)} autoComplete="new-password" required />
         <OnboardingCheck valid={state.password === state.confirmation && Boolean(state.confirmation)}>confirmação de senha confere</OnboardingCheck>
         {state.error ? <StageError>{state.error}</StageError> : null}

@@ -35,5 +35,5 @@ export function useOnboardingAction(action: OnboardingAction | null) {
   useLayoutEffect(() => {
     if (!setAction) return
     setAction(action)
-  }, [setAction, action?.label, action?.disabled, action?.type, action?.form])
+  }, [setAction, action?.label, action?.disabled, action?.type, action?.form, action?.onClick])
 }

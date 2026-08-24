@@ -54,8 +54,8 @@ function PasswordSection() {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     setMessage('')
-    if (Array.from(newPassword.normalize('NFC')).length < 15 || newPassword !== confirmation) {
-      setMessage('The new password must have at least 15 characters and both values must match.')
+    if (Array.from(newPassword.normalize('NFC')).length < 8 || newPassword !== confirmation) {
+      setMessage('The new password must have at least 8 characters and both values must match.')
       return
     }
     const assessment = await passwordSafety.check()

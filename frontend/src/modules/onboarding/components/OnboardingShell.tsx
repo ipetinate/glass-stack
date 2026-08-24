@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 
 import { Button } from '@/core/components/ui/Button'
 import { GlassStackLoader } from '@/core/components/ui/GlassStackLoader'
+import { useLockStore } from '@/core/stores/lock'
 import { ArrowLeft, ArrowRight } from 'lucide-react'
 import { GlassAPIError } from '@/lib/glass-api'
 import { getSetupStatus } from '@/modules/auth/api/auth'
@@ -57,7 +58,7 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
   const headingRef = useRef<HTMLHeadingElement>(null)
   const shouldReduceMotion = useReducedMotion()
   const [action, setAction] = useState<OnboardingAction | null>(null)
-  const setup = useQuery({ queryKey: ['auth', 'setup'], queryFn: getSetupStatus, retry: false, enabled: !standalone })
+  const setup = useQuery({ queryKey: ['auth', 'setup'], queryFn: getSetupStatus, retry: false, enabled: !standalone, refetchOnWindowFocus: false })
   const state = useOnboardingStore()
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export function OnboardingShell({ standalone = false }: { standalone?: boolean }
     sessionStorage.removeItem('glassstack-onboarding')
     localStorage.removeItem('glassstack-onboarding')
     useOnboardingStore.getState().reset()
+    useLockStore.getState().reset()
     const isDark = document.documentElement.classList.contains('dark')
     useOnboardingStore.getState().setField('theme', isDark ? 'dark' : 'light')
   }, [])

@@ -4,14 +4,19 @@ import { routes } from './router'
 
 describe('router', () => {
   it('keeps route errors inside the app content area', () => {
-    const shellRoutes = routes.filter((route) => route.path !== '*')
+    const nestedRoutes = routes.flatMap((route) => route.children ?? [])
 
-    expect(shellRoutes.length).toBeGreaterThan(0)
+    expect(nestedRoutes.length).toBeGreaterThan(0)
 
-    shellRoutes.forEach((route) => {
-      route.children?.forEach((childRoute) => {
-        expect(childRoute.errorElement).toBeDefined()
-      })
+    const shellRoute = nestedRoutes.find((route) =>
+      route.children?.some((childRoute) => childRoute.path === '/'),
+    )
+
+    expect(shellRoute).toBeDefined()
+    expect(shellRoute?.children?.length).toBeGreaterThan(0)
+
+    shellRoute?.children?.forEach((childRoute) => {
+      expect(childRoute.errorElement).toBeDefined()
     })
   })
 })

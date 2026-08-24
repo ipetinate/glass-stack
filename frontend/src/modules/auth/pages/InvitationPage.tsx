@@ -17,7 +17,7 @@ import {
   type AuthUser,
   type SetupPreferences,
 } from '../api/auth'
-import { AuthInput, AuthSurface } from './LoginPage'
+import { AuthInput, AuthSurface } from '../components/AuthSurface'
 
 type Enrollment = Awaited<ReturnType<typeof beginInvitationTOTP>>
 
@@ -47,7 +47,7 @@ export function InvitationPage() {
   }, [token])
 
   const passwordValid = useMemo(
-    () => Array.from(password.normalize('NFC')).length >= 15,
+    () => Array.from(password.normalize('NFC')).length >= 8,
     [password],
   )
   const passwordSafety = usePasswordSafety(password)
@@ -56,7 +56,7 @@ export function InvitationPage() {
     event.preventDefault()
     setError('')
     if (!role || !passwordValid || password !== confirmation) {
-      setError('Use at least 15 characters and make sure both passwords match.')
+      setError('Use at least 8 characters and make sure both passwords match.')
       return
     }
     if (!enrollment) {
@@ -147,7 +147,7 @@ export function InvitationPage() {
                   <AuthInput label="Confirm password" type="password" value={confirmation} onChange={setConfirmation} autoComplete="new-password" />
                 </div>
                 <div className="mt-4 space-y-2 text-sm text-white/55">
-                  <ValidationLine valid={passwordValid}>At least 15 characters</ValidationLine>
+                  <ValidationLine valid={passwordValid}>At least 8 characters</ValidationLine>
                   <PasswordSafetyStatus assessment={passwordSafety.assessment} className="text-white/55" />
                   <ValidationLine valid={password === confirmation && password !== ''}>Passwords match</ValidationLine>
                 </div>
