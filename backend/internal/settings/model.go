@@ -20,17 +20,43 @@ type WindowAppearance struct {
 	ActionVisibility map[string]bool `json:"actionVisibility"`
 }
 
+type LockScreenPreferences struct {
+	AutoLockMinutes *int `json:"autoLockMinutes"`
+}
+
+type ClockPreferences struct {
+	Variant     string `json:"variant"`
+	HourFormat  string `json:"hourFormat"`
+	ShowDate    bool   `json:"showDate"`
+	ShowWeekday bool   `json:"showWeekday"`
+	ShowMonth   bool   `json:"showMonth"`
+	ShowYear    bool   `json:"showYear"`
+}
+
+type WeatherDisplayPreferences struct {
+	ShowCondition bool `json:"showCondition"`
+	ShowGreeting  bool `json:"showGreeting"`
+	ShowIcon      bool `json:"showIcon"`
+}
+
+type StatusbarPreferences struct {
+	Clock   ClockPreferences          `json:"clock"`
+	Weather WeatherDisplayPreferences `json:"weather"`
+}
+
 type Preferences struct {
-	SchemaVersion        int              `json:"schemaVersion"`
-	Locale               string           `json:"locale"`
-	Theme                string           `json:"theme"`
-	AvatarPresetID       string           `json:"avatarPresetId"`
-	AvatarURL            string           `json:"avatarUrl,omitempty"`
-	DisplayName          string           `json:"displayName,omitempty"`
-	WallpaperID          string           `json:"wallpaperId,omitempty"`
-	WindowAppearance     WindowAppearance `json:"windowAppearance"`
-	EventSamplingSeconds int              `json:"eventSamplingSeconds"`
-	Dashboard            map[string]any   `json:"dashboard,omitempty"`
+	SchemaVersion        int                   `json:"schemaVersion"`
+	Locale               string                `json:"locale"`
+	Theme                string                `json:"theme"`
+	AvatarPresetID       string                `json:"avatarPresetId"`
+	AvatarURL            string                `json:"avatarUrl,omitempty"`
+	DisplayName          string                `json:"displayName,omitempty"`
+	WallpaperID          string                `json:"wallpaperId,omitempty"`
+	WindowAppearance     WindowAppearance      `json:"windowAppearance"`
+	LockScreen           LockScreenPreferences `json:"lockScreen"`
+	Statusbar            StatusbarPreferences  `json:"statusbar"`
+	EventSamplingSeconds int                   `json:"eventSamplingSeconds"`
+	Dashboard            map[string]any        `json:"dashboard,omitempty"`
 }
 
 type PreferenceRecord struct {

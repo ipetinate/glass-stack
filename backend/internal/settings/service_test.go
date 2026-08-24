@@ -165,6 +165,53 @@ func TestUpdatePreferencesValidatesAndPreservesRevision(t *testing.T) {
 	}
 }
 
+func TestDefaultAndValidateLockScreenPreference(t *testing.T) {
+	t.Parallel()
+
+	defaults := DefaultPreferences()
+	if defaults.LockScreen.AutoLockMinutes == nil ||
+		*defaults.LockScreen.AutoLockMinutes != DefaultAutoLockMinutes {
+		t.Fatalf("default auto lock minutes = %v, want %d",
+			defaults.LockScreen.AutoLockMinutes, DefaultAutoLockMinutes)
+	}
+
+	store := &fakeStore{}
+	service := NewService(store, nil, nil, false)
+
+	tests := []struct {
+		name      string
+		minutes   *int
+		wantError bool
+	}{
+		{name: "nil disables auto lock"},
+		{name: "one minute", minutes: intPointer(1)},
+		{name: "fifteen minutes", minutes: intPointer(15)},
+		{name: "day", minutes: intPointer(1440)},
+		{name: "zero rejected", minutes: intPointer(0), wantError: true},
+		{name: "negative rejected", minutes: intPointer(-5), wantError: true},
+		{name: "too large rejected", minutes: intPointer(1441), wantError: true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			preferences := DefaultPreferences()
+			preferences.LockScreen.AutoLockMinutes = test.minutes
+			_, err := service.UpdatePreferences(
+				context.Background(),
+				"user-1",
+				1,
+				preferences,
+			)
+			if test.wantError && !errors.Is(err, ErrInvalidPreferences) {
+				t.Fatalf("error = %v, want ErrInvalidPreferences", err)
+			}
+			if !test.wantError && err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
 type fakeWallpaperProvider struct {
 	photo           UnsplashPhoto
 	searchResult    UnsplashSearch

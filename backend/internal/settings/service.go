@@ -34,6 +34,14 @@ func NewService(
 	}
 }
 
+const (
+	DefaultAutoLockMinutes = 15
+	maxAutoLockMinutes     = 1440
+
+	DefaultClockVariant    = "HH:mm:ss"
+	DefaultClockHourFormat = "24"
+)
+
 func DefaultPreferences() Preferences {
 	return Preferences{
 		SchemaVersion:  1,
@@ -48,16 +56,50 @@ func DefaultPreferences() Preferences {
 				"verticalExpand": true,
 			},
 		},
+		LockScreen: LockScreenPreferences{
+			AutoLockMinutes: intPointer(DefaultAutoLockMinutes),
+		},
+		Statusbar: StatusbarPreferences{
+			Clock: ClockPreferences{
+				Variant:     DefaultClockVariant,
+				HourFormat:  DefaultClockHourFormat,
+				ShowDate:    true,
+				ShowWeekday: true,
+				ShowMonth:   true,
+				ShowYear:    true,
+			},
+			Weather: WeatherDisplayPreferences{
+				ShowCondition: true,
+				ShowGreeting:  true,
+				ShowIcon:      true,
+			},
+		},
 		EventSamplingSeconds: 1,
 		Dashboard:            map[string]any{"version": 1},
 	}
+}
+
+func normalizeStatusbar(preferences *Preferences) {
+	if preferences.Statusbar.Clock.Variant == "" ||
+		preferences.Statusbar.Clock.HourFormat == "" {
+		preferences.Statusbar = DefaultPreferences().Statusbar
+	}
+}
+
+func intPointer(value int) *int {
+	return &value
 }
 
 func (service *Service) GetPreferences(
 	ctx context.Context,
 	userID string,
 ) (PreferenceRecord, error) {
-	return service.store.GetPreferences(ctx, userID)
+	record, err := service.store.GetPreferences(ctx, userID)
+	if err != nil {
+		return PreferenceRecord{}, err
+	}
+	normalizeStatusbar(&record.Preferences)
+	return record, nil
 }
 
 func (service *Service) WallpaperCapabilities() WallpaperCapabilities {
@@ -73,6 +115,7 @@ func (service *Service) UpdatePreferences(
 	revision int,
 	preferences Preferences,
 ) (PreferenceRecord, error) {
+	normalizeStatusbar(&preferences)
 	if err := validatePreferences(preferences); err != nil {
 		return PreferenceRecord{}, err
 	}
@@ -296,6 +339,21 @@ func validatePreferences(preferences Preferences) error {
 	case "solid", "blur":
 	default:
 		return fmt.Errorf("%w: unsupported window background", ErrInvalidPreferences)
+	}
+	if minutes := preferences.LockScreen.AutoLockMinutes; minutes != nil {
+		if *minutes < 1 || *minutes > maxAutoLockMinutes {
+			return fmt.Errorf("%w: unsupported auto lock interval", ErrInvalidPreferences)
+		}
+	}
+	switch preferences.Statusbar.Clock.Variant {
+	case "HH:mm", "HH:mm:ss":
+	default:
+		return fmt.Errorf("%w: unsupported clock variant", ErrInvalidPreferences)
+	}
+	switch preferences.Statusbar.Clock.HourFormat {
+	case "12", "24":
+	default:
+		return fmt.Errorf("%w: unsupported clock hour format", ErrInvalidPreferences)
 	}
 	return nil
 }
