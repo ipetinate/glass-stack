@@ -3,6 +3,32 @@ import type { ApplicationDetail, ApplicationSummary } from '@/modules/applicatio
 const iconSrc = '/images/logo.png'
 const screenshotSrc = '/images/wallpapers/default-dark.avif'
 
+const sharedRequirements = [
+  { category: 'Memória', minimum: '2 GB', recommended: '4 GB+' },
+  { category: 'Armazenamento', minimum: '50 GB', recommended: '100 GB+' },
+  { category: 'Processador', minimum: 'Dual Core 64 bits', recommended: 'Six Core ARM' },
+]
+
+function buildReviews(prefix: string): ApplicationDetail['reviews'] {
+  return [
+    {
+      id: `${prefix}-review-1`,
+      author: 'Eric E.',
+      postedAt: 'há 3 dias',
+      snippet:
+        'Funciona muito bem no meu homelab. A instalação foi rápida e o app subiu sem nenhum ajuste manual.',
+      rating: 5,
+    },
+    {
+      id: `${prefix}-review-2`,
+      author: 'Marina S.',
+      postedAt: 'há 1 semana',
+      snippet: 'Ótima alternativa self-hosted, só senti falta de mais opções de backup.',
+      rating: 4,
+    },
+  ]
+}
+
 export const applications: ApplicationSummary[] = [
   {
     id: 'jellyfin',
@@ -68,7 +94,12 @@ export function getApplicationDetail(id: string): ApplicationDetail | undefined 
   return {
     ...application,
     type: 'Docker Image',
-    requirements: ['x86_64', '2 GB RAM'],
+    version: '0.5.8',
+    imageSize: '243 MB',
+    architectures: ['x86-64', 'arm64', 'riscv64', 'mips64'],
+    requirements: sharedRequirements,
+    reviews: buildReviews(application.id),
+    dockerHubUrl: `https://hub.docker.com/r/${application.id}`,
     longDescription: `${application.description} O aplicativo é executado no seu GlassStack e pode ser acessado pelos dispositivos autorizados.`,
   }
 }

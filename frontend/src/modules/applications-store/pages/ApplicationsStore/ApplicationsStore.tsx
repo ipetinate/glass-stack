@@ -1,5 +1,6 @@
 import { Search, ShoppingBag } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Input } from '@/core/components/form'
@@ -16,9 +17,11 @@ import {
 } from '../../components'
 import { filterApplications } from '../../functions/filter-applications'
 import {
+  applicationsQueryKey,
   useApplication,
   useApplications,
   useInstallApplication,
+  useInstallOperation,
 } from '../../repositories'
 import type { ApplicationSummary, InstallationMode } from '../../types'
 
@@ -28,9 +31,11 @@ const EMPTY_APPLICATIONS: ApplicationSummary[] = []
 
 export function ApplicationsStore() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { confirmClose } = useUnsavedChanges({ scope: 'Applications Store' })
   const applicationsQuery = useApplications()
   const installMutation = useInstallApplication()
+  const installOperationQuery = useInstallOperation(installMutation.data?.id)
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [sort, setSort] = useState('recent')
@@ -47,6 +52,21 @@ export function ApplicationsStore() {
     () => filterApplications(applications, search, category, sort),
     [applications, category, search, sort],
   )
+
+  const operation = installOperationQuery.data
+  const isInstalling = installingId !== undefined && operation?.status === 'installing'
+  const installProgress = operation?.status === 'installing' ? operation.progress : undefined
+
+  useEffect(() => {
+    if (operation?.status !== 'installed') return
+    void queryClient.invalidateQueries({ queryKey: applicationsQueryKey })
+    const timeout = setTimeout(() => {
+      setInstallingId(undefined)
+      setInstallationMode(undefined)
+      installMutation.reset()
+    }, 1500)
+    return () => clearTimeout(timeout)
+  }, [operation?.status, queryClient, installMutation])
 
   const startInstall = (appId: string, mode: InstallationMode, options?: { port: number; volume: string }) => {
     setInstallingId(appId)
@@ -81,7 +101,8 @@ export function ApplicationsStore() {
             setCustomInstallOpen(true)
             setInstallationMode('custom')
           }}
-          isInstalling={installingId === selectedId}
+          isInstalling={isInstalling && installingId === selectedId}
+          installProgress={installingId === selectedId ? installProgress : undefined}
         />
       ) : (
         <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">
@@ -115,7 +136,12 @@ export function ApplicationsStore() {
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto">
                 {visibleApplications.length > 0 ? (
-                  <ApplicationGrid applications={visibleApplications} onOpen={setSelectedId} onInstall={(appId) => startInstall(appId, 'standard')} />
+                  <ApplicationGrid
+                    applications={visibleApplications}
+                    installingApplicationId={isInstalling ? installingId : undefined}
+                    onOpen={setSelectedId}
+                    onInstall={(appId) => startInstall(appId, 'standard')}
+                  />
                 ) : (
                   <div className="rounded-xl border border-white/10 bg-black/20 p-8 text-center text-sm text-white/60">
                     Nenhum aplicativo encontrado.
@@ -137,7 +163,8 @@ export function ApplicationsStore() {
       ) : null}
       {installingId && installMutation.data ? (
         <div role="status" className="mt-4 shrink-0 rounded-xl border border-cyan-300/30 bg-cyan-400/10 p-4 text-sm text-cyan-50">
-          {installationMode === 'custom' ? 'Instalação customizada iniciada.' : 'Instalação iniciada.'} {installMutation.data.message}
+          {installationMode === 'custom' ? 'Instalação customizada iniciada.' : 'Instalação iniciada.'}{' '}
+          {operation?.message ?? installMutation.data.message}
         </div>
       ) : null}
     </Window>

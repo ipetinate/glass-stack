@@ -45,6 +45,9 @@ describe('ApplicationsStore', () => {
 
     expect(await screen.findByRole('heading', { name: 'Jellyfin' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Voltar/i })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Requisitos' })).toHaveTextContent('Armazenamento')
+    expect(screen.getByRole('region', { name: 'Avaliações' })).toHaveTextContent('Eric E.')
+    expect(screen.getByRole('region', { name: 'Detalhes técnicos' })).toHaveTextContent('arm64')
 
     await user.click(screen.getByRole('button', { name: /Voltar/i }))
     await waitFor(() => expect(screen.getByPlaceholderText('Encontre um aplicativo…')).toBeInTheDocument())

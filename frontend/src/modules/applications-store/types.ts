@@ -1,5 +1,7 @@
 export type AppCategory = 'Multimedia' | 'Productivity' | 'Networking'
 
+export type AppArchitecture = 'x86-64' | 'arm64' | 'riscv64' | 'mips64'
+
 export type AppStatus = 'available' | 'installed' | 'installing' | 'error'
 
 export type InstallationMode = 'standard' | 'custom'
@@ -8,6 +10,20 @@ export type AppScreenshot = {
   id: string
   src: string
   alt: string
+}
+
+export type AppReview = {
+  id: string
+  author: string
+  postedAt: string
+  snippet: string
+  rating: number
+}
+
+export type AppRequirement = {
+  category: string
+  minimum: string
+  recommended: string
 }
 
 export type ApplicationSummary = {
@@ -26,7 +42,12 @@ export type ApplicationSummary = {
 
 export type ApplicationDetail = ApplicationSummary & {
   type: string
-  requirements: string[]
+  version: string
+  imageSize: string
+  architectures: AppArchitecture[]
+  requirements: AppRequirement[]
+  reviews: AppReview[]
+  dockerHubUrl?: string
   longDescription: string
 }
 

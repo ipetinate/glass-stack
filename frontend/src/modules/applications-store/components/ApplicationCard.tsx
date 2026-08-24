@@ -1,4 +1,4 @@
-import { Check, Download, Star } from 'lucide-react'
+import { Check, Download, LoaderCircle, Star } from 'lucide-react'
 
 import { Button } from '@/core/components/ui/Button'
 
@@ -7,17 +7,19 @@ import type { ApplicationSummary } from '../types'
 
 type ApplicationCardProps = {
   application: ApplicationSummary
+  installing?: boolean
   onOpen: (applicationId: string) => void
   onInstall: (applicationId: string) => void
 }
 
 export function ApplicationCard({
   application,
+  installing = false,
   onOpen,
   onInstall,
 }: ApplicationCardProps) {
   const isInstalled = application.status === 'installed'
-  const isInstalling = application.status === 'installing'
+  const isInstalling = installing || application.status === 'installing'
 
   return (
     <article className="flex min-h-44 flex-col rounded-2xl border border-white/10 bg-black/20 p-5 backdrop-blur-sm transition-colors hover:bg-black/30">
@@ -61,7 +63,7 @@ export function ApplicationCard({
           onClick={() => onInstall(application.id)}
           className="min-h-8 shrink-0 rounded-lg border-0 bg-[#00bfff] px-3 text-xs text-white hover:bg-[#00a9df]"
         >
-          {isInstalled ? <Check className="size-3.5" /> : <Download className="size-3.5" />}
+          {isInstalled ? <Check className="size-3.5" /> : isInstalling ? <LoaderCircle className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
           {isInstalled ? 'Instalado' : isInstalling ? 'Instalando…' : 'Instalar'}
         </Button>
       </div>
