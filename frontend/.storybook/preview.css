@@ -1,0 +1,10 @@
+html,
+body,
+#storybook-root {
+  background: #ffffff !important;
+  background-image: none !important;
+}
+
+body {
+  overflow: auto !important;
+}
