@@ -14,6 +14,9 @@ export type ClockProps = {
   variant?: ClockVariant
   hourVariant?: HourVariant
   showDate?: boolean
+  showWeekday?: boolean
+  showMonth?: boolean
+  showYear?: boolean
   dayVariant?: DayVariant
   timeClassName?: string
 }
@@ -24,6 +27,9 @@ export function Clock({
   dateFormat = 'long',
   variant = 'HH:mm',
   showDate: showDay = false,
+  showWeekday = true,
+  showMonth = true,
+  showYear = true,
   dayVariant = 'long',
   hourVariant = '12',
   timeClassName = '',
@@ -41,22 +47,19 @@ export function Clock({
 
   const getDate = useCallback(
     (date: Date) => {
+      const options: Intl.DateTimeFormatOptions = { day: 'numeric' }
       if (dateFormat === 'compact') {
-        return date.toLocaleDateString(undefined, {
-          weekday: dayVariant,
-          month: 'short',
-          day: 'numeric',
-        })
+        if (showWeekday) options.weekday = dayVariant
+        if (showMonth) options.month = 'short'
+        if (showYear) options.year = 'numeric'
+      } else {
+        if (showWeekday) options.weekday = dayVariant
+        if (showMonth) options.month = 'long'
+        if (showYear) options.year = 'numeric'
       }
-
-      return date.toLocaleDateString(undefined, {
-        weekday: dayVariant,
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      return date.toLocaleDateString(undefined, options)
     },
-    [dateFormat, dayVariant],
+    [dateFormat, dayVariant, showMonth, showWeekday, showYear],
   )
 
   const getClockState = useCallback(() => {

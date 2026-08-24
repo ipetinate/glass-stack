@@ -10,6 +10,15 @@ export type AuthUser = {
   avatarPresetId?: string
 }
 
+export type AuthIdentity = {
+  id: string
+  username: string
+  role: AuthUser['role']
+  displayName?: string
+  avatarUrl?: string
+  avatarPresetId?: string
+}
+
 export type AuthSession = {
   user: AuthUser
   csrfToken: string
@@ -32,6 +41,24 @@ export type SetupPreferences = {
       verticalExpand: boolean
     }
   }
+  lockScreen?: {
+    autoLockMinutes: number | null
+  }
+  statusbar?: {
+    clock: {
+      variant: 'HH:mm' | 'HH:mm:ss'
+      hourFormat: '12' | '24'
+      showDate: boolean
+      showWeekday: boolean
+      showMonth: boolean
+      showYear: boolean
+    }
+    weather: {
+      showCondition: boolean
+      showGreeting: boolean
+      showIcon: boolean
+    }
+  }
   eventSamplingSeconds: 1 | 2 | 3 | 4 | 5
   dashboard: { version: 1 }
 }
@@ -39,6 +66,7 @@ export type SetupPreferences = {
 export const authKeys = {
   session: ['auth', 'session'] as const,
   setup: ['auth', 'setup'] as const,
+  identities: ['auth', 'identities'] as const,
 }
 
 export const getSetupStatus = () =>
@@ -107,6 +135,15 @@ export const completeLoginMFA = (input: {
   code: string
 }) =>
   glassRequest<{ user: AuthUser; csrfToken: string }>('/api/v1/auth/totp', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+
+export const listIdentities = () =>
+  glassRequest<{ identities: AuthIdentity[] }>('/api/v1/auth/identities')
+
+export const unlock = (input: { password: string }) =>
+  glassRequest<AuthSession>('/api/v1/auth/unlock', {
     method: 'POST',
     body: JSON.stringify(input),
   })

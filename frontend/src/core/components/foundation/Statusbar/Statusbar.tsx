@@ -1,8 +1,10 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { ComponentErrorBoundary } from '@/core/components/structure/ComponentErrorBoundary'
 import { Avatar } from '@/core/components/ui/Avatar'
 import { useAppStore } from '@/core/stores/app'
+import { useLockStore } from '@/core/stores/lock'
+import { useStatusbarStore } from '@/core/stores/statusbar'
 import { BackgroundBlur } from '@/core/components/ui/BackgroundBlur'
 import { Clock } from '@/core/components/ui/Clock'
 import { Weather, useWeatherStore } from '@/lib/weather'
@@ -10,20 +12,19 @@ import { useClickOutside } from '@/core/hooks/useClickOutside'
 
 import { AvatarDropdownContent } from './AvatarDropdownContent'
 import { ClockDropdownContent } from './ClockDropdownContent'
-import type {
-  ClockVariant,
-  HourVariant,
-  StatusbarDropdown,
-} from './Statusbar.types'
+import type { StatusbarDropdown } from './Statusbar.types'
 import { StatusbarDropdownTrigger } from './StatusbarDropdownTrigger'
 import { WeatherDropdownContent } from './WeatherDropdownContent'
 
 export function Statusbar() {
   const statusbarRef = useRef<HTMLDivElement>(null)
   const [activeDropdown, setActiveDropdown] = useState<StatusbarDropdown>(null)
-  const [clockVariant, setClockVariant] = useState<ClockVariant>('HH:mm:ss')
-  const [hourVariant, setHourVariant] = useState<HourVariant>('24')
-  const [showDate, setShowDate] = useState(true)
+  const clockVariant = useStatusbarStore((state) => state.clockVariant)
+  const hourVariant = useStatusbarStore((state) => state.hourVariant)
+  const showDate = useStatusbarStore((state) => state.showDate)
+  const showWeekday = useStatusbarStore((state) => state.showWeekday)
+  const showMonth = useStatusbarStore((state) => state.showMonth)
+  const showYear = useStatusbarStore((state) => state.showYear)
   useClickOutside(
     () => setActiveDropdown(null),
     {
@@ -38,6 +39,11 @@ export function Statusbar() {
   const showWeatherGreeting = useWeatherStore((state) => state.showGreeting)
   const showWeatherIcon = useWeatherStore((state) => state.showIcon)
   const user = useAppStore((state) => state.user)
+  const locked = useLockStore((state) => state.locked)
+
+  useEffect(() => {
+    if (locked) setActiveDropdown(null)
+  }, [locked])
 
   const toggleDropdown = (dropdown: StatusbarDropdown) => {
     setActiveDropdown((currentDropdown) =>
@@ -55,21 +61,15 @@ export function Statusbar() {
         className="shrink-0"
         label="Open clock settings"
         onClick={() => toggleDropdown('clock')}
-        dropdown={
-          <ClockDropdownContent
-            clockVariant={clockVariant}
-            hourVariant={hourVariant}
-            setClockVariant={setClockVariant}
-            setHourVariant={setHourVariant}
-            setShowDate={setShowDate}
-            showDate={showDate}
-          />
-        }
+        dropdown={<ClockDropdownContent />}
       >
         <Clock
           className="min-w-64"
           dateClassName="whitespace-nowrap"
           showDate={showDate}
+          showWeekday={showWeekday}
+          showMonth={showMonth}
+          showYear={showYear}
           timeClassName="whitespace-nowrap tabular-nums"
           variant={clockVariant}
           hourVariant={hourVariant}
@@ -99,16 +99,20 @@ export function Statusbar() {
         className="shrink-0"
         label="Open profile settings"
         onClick={() => toggleDropdown('avatar')}
-        dropdown={<AvatarDropdownContent />}
+        dropdown={
+          <AvatarDropdownContent onClose={() => setActiveDropdown(null)} />
+        }
       >
-        {user?.avatarUrl || user?.avatarPresetId ? (
-          <Avatar
-            size="md"
-            image={resolveAvatarImage(user.avatarUrl, user.avatarPresetId)}
-          />
-        ) : (
-          <Avatar size="md" initials={user?.username.slice(0, 2).toUpperCase() ?? 'GS'} />
-        )}
+      <div>
+          {user?.avatarUrl || user?.avatarPresetId ? (
+            <Avatar
+              size="md"
+              image={resolveAvatarImage(user.avatarUrl, user.avatarPresetId)}
+            />
+          ) : (
+            <Avatar size="md" initials={user?.username.slice(0, 2).toUpperCase() ?? 'GS'} />
+          )}
+      </div>
       </StatusbarDropdownTrigger>
     </BackgroundBlur>
   )

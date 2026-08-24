@@ -1,23 +1,22 @@
-import type { ClockVariant, HourVariant } from './Statusbar.types'
 import { Checkbox, SegmentedControl } from '@/core/components/form'
+import { useStatusbarStore } from '@/core/stores/statusbar'
 
-type ClockDropdownContentProps = {
-  clockVariant: ClockVariant
-  hourVariant: HourVariant
-  setClockVariant: (variant: ClockVariant) => void
-  setHourVariant: (variant: HourVariant) => void
-  setShowDate: (showDate: boolean) => void
-  showDate: boolean
-}
+export function ClockDropdownContent() {
+  const {
+    clockVariant,
+    hourVariant,
+    showDate,
+    showWeekday,
+    showMonth,
+    showYear,
+    setClockVariant,
+    setHourVariant,
+    setShowDate,
+    setShowWeekday,
+    setShowMonth,
+    setShowYear,
+  } = useStatusbarStore()
 
-export function ClockDropdownContent({
-  clockVariant,
-  hourVariant,
-  setClockVariant,
-  setHourVariant,
-  setShowDate,
-  showDate,
-}: ClockDropdownContentProps) {
   return (
     <div className="flex flex-col gap-3 text-sm">
       <p className="text-base font-semibold">Clock</p>
@@ -31,6 +30,24 @@ export function ClockDropdownContent({
         label="Show date"
         checked={showDate}
         onChange={(event) => setShowDate(event.target.checked)}
+        className="justify-between"
+      />
+      <Checkbox
+        label="Show weekday"
+        checked={showWeekday}
+        onChange={(event) => setShowWeekday(event.target.checked)}
+        className="justify-between"
+      />
+      <Checkbox
+        label="Show month"
+        checked={showMonth}
+        onChange={(event) => setShowMonth(event.target.checked)}
+        className="justify-between"
+      />
+      <Checkbox
+        label="Show year"
+        checked={showYear}
+        onChange={(event) => setShowYear(event.target.checked)}
         className="justify-between"
       />
       <SegmentedControl

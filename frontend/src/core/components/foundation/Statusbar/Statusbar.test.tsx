@@ -76,8 +76,11 @@ describe('Statusbar', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open profile settings' }))
 
-    expect(screen.getByText('Profile')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Gerenciar perfil' })).toBeInTheDocument()
+    expect(screen.getByText('User')).toBeInTheDocument()
+    expect(screen.getByText('Local profile settings')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Editar perfil' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Bloquear tela' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Sair' })).toBeInTheDocument()
   })
 
   it('closes the active dropdown when clicking outside', async () => {

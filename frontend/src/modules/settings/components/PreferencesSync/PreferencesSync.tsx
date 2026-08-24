@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 
 import { useEventSamplingStore } from '@/core/stores/event-sampling'
+import { useStatusbarStore } from '@/core/stores/statusbar'
 import { useThemeStore } from '@/core/stores/theme'
 import {
   defaultWallpaper,
@@ -11,6 +12,7 @@ import {
 import { useWindowAppearanceStore } from '@/core/stores/window-appearance'
 import { useAppStore } from '@/core/stores/app'
 import type { SetupPreferences } from '@/modules/auth/api/auth'
+import { useWeatherStore } from '@/lib/weather'
 
 import {
   getPreferences,
@@ -44,6 +46,23 @@ export function PreferencesSync() {
     useEventSamplingStore
       .getState()
       .setIntervalSeconds(record.preferences.eventSamplingSeconds)
+
+    const statusbar = record.preferences.statusbar
+    if (statusbar) {
+      useStatusbarStore.setState({
+        clockVariant: statusbar.clock.variant,
+        hourVariant: statusbar.clock.hourFormat,
+        showDate: statusbar.clock.showDate,
+        showWeekday: statusbar.clock.showWeekday,
+        showMonth: statusbar.clock.showMonth,
+        showYear: statusbar.clock.showYear,
+      })
+      useWeatherStore.setState({
+        showCondition: statusbar.weather.showCondition,
+        showGreeting: statusbar.weather.showGreeting,
+        showIcon: statusbar.weather.showIcon,
+      })
+    }
 
     const preset =
       wallpaperPresets.find(
@@ -94,6 +113,8 @@ export function PreferencesSync() {
       useWallpaperStore.subscribe(schedule),
       useWindowAppearanceStore.subscribe(schedule),
       useEventSamplingStore.subscribe(schedule),
+      useStatusbarStore.subscribe(schedule),
+      useWeatherStore.subscribe(schedule),
     ]
     return () => {
       window.clearTimeout(pending.current)
@@ -111,6 +132,8 @@ function currentPreferences(
   const wallpaper = useWallpaperStore.getState().selectedWallpaper
   const windows = useWindowAppearanceStore.getState()
   const sampling = useEventSamplingStore.getState().intervalSeconds
+  const statusbar = useStatusbarStore.getState()
+  const weather = useWeatherStore.getState()
   return {
     schemaVersion: 1,
     locale: base?.locale ?? 'en-US',
@@ -122,6 +145,22 @@ function currentPreferences(
     windowAppearance: {
       backgroundMode: windows.backgroundMode,
       actionVisibility: windows.actionVisibility,
+    },
+    lockScreen: base?.lockScreen,
+    statusbar: {
+      clock: {
+        variant: statusbar.clockVariant,
+        hourFormat: statusbar.hourVariant,
+        showDate: statusbar.showDate,
+        showWeekday: statusbar.showWeekday,
+        showMonth: statusbar.showMonth,
+        showYear: statusbar.showYear,
+      },
+      weather: {
+        showCondition: weather.showCondition,
+        showGreeting: weather.showGreeting,
+        showIcon: weather.showIcon,
+      },
     },
     eventSamplingSeconds: sampling,
     dashboard: base?.dashboard ?? { version: 1 },
