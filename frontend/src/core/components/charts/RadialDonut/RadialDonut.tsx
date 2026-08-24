@@ -107,7 +107,7 @@ export function RadialDonut({
   const createArc = arc<unknown>()
     .innerRadius(innerRadius)
     .outerRadius(outerRadius)
-    .cornerRadius(roundedCaps ? Math.min(thickness / 2, 6) : 0)
+    .cornerRadius(roundedCaps ? Math.min(thickness / 2, 4) : 0)
   const trackArcPath =
     createArc({
       startAngle: (startAngle * Math.PI) / 180,
@@ -195,6 +195,7 @@ export function RadialDonut({
           />
         )}
       </g>
+
       {centerDot ? (
         <>
           <circle
@@ -213,6 +214,7 @@ export function RadialDonut({
           />
         </>
       ) : null}
+
       {showIndicator ? (
         <circle
           data-testid="radial-donut-indicator"
