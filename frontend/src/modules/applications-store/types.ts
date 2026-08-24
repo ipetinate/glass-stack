@@ -1,0 +1,49 @@
+export type AppCategory = 'Multimedia' | 'Productivity' | 'Networking'
+
+export type AppStatus = 'available' | 'installed' | 'installing' | 'error'
+
+export type InstallationMode = 'standard' | 'custom'
+
+export type AppScreenshot = {
+  id: string
+  src: string
+  alt: string
+}
+
+export type ApplicationSummary = {
+  id: string
+  name: string
+  developer: string
+  description: string
+  category: AppCategory
+  tags: string[]
+  iconSrc: string
+  screenshots: AppScreenshot[]
+  rating: number
+  downloads: string
+  status: AppStatus
+}
+
+export type ApplicationDetail = ApplicationSummary & {
+  type: string
+  requirements: string[]
+  longDescription: string
+}
+
+export type InstallRequest = {
+  appId: string
+  mode: InstallationMode
+  options?: {
+    port?: number
+    volume?: string
+  }
+}
+
+export type InstallOperation = {
+  id: string
+  appId: string
+  status: Extract<AppStatus, 'installing' | 'installed' | 'error'>
+  progress: number
+  message: string
+}
+
