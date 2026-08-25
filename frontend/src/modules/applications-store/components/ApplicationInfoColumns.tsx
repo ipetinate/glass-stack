@@ -14,7 +14,7 @@ import type { ApplicationDetail as ApplicationDetailModel } from '../types'
 
 function Stars({ value }: { value: number }) {
   return (
-    <span className="flex items-center gap-0.5" aria-label={`${value} de 5 estrelas`}>
+    <span className="flex items-center gap-0.5" aria-label={`${value} of 5 stars`}>
       {[1, 2, 3, 4, 5].map((position) => (
         <Star
           key={position}
@@ -33,14 +33,14 @@ function formatRelativeTime(value: string) {
   const timestamp = Date.parse(value)
   if (Number.isNaN(timestamp)) return value
   const elapsedDays = Math.floor((Date.now() - timestamp) / 86_400_000)
-  if (elapsedDays <= 0) return 'hoje'
-  if (elapsedDays === 1) return 'há 1 dia'
-  if (elapsedDays < 30) return `há ${elapsedDays} dias`
+  if (elapsedDays <= 0) return 'today'
+  if (elapsedDays === 1) return '1 day ago'
+  if (elapsedDays < 30) return `${elapsedDays} days ago`
   const elapsedMonths = Math.floor(elapsedDays / 30)
-  if (elapsedMonths === 1) return 'há 1 mês'
-  if (elapsedMonths < 12) return `há ${elapsedMonths} meses`
+  if (elapsedMonths === 1) return '1 month ago'
+  if (elapsedMonths < 12) return `${elapsedMonths} months ago`
   const elapsedYears = Math.floor(elapsedMonths / 12)
-  return elapsedYears === 1 ? 'há 1 ano' : `há ${elapsedYears} anos`
+  return elapsedYears === 1 ? '1 year ago' : `${elapsedYears} years ago`
 }
 
 function StarPicker({
@@ -57,7 +57,7 @@ function StarPicker({
         <button
           key={position}
           type="button"
-          aria-label={`${position} estrela${position > 1 ? 's' : ''}`}
+          aria-label={`${position} star${position > 1 ? 's' : ''}`}
           onMouseEnter={() => setHovered(position)}
           onMouseLeave={() => setHovered(0)}
           onClick={() => onChange(position)}
@@ -137,15 +137,15 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
 
   return (
     <div className="grid gap-6 border-t border-white/10 pt-6 md:grid-cols-3">
-      <section aria-label="Avaliações" className="flex flex-col gap-3">
+      <section aria-label="Reviews" className="flex flex-col gap-3">
         <header className="flex items-baseline justify-between">
-          <h2 className="text-base font-semibold text-white">Avaliações</h2>
+          <h2 className="text-base font-semibold text-white">Reviews</h2>
           <button
             type="button"
             onClick={toggleForm}
             className="text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
           >
-            {reviewFormOpen ? 'Cancelar' : 'Escrever avaliação'}
+            {reviewFormOpen ? 'Cancel' : 'Write a review'}
           </button>
         </header>
         <Stars value={application.rating ?? 0} />
@@ -154,8 +154,8 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
             {isPending ? (
               <>
                 <p className="text-xs leading-5 text-white/70">
-                  Abra o link abaixo e digite o código para conectar sua conta{' '}
-                  {session?.provider === 'google' ? 'Google' : 'GitHub'}.
+                  Open the link below and enter the code to connect your{' '}
+                  {session?.provider === 'google' ? 'Google' : 'GitHub'} account.
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <code className="rounded-md border border-cyan-300/40 bg-black/50 px-4 py-2 font-mono text-xl tracking-[0.3em] text-cyan-200">
@@ -163,7 +163,7 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
                   </code>
                   <button
                     type="button"
-                    aria-label="Copiar código"
+                    aria-label="Copy code"
                     onClick={() => {
                       void navigator.clipboard.writeText(session?.userCode ?? '')
                       setCodeCopied(true)
@@ -174,7 +174,7 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
                   </button>
                 </div>
                 {codeCopied ? (
-                  <span className="text-center text-[11px] text-white/45">Código copiado.</span>
+                  <span className="text-center text-[11px] text-white/45">Code copied.</span>
                 ) : null}
                 <a
                   href={session?.verificationUri || 'https://github.com/login/device'}
@@ -182,24 +182,24 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
                   rel="noreferrer"
                   className="mx-auto inline-flex w-fit items-center gap-1.5 text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
                 >
-                  Abrir página de autorização
+                  Open authorization page
                   <ExternalLink className="size-3" />
                 </a>
                 <p className="flex items-center justify-center gap-2 text-[11px] text-white/50">
                   <LoaderCircle className="size-3 animate-spin" />
-                  Aguardando autorização…
+                  Waiting for authorization…
                 </p>
               </>
             ) : (
               <>
                 <p className="text-xs leading-5 text-white/70">
-                  Entre com sua conta para publicar sua avaliação.
+                  Sign in with your account to publish your review.
                 </p>
                 {startLoginMutation.isError ? (
                   <p role="alert" className="text-xs leading-4 text-rose-300">
                     {startLoginMutation.error instanceof Error
                       ? startLoginMutation.error.message
-                      : 'Não foi possível iniciar o login.'}
+                      : 'Could not start login.'}
                   </p>
                 ) : null}
                 <div className="grid grid-cols-2 gap-2">
@@ -248,8 +248,8 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
               </span>
               <button
                 type="button"
-                aria-label="Desconectar conta"
-                title="Sair"
+                aria-label="Sign out"
+                title="Sign out"
                 onClick={() => cancelLoginMutation.mutate()}
                 className="shrink-0 text-white/50 transition-colors hover:text-rose-300"
               >
@@ -258,8 +258,8 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
             </div>
             <StarPicker value={reviewRating} onChange={setReviewRating} />
             <textarea
-              aria-label="Seu comentário"
-              placeholder="Conte como foi sua experiência…"
+              aria-label="Your comment"
+              placeholder="Tell us about your experience…"
               required
               rows={3}
               value={reviewComment}
@@ -270,7 +270,7 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
               <p role="alert" className="text-xs leading-4 text-rose-300">
                 {(createReviewMutation.error instanceof Error
                   ? createReviewMutation.error.message
-                  : '') || 'Não foi possível publicar a avaliação.'}
+                  : '') || 'Could not publish review.'}
               </p>
             ) : null}
             <Button
@@ -286,7 +286,7 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
               {createReviewMutation.isPending ? (
                 <LoaderCircle className="size-3.5 animate-spin" />
               ) : null}
-              Publicar avaliação
+              Publish review
             </Button>
           </form>
         ) : null}
@@ -314,16 +314,16 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
             type="button"
             className="w-fit text-xs text-white/50 transition-colors hover:text-white/80"
           >
-            Ver todas as avaliações
+            View all reviews
           </button>
         ) : null}
       </section>
 
-      <section aria-label="Detalhes técnicos" className="flex flex-col gap-3 border-white/10 md:border-l md:pl-6">
-        <h2 className="text-base font-semibold text-white">Detalhes</h2>
+      <section aria-label="Technical details" className="flex flex-col gap-3 border-white/10 md:border-l md:pl-6">
+        <h2 className="text-base font-semibold text-white">Details</h2>
         <dl className="grid content-start gap-2 text-sm">
           <div className="flex items-center justify-between gap-4">
-            <dt className="text-white/55">Última versão</dt>
+            <dt className="text-white/55">Latest version</dt>
             <dd>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-base font-semibold text-cyan-200">
                 <Tag className="size-4" aria-hidden="true" />
@@ -333,12 +333,12 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
           </div>
           {application.imageSize ? (
             <div className="flex justify-between gap-4">
-              <dt className="text-white/55">Tamanho da imagem</dt>
+              <dt className="text-white/55">Image size</dt>
               <dd className="text-white">{application.imageSize}</dd>
             </div>
           ) : null}
           <div className="flex flex-col gap-1">
-            <dt className="text-white/55">Arquiteturas</dt>
+            <dt className="text-white/55">Architectures</dt>
             <dd className="flex flex-wrap gap-x-3 gap-y-1">
               {application.architectures.map((architecture) => (
                 <span key={architecture} style={{ color: architectureColors[architecture] }}>
@@ -355,18 +355,18 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
             rel="noreferrer"
             className="inline-flex w-fit items-center gap-1.5 text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
           >
-            Abrir no Docker Hub
+            Open on Docker Hub
             <ExternalLink className="size-3.5" />
           </a>
         ) : null}
       </section>
 
-      <section aria-label="Requisitos" className="flex flex-col gap-3 border-white/10 md:border-l md:pl-6">
-        <h2 className="text-base font-semibold text-white">Requisitos</h2>
+      <section aria-label="Requirements" className="flex flex-col gap-3 border-white/10 md:border-l md:pl-6">
+        <h2 className="text-base font-semibold text-white">Requirements</h2>
         <table className="w-full overflow-hidden rounded-md border-separate border-spacing-0 text-left text-xs backdrop-blur-sm">
           <thead>
             <tr className="text-white/80">
-              {['Categoria', 'Mínimo', 'Recomendado'].map((heading) => (
+              {['Category', 'Minimum', 'Recommended'].map((heading) => (
                 <th key={heading} scope="col" className="border-l border-t border-white/10 bg-white/5 px-2.5 py-2 font-semibold first:border-l-0">
                   {heading}
                 </th>

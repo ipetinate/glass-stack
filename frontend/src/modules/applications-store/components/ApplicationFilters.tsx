@@ -32,7 +32,7 @@ export function ApplicationFilters({
         className="min-h-9 rounded-lg border-white/10 bg-black/20 text-white/80 hover:bg-black/35"
       >
         <Filter className="size-4" />
-        Filtros
+        Filters
         <ListFilter className="size-4 opacity-60" />
       </Button>
       {expanded ? (

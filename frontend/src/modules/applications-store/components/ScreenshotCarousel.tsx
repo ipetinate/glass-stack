@@ -49,7 +49,7 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
   if (screenshots.length === 0) return null
 
   return (
-    <section aria-label="Capturas de tela" className="flex min-w-0 flex-col gap-3">
+    <section aria-label="Screenshots" className="flex min-w-0 flex-col gap-3">
       <div className="relative">
         <div
           ref={scrollerRef}
@@ -69,7 +69,7 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
               <img src={screenshot.src} alt={screenshot.alt} className="size-full object-cover" />
               <button
                 type="button"
-                aria-label={`Expandir captura ${index + 1}`}
+                aria-label={`Expand screenshot ${index + 1}`}
                 onClick={() => setLightboxIndex(index)}
                 className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/35 group-hover:opacity-100"
               >
@@ -82,7 +82,7 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
           <>
             <button
               type="button"
-              aria-label="Captura anterior"
+              aria-label="Previous screenshot"
               onClick={() => scrollToIndex(activeIndex - 1)}
               disabled={activeIndex === 0}
               className="absolute top-1/2 left-3 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white transition-colors hover:border-cyan-300/60 hover:text-cyan-300 disabled:pointer-events-none disabled:opacity-0"
@@ -91,7 +91,7 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
             </button>
             <button
               type="button"
-              aria-label="Próxima captura"
+              aria-label="Next screenshot"
               onClick={() => scrollToIndex(activeIndex + 1)}
               disabled={activeIndex >= screenshots.length - 1}
               className="absolute top-1/2 right-3 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white transition-colors hover:border-cyan-300/60 hover:text-cyan-300 disabled:pointer-events-none disabled:opacity-0"
@@ -102,14 +102,14 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
         ) : null}
       </div>
       {screenshots.length > 1 ? (
-        <div role="tablist" aria-label="Navegar entre capturas" className="flex items-center justify-center gap-1.5">
+        <div role="tablist" aria-label="Navigate screenshots" className="flex items-center justify-center gap-1.5">
           {screenshots.map((screenshot, index) => (
             <button
               key={screenshot.id}
               type="button"
               role="tab"
               aria-selected={index === activeIndex}
-              aria-label={`Captura ${index + 1} de ${screenshots.length}`}
+              aria-label={`Screenshot ${index + 1} of ${screenshots.length}`}
               onClick={() => scrollToIndex(index)}
               className={
                 index === activeIndex
@@ -124,7 +124,7 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Captura expandida"
+          aria-label="Expanded screenshot"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-10 backdrop-blur-sm"
           onClick={(event) => {
             if (event.target === event.currentTarget) setLightboxIndex(undefined)
@@ -137,7 +137,7 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
           />
           <button
             type="button"
-            aria-label="Fechar captura expandida"
+            aria-label="Close expanded screenshot"
             onClick={() => setLightboxIndex(undefined)}
             className="absolute top-5 right-5 flex size-10 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white transition-colors hover:border-cyan-300/60 hover:text-cyan-300"
           >
@@ -147,7 +147,7 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
             <>
               <button
                 type="button"
-                aria-label="Imagem anterior"
+                aria-label="Previous image"
                 onClick={() =>
                   setLightboxIndex((current) =>
                     current === undefined ? current : (current - 1 + screenshots.length) % screenshots.length,
@@ -159,7 +159,7 @@ export function ScreenshotCarousel({ screenshots }: ScreenshotCarouselProps) {
               </button>
               <button
                 type="button"
-                aria-label="Próxima imagem"
+                aria-label="Next image"
                 onClick={() =>
                   setLightboxIndex((current) =>
                     current === undefined ? current : (current + 1) % screenshots.length,

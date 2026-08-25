@@ -3,30 +3,30 @@ import type { SelectOption } from '@/core/components/form'
 import type { AppArchitecture, AppCategory } from './types'
 
 export const applicationCategories: SelectOption[] = [
-  { value: 'all', label: 'Todas as categorias' },
-  { value: 'Multimedia', label: 'Multimídia' },
-  { value: 'Productivity', label: 'Produtividade' },
-  { value: 'Networking', label: 'Rede' },
-  { value: 'Home', label: 'Casa' },
-  { value: 'Security', label: 'Segurança' },
-  { value: 'DeveloperTools', label: 'Ferramentas de desenvolvedor' },
-  { value: 'Other', label: 'Outros' },
+  { value: 'all', label: 'All categories' },
+  { value: 'Multimedia', label: 'Multimedia' },
+  { value: 'Productivity', label: 'Productivity' },
+  { value: 'Networking', label: 'Networking' },
+  { value: 'Home', label: 'Home' },
+  { value: 'Security', label: 'Security' },
+  { value: 'DeveloperTools', label: 'Developer Tools' },
+  { value: 'Other', label: 'Other' },
 ]
 
 export const applicationSortOptions: SelectOption[] = [
-  { value: 'recent', label: 'Mais recentes' },
-  { value: 'rating', label: 'Melhor avaliados' },
-  { value: 'name', label: 'Nome' },
+  { value: 'recent', label: 'Most recent' },
+  { value: 'rating', label: 'Highest rated' },
+  { value: 'name', label: 'Name' },
 ]
 
 export const categoryLabels: Record<AppCategory, string> = {
-  Multimedia: 'Multimídia',
-  Productivity: 'Produtividade',
-  Networking: 'Rede',
-  Home: 'Casa',
-  Security: 'Segurança',
+  Multimedia: 'Multimedia',
+  Productivity: 'Productivity',
+  Networking: 'Networking',
+  Home: 'Home',
+  Security: 'Security',
   DeveloperTools: 'Developer Tools',
-  Other: 'Outros',
+  Other: 'Other',
 }
 
 export const categoryTagColors: Record<string, string> = {

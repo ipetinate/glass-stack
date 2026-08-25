@@ -30,7 +30,7 @@ export function ApplicationCard({
       >
         <img
           src={application.iconSrc}
-          alt={`${application.name} ícone`}
+          alt={`${application.name} icon`}
           className="size-16 shrink-0 rounded-2xl object-cover"
         />
         <span className="min-w-0">
@@ -48,7 +48,7 @@ export function ApplicationCard({
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2 text-[11px] text-white/70">
-          <span className="rounded-full bg-[#00b5f0] px-2 py-1 text-white">
+          <span className="rounded-md bg-[#00b5f0] px-2 py-1 text-white">
             {categoryLabels[application.category]}
           </span>
           <span className="flex items-center gap-1">
@@ -68,7 +68,7 @@ export function ApplicationCard({
           className="min-h-8 shrink-0 rounded-lg border-0 bg-[#00bfff] px-3 text-xs text-white hover:bg-[#00a9df]"
         >
           {isInstalled ? <Check className="size-3.5" /> : isInstalling ? <LoaderCircle className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-          {isInstalled ? 'Instalado' : isInstalling ? 'Instalando…' : 'Instalar'}
+          {isInstalled ? 'Installed' : isInstalling ? 'Installing…' : 'Install'}
         </Button>
       </div>
     </article>

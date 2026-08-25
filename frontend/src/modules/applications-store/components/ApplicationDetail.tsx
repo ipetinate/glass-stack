@@ -36,12 +36,12 @@ function InstallAction({ status, isInstalling, installProgress, onInstall }: Ins
         ) : (
           <Download className="size-3.5" />
         )}
-        {isInstalled ? 'Instalado' : isInstalling ? 'Instalando…' : 'Instalar'}
+        {isInstalled ? 'Installed' : isInstalling ? 'Installing…' : 'Install'}
       </Button>
       {showProgress ? (
-        <div role="status" aria-label={`Progresso da instalação: ${installProgress ?? 0}%`} className="w-full min-w-28">
+        <div role="status" aria-label={`Installation progress: ${installProgress ?? 0}%`} className="w-full min-w-28">
           <div className="flex items-center justify-between text-[11px] text-white/55">
-            <span>Progresso</span>
+            <span>Progress</span>
             <span>{Math.round(installProgress ?? 0)}%</span>
           </div>
           <div className="mt-0.5 h-0.5 w-full overflow-hidden rounded-full bg-white/15">
@@ -88,8 +88,17 @@ export function ApplicationDetail({
         {scrolled ? (
           <BackgroundBlur
             as="div"
-            className="pointer-events-auto mb-2 flex items-center gap-3 rounded-2xl border-white/10 bg-black/70 px-4 py-2"
+            className="pointer-events-auto mb-2 flex items-center gap-3 rounded-2xl border-white/10 bg-black/70 px-4 py-3"
           >
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={onBack}
+              className="min-h-8 min-w-8 rounded-lg p-0 text-white/70 hover:text-white"
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
             <img src={application.iconSrc} alt="" className="size-10 rounded-lg object-cover" />
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{application.name}</span>
             <InstallAction
@@ -105,18 +114,19 @@ export function ApplicationDetail({
       <Button
         type="button"
         size="sm"
+        variant="ghost"
         onClick={onBack}
-        className="mb-6 w-fit rounded-lg border-0 bg-transparent px-3 text-white hover:bg-white/10 hover:text-cyan-300"
+        className="mb-6 w-fit rounded-lg px-3 text-white/70 hover:text-white"
       >
         <ArrowLeft className="size-4" />
-        Voltar
+        Back
       </Button>
 
       <header className="flex flex-wrap items-start justify-between gap-6">
         <div className="flex items-center gap-5">
           <img
             src={application.iconSrc}
-            alt={`${application.name} ícone`}
+            alt={`${application.name} icon`}
             className="size-28 rounded-2xl object-cover"
           />
           <div>
@@ -134,13 +144,13 @@ export function ApplicationDetail({
           </div>
         </div>
 
-        <section aria-label="Informações adicionais" className="grid gap-2 text-xs text-white/75">
+        <section aria-label="Additional information" className="grid gap-2 text-xs text-white/75">
           <div className="flex items-center gap-2">
-            <span className="text-white/55">Tipo:</span>
+            <span className="text-white/55">Type:</span>
             <span className="rounded-full bg-[#00b5f0] px-2 py-0.5 text-white">{application.type}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-white/55">Categorias:</span>
+            <span className="text-white/55">Categories:</span>
             <ApplicationCategoryTags tags={application.tags} />
           </div>
         </section>
@@ -159,7 +169,7 @@ export function ApplicationDetail({
             disabled={actionDisabled}
             className="min-h-7 rounded-lg border-0 bg-[#8b87f9] px-3 text-xs text-white hover:bg-[#7975ed]"
           >
-            Instalação customizada
+            Custom Install
           </Button>
         </div>
       </header>

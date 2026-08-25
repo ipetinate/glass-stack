@@ -1,6 +1,6 @@
 import { RefreshCw, Search, ShoppingBag } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Input } from '@/core/components/form'
@@ -46,6 +46,9 @@ export function ApplicationsStore() {
   const [customInstallOpen, setCustomInstallOpen] = useState(false)
   const [installingId, setInstallingId] = useState<string>()
   const [installationMode, setInstallationMode] = useState<InstallationMode>()
+  const [slideDirection, setSlideDirection] = useState<'in' | 'out'>('in')
+  const [showDetail, setShowDetail] = useState(false)
+  const prevSelectedId = useRef<string | undefined>(undefined)
 
   const applications = applicationsQuery.data ?? EMPTY_APPLICATIONS
   const selectedSummary = applications.find((application) => application.id === selectedId)
@@ -76,6 +79,25 @@ export function ApplicationsStore() {
     installMutation.mutate({ appId, mode, options })
   }
 
+  const handleOpen = (appId: string) => {
+    prevSelectedId.current = undefined
+    setSlideDirection('in')
+    setSelectedId(appId)
+    setShowDetail(false)
+    requestAnimationFrame(() => setShowDetail(true))
+  }
+
+  const handleBack = () => {
+    prevSelectedId.current = selectedId
+    setSlideDirection('out')
+    setShowDetail(false)
+    setTimeout(() => {
+      setSelectedId(undefined)
+      setCustomInstallOpen(false)
+      setInstallingId(undefined)
+    }, 300)
+  }
+
   const handleClose = () => {
     if (!confirmClose()) return
     navigate('/')
@@ -83,46 +105,38 @@ export function ApplicationsStore() {
 
   return (
     <Window
-      title="Loja de aplicativos"
+      title="App Store"
       icon={ShoppingBag}
       canMaximize
       onClose={handleClose}
       className="h-full"
-      contentClassName="pt-6"
+      contentClassName="pt-6 overflow-hidden"
     >
-      {selectedId && selectedQuery.data ? (
-        <ApplicationDetail
-          application={selectedQuery.data}
-          onBack={() => {
-            setSelectedId(undefined)
-            setCustomInstallOpen(false)
-            setInstallingId(undefined)
+      <div className="relative h-full min-h-0">
+        {/* List view */}
+        <div
+          className="absolute inset-0 flex flex-col gap-5 transition-all duration-300 ease-out"
+          style={{
+            transform: showDetail ? 'translateX(-100%)' : 'translateX(0)',
+            opacity: showDetail ? 0 : 1,
+            pointerEvents: showDetail ? 'none' : 'auto',
           }}
-          onInstall={() => startInstall(selectedId, 'standard')}
-          onCustomInstall={() => {
-            setCustomInstallOpen(true)
-            setInstallationMode('custom')
-          }}
-          isInstalling={isInstalling && installingId === selectedId}
-          installProgress={installingId === selectedId ? installProgress : undefined}
-        />
-      ) : (
-        <div className="flex h-full min-h-0 flex-col gap-5 overflow-hidden">
+        >
           {applicationsQuery.isLoading ? <StoreSkeleton /> : null}
           {applicationsQuery.isError ? (
             <div role="alert" className="rounded-xl border border-rose-300/30 bg-rose-500/10 p-5 text-sm text-rose-100">
-              Não foi possível carregar a loja de aplicativos.
+              Could not load the app store.
             </div>
           ) : null}
           {!applicationsQuery.isLoading && !applicationsQuery.isError && applications.length > 0 ? (
-            <>
-              <FeaturedApplications applications={getFeaturedApplications(applications)} onOpen={setSelectedId} />
-              <div className="flex shrink-0 flex-col gap-3 md:flex-row md:items-center">
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <FeaturedApplications applications={getFeaturedApplications(applications)} onOpen={handleOpen} />
+              <div className="sticky top-0 z-10 flex flex-col gap-3 border-b border-white/5 bg-[#12161c]/80 py-3 backdrop-blur-xl md:flex-row md:items-center">
                 <Input
-                  aria-label="Buscar aplicativos"
+                  aria-label="Search apps"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Encontre um aplicativo…"
+                  placeholder="Find an app…"
                   prepend={<Search className="size-4" />}
                   containerClassName="min-w-0 flex-1"
                   className="text-white"
@@ -137,8 +151,8 @@ export function ApplicationsStore() {
                 />
                 <button
                   type="button"
-                  aria-label="Atualizar catálogo"
-                  title="Atualizar catálogo"
+                  aria-label="Refresh catalog"
+                  title="Refresh catalog"
                   onClick={() => syncMutation.mutate()}
                   disabled={syncMutation.isPending}
                   className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-white/15 text-white/70 transition-colors hover:border-cyan-300/60 hover:text-cyan-300 disabled:opacity-50"
@@ -146,24 +160,53 @@ export function ApplicationsStore() {
                   <RefreshCw className={syncMutation.isPending ? 'size-4 animate-spin' : 'size-4'} />
                 </button>
               </div>
-              <div className="min-h-0 flex-1 overflow-y-auto">
+              <div className="pt-5">
                 {visibleApplications.length > 0 ? (
                   <ApplicationGrid
                     applications={visibleApplications}
                     installingApplicationId={isInstalling ? installingId : undefined}
-                    onOpen={setSelectedId}
+                    onOpen={handleOpen}
                     onInstall={(appId) => startInstall(appId, 'standard')}
                   />
                 ) : (
                   <div className="rounded-xl border border-white/10 bg-black/20 p-8 text-center text-sm text-white/60">
-                    Nenhum aplicativo encontrado.
+                    No apps found.
                   </div>
                 )}
               </div>
-            </>
+            </div>
           ) : null}
         </div>
-      )}
+
+        {/* Detail view */}
+        {selectedId && selectedQuery.data ? (
+          <div
+            className="absolute inset-0 transition-all duration-300 ease-out"
+            style={{
+              transform: showDetail
+                ? 'translateX(0)'
+                : slideDirection === 'in'
+                  ? 'translateX(100%)'
+                  : 'translateX(100%)',
+              opacity: showDetail ? 1 : 0,
+              pointerEvents: showDetail ? 'auto' : 'none',
+            }}
+          >
+            <ApplicationDetail
+              application={selectedQuery.data}
+              onBack={handleBack}
+              onInstall={() => startInstall(selectedId, 'standard')}
+              onCustomInstall={() => {
+                setCustomInstallOpen(true)
+                setInstallationMode('custom')
+              }}
+              isInstalling={isInstalling && installingId === selectedId}
+              installProgress={installingId === selectedId ? installProgress : undefined}
+            />
+          </div>
+        ) : null}
+      </div>
+
       {selectedSummary && customInstallOpen && selectedQuery.data ? (
         <CustomInstallForm
           application={selectedQuery.data}
@@ -176,7 +219,7 @@ export function ApplicationsStore() {
       ) : null}
       {installingId && installMutation.data ? (
         <div role="status" className="mt-4 shrink-0 rounded-xl border border-cyan-300/30 bg-cyan-400/10 p-4 text-sm text-cyan-50">
-          {installationMode === 'custom' ? 'Instalação customizada iniciada.' : 'Instalação iniciada.'}{' '}
+          {installationMode === 'custom' ? 'Custom installation started.' : 'Installation started.'}{' '}
           {operation?.message ?? installMutation.data.message}
         </div>
       ) : null}

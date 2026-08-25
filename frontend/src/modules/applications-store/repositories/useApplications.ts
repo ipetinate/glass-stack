@@ -57,7 +57,7 @@ export function useCreateReview(appId: string | undefined) {
 
   return useMutation({
     mutationFn: (review: { rating: number; comment: string }) => {
-      if (!appId) throw new Error('Nenhum aplicativo selecionado.')
+      if (!appId) throw new Error('No app selected.')
       return createReview(appId, review)
     },
     onSuccess: () => {
