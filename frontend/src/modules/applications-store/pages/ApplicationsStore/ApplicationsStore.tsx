@@ -132,7 +132,7 @@ export function ApplicationsStore() {
           {!applicationsQuery.isLoading && !applicationsQuery.isError && applications.length > 0 ? (
             <div className="min-h-0 flex-1 overflow-y-auto">
               <FeaturedApplications applications={getFeaturedApplications(applications)} onOpen={handleOpen} />
-              <div className="sticky top-0 z-10 flex flex-col gap-3 border-b border-white/5 bg-[#12161c]/80 py-3 backdrop-blur-xl md:flex-row md:items-center">
+              <div className="flex flex-col gap-3 border-b border-white/5 py-3 md:flex-row md:items-center">
                 <Input
                   aria-label="Search apps"
                   value={search}
