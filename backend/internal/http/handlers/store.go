@@ -34,7 +34,12 @@ func NewStoreHandler(
 }
 
 func (handler *StoreHandler) Catalog(response http.ResponseWriter, request *http.Request) {
-	applications, err := handler.service.Catalog(request.Context())
+	filter := store.CatalogFilter{
+		Query:    request.URL.Query().Get("q"),
+		Category: request.URL.Query().Get("category"),
+		Sort:     request.URL.Query().Get("sort"),
+	}
+	applications, err := handler.service.CatalogFiltered(request.Context(), filter)
 	if err != nil {
 		writeStoreError(
 			response,

@@ -1,6 +1,6 @@
 import { Search, ShoppingBag } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 
 import { Input } from '@/core/components/form'
@@ -16,7 +16,6 @@ import {
   FilterTrigger,
   StoreSkeleton,
 } from '../../components'
-import { filterApplications } from '../../functions/filter-applications'
 import {
   applicationsQueryKey,
   useApplication,
@@ -34,10 +33,10 @@ export function ApplicationsStore() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { confirmClose } = useUnsavedChanges({ scope: 'Applications Store' })
-  const applicationsQuery = useApplications()
   const installMutation = useInstallApplication()
   const installOperationQuery = useInstallOperation(installMutation.data?.id)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [sort, setSort] = useState('recent')
   const [filtersExpanded, setFiltersExpanded] = useState(false)
@@ -48,14 +47,18 @@ export function ApplicationsStore() {
   const [slideDirection, setSlideDirection] = useState<'in' | 'out'>('in')
   const [showDetail, setShowDetail] = useState(false)
   const prevSelectedId = useRef<string | undefined>(undefined)
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined as never)
 
+  const applicationsQuery = useApplications({ q: debouncedSearch, category, sort })
   const applications = applicationsQuery.data ?? EMPTY_APPLICATIONS
   const selectedSummary = applications.find((application) => application.id === selectedId)
   const selectedQuery = useApplication(selectedId)
-  const visibleApplications = useMemo(
-    () => filterApplications(applications, search, category, sort),
-    [applications, category, search, sort],
-  )
+
+  useEffect(() => {
+    clearTimeout(debounceTimer.current)
+    debounceTimer.current = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(debounceTimer.current)
+  }, [search])
 
   const operation = installOperationQuery.data
   const isInstalling = installingId !== undefined && operation?.status === 'installing'
@@ -151,9 +154,9 @@ export function ApplicationsStore() {
                 />
               </div>
               <div className="pt-5">
-                {visibleApplications.length > 0 ? (
+                {applications.length > 0 ? (
                   <ApplicationGrid
-                    applications={visibleApplications}
+                    applications={applications}
                     installingApplicationId={isInstalling ? installingId : undefined}
                     onOpen={handleOpen}
                     onInstall={(appId) => startInstall(appId, 'standard')}

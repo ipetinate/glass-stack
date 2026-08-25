@@ -15,10 +15,10 @@ import type { InstallRequest } from '../types'
 
 export const applicationsQueryKey = ['applications-store', 'applications']
 
-export function useApplications() {
+export function useApplications(filters?: { q?: string; category?: string; sort?: string }) {
   return useQuery({
-    queryKey: applicationsQueryKey,
-    queryFn: getApplications,
+    queryKey: [...applicationsQueryKey, filters],
+    queryFn: () => getApplications(filters),
   })
 }
 

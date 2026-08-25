@@ -1,5 +1,6 @@
 import { Filter } from 'lucide-react'
 
+import { BackgroundBlur } from '@/core/components/ui/BackgroundBlur'
 import { Select } from '@/core/components/form'
 
 import { applicationCategories, applicationSortOptions } from '../constants'
@@ -22,7 +23,7 @@ export function ApplicationFilters({
   if (!expanded) return null
 
   return (
-    <div className="absolute right-0 top-full z-20 mt-2 grid w-72 gap-3 rounded-xl border border-white/10 bg-[#151a21]/95 p-4 shadow-xl backdrop-blur-xl">
+    <BackgroundBlur className="absolute right-0 top-full z-20 mt-2 grid w-72 gap-3 p-4">
       <Select
         aria-label="Category"
         value={category}
@@ -35,7 +36,7 @@ export function ApplicationFilters({
         options={applicationSortOptions}
         onValueChange={(value) => onSortChange(String(value))}
       />
-    </div>
+    </BackgroundBlur>
   )
 }
 

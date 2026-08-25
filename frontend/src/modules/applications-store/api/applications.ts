@@ -8,8 +8,13 @@ import type {
   ReviewSession,
 } from '../types'
 
-export function getApplications() {
-  return glassRequest<ApplicationSummary[]>('/api/v1/catalog/apps')
+export function getApplications(filters?: { q?: string; category?: string; sort?: string }) {
+  const params = new URLSearchParams()
+  if (filters?.q) params.set('q', filters.q)
+  if (filters?.category && filters.category !== 'all') params.set('category', filters.category)
+  if (filters?.sort) params.set('sort', filters.sort)
+  const query = params.toString()
+  return glassRequest<ApplicationSummary[]>(`/api/v1/catalog/apps${query ? `?${query}` : ''}`)
 }
 
 export function getApplication(appId: string) {

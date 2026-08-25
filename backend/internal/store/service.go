@@ -139,6 +139,63 @@ func (service *Service) Catalog(ctx context.Context) ([]ApplicationSummaryDTO, e
 	return summaries, nil
 }
 
+type CatalogFilter struct {
+	Query    string
+	Category string
+	Sort     string
+}
+
+func (service *Service) CatalogFiltered(ctx context.Context, filter CatalogFilter) ([]ApplicationSummaryDTO, error) {
+	records, err := service.catalog.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	search := strings.TrimSpace(strings.ToLower(filter.Query))
+	category := strings.TrimSpace(filter.Category)
+	sortBy := strings.TrimSpace(filter.Sort)
+
+	summaries := make([]ApplicationSummaryDTO, 0, len(records))
+	for _, record := range records {
+		if category != "" && category != "all" && record.Summary.Category != category {
+			continue
+		}
+		if search != "" {
+			haystack := strings.ToLower(record.Summary.Name + " " + record.Summary.Developer + " " + record.Summary.Description)
+			if !strings.Contains(haystack, search) {
+				continue
+			}
+		}
+		summaries = append(summaries, record.Summary)
+	}
+
+	switch sortBy {
+	case "name":
+		sort.Slice(summaries, func(i, j int) bool {
+			return summaries[i].Name < summaries[j].Name
+		})
+	case "rating":
+		sort.Slice(summaries, func(i, j int) bool {
+			if summaries[i].Rating == nil && summaries[j].Rating == nil {
+				return false
+			}
+			if summaries[i].Rating == nil {
+				return false
+			}
+			if summaries[j].Rating == nil {
+				return true
+			}
+			return *summaries[i].Rating > *summaries[j].Rating
+		})
+	default:
+		sort.Slice(summaries, func(i, j int) bool {
+			return summaries[i].Name < summaries[j].Name
+		})
+	}
+
+	return summaries, nil
+}
+
 func (service *Service) Application(
 	ctx context.Context,
 	appID string,
