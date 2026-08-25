@@ -28,3 +28,17 @@ export function getInstallOperation(operationId: string) {
   )
 }
 
+export type StoreSyncSummary = {
+  commit: string
+  added: number
+  updated: number
+  removed: number
+  unchanged: boolean
+}
+
+export function syncStoreCatalog() {
+  return glassRequest<StoreSyncSummary>('/api/v1/store/sync', {
+    method: 'POST',
+  })
+}
+

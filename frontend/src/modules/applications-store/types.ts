@@ -1,4 +1,11 @@
-export type AppCategory = 'Multimedia' | 'Productivity' | 'Networking'
+export type AppCategory =
+  | 'Multimedia'
+  | 'Productivity'
+  | 'Networking'
+  | 'Home'
+  | 'Security'
+  | 'DeveloperTools'
+  | 'Other'
 
 export type AppArchitecture = 'x86-64' | 'arm64' | 'riscv64' | 'mips64'
 
@@ -35,15 +42,15 @@ export type ApplicationSummary = {
   tags: string[]
   iconSrc: string
   screenshots: AppScreenshot[]
-  rating: number
-  downloads: string
+  rating?: number
+  downloads?: string
   status: AppStatus
 }
 
 export type ApplicationDetail = ApplicationSummary & {
   type: string
   version: string
-  imageSize: string
+  imageSize?: string
   architectures: AppArchitecture[]
   requirements: AppRequirement[]
   reviews: AppReview[]

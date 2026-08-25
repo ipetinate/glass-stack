@@ -52,8 +52,12 @@ export function ApplicationCard({
             {categoryLabels[application.category]}
           </span>
           <span className="flex items-center gap-1">
-            <Star className="size-3 fill-current text-cyan-300" />
-            {application.rating.toFixed(1)}
+            {application.rating !== undefined ? (
+              <>
+                <Star className="size-3 fill-current text-cyan-300" />
+                {application.rating.toFixed(1)}
+              </>
+            ) : null}
           </span>
         </div>
         <Button

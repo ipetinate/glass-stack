@@ -20,7 +20,7 @@ export function filterApplications(
 
   return [...filtered].sort((left, right) => {
     if (sort === 'name') return left.name.localeCompare(right.name)
-    if (sort === 'rating') return right.rating - left.rating
+    if (sort === 'rating') return (right.rating ?? 0) - (left.rating ?? 0)
     return 0
   })
 }

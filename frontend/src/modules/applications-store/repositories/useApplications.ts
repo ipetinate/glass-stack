@@ -5,6 +5,7 @@ import {
   getApplications,
   getInstallOperation,
   startApplicationInstall,
+  syncStoreCatalog,
 } from '../api/applications'
 import type { InstallRequest } from '../types'
 
@@ -30,6 +31,17 @@ export function useInstallApplication() {
 
   return useMutation({
     mutationFn: (request: InstallRequest) => startApplicationInstall(request),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: applicationsQueryKey })
+    },
+  })
+}
+
+export function useSyncCatalog() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => syncStoreCatalog(),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: applicationsQueryKey })
     },

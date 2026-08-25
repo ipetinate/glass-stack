@@ -7,6 +7,10 @@ export const applicationCategories: SelectOption[] = [
   { value: 'Multimedia', label: 'Multimídia' },
   { value: 'Productivity', label: 'Produtividade' },
   { value: 'Networking', label: 'Rede' },
+  { value: 'Home', label: 'Casa' },
+  { value: 'Security', label: 'Segurança' },
+  { value: 'DeveloperTools', label: 'Ferramentas de desenvolvedor' },
+  { value: 'Other', label: 'Outros' },
 ]
 
 export const applicationSortOptions: SelectOption[] = [
@@ -19,6 +23,10 @@ export const categoryLabels: Record<AppCategory, string> = {
   Multimedia: 'Multimídia',
   Productivity: 'Produtividade',
   Networking: 'Rede',
+  Home: 'Casa',
+  Security: 'Segurança',
+  DeveloperTools: 'Developer Tools',
+  Other: 'Outros',
 }
 
 export const categoryTagColors: Record<string, string> = {
@@ -28,6 +36,10 @@ export const categoryTagColors: Record<string, string> = {
   Photos: '#9bd8ff',
   Files: '#c4ff9b',
   DNS: '#ffb89b',
+  Home: '#ffd59b',
+  Security: '#9bffb4',
+  DeveloperTools: '#9bc8ff',
+  Other: '#d0d0d0',
 }
 
 export const architectureColors: Record<AppArchitecture, string> = {

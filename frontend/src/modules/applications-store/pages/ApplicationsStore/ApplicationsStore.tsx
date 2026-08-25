@@ -1,4 +1,4 @@
-import { Search, ShoppingBag } from 'lucide-react'
+import { RefreshCw, Search, ShoppingBag } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -22,6 +22,7 @@ import {
   useApplications,
   useInstallApplication,
   useInstallOperation,
+  useSyncCatalog,
 } from '../../repositories'
 import type { ApplicationSummary, InstallationMode } from '../../types'
 
@@ -36,6 +37,7 @@ export function ApplicationsStore() {
   const applicationsQuery = useApplications()
   const installMutation = useInstallApplication()
   const installOperationQuery = useInstallOperation(installMutation.data?.id)
+  const syncMutation = useSyncCatalog()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [sort, setSort] = useState('recent')
@@ -133,6 +135,16 @@ export function ApplicationsStore() {
                   onSortChange={setSort}
                   onToggle={() => setFiltersExpanded((current) => !current)}
                 />
+                <button
+                  type="button"
+                  aria-label="Atualizar catálogo"
+                  title="Atualizar catálogo"
+                  onClick={() => syncMutation.mutate()}
+                  disabled={syncMutation.isPending}
+                  className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-white/15 text-white/70 transition-colors hover:border-cyan-300/60 hover:text-cyan-300 disabled:opacity-50"
+                >
+                  <RefreshCw className={syncMutation.isPending ? 'size-4 animate-spin' : 'size-4'} />
+                </button>
               </div>
               <div className="min-h-0 flex-1 overflow-y-auto">
                 {visibleApplications.length > 0 ? (

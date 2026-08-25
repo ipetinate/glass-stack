@@ -39,7 +39,7 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
             Escrever avaliação
           </button>
         </header>
-        <Stars value={application.rating} />
+        <Stars value={application.rating ?? 0} />
         {latestReview ? (
           <article className="rounded-lg bg-white/5 p-3">
             <div className="flex items-center justify-between gap-2">
@@ -66,10 +66,12 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
             <dt className="text-white/55">Última versão</dt>
             <dd className="text-white">{application.version}</dd>
           </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-white/55">Tamanho da imagem</dt>
-            <dd className="text-white">{application.imageSize}</dd>
-          </div>
+          {application.imageSize ? (
+            <div className="flex justify-between gap-4">
+              <dt className="text-white/55">Tamanho da imagem</dt>
+              <dd className="text-white">{application.imageSize}</dd>
+            </div>
+          ) : null}
           <div className="flex flex-col gap-1">
             <dt className="text-white/55">Arquiteturas</dt>
             <dd className="flex flex-wrap gap-x-3 gap-y-1">

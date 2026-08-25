@@ -50,4 +50,13 @@ export const handlers = [
   http.get('/api/v1/apps/install/:operationId', ({ params }) =>
     HttpResponse.json(buildOperation(String(params.operationId))),
   ),
+  http.post('/api/v1/store/sync', () =>
+    HttpResponse.json({
+      commit: 'abc123def456',
+      added: 0,
+      updated: 0,
+      removed: 0,
+      unchanged: false,
+    }),
+  ),
 ]
