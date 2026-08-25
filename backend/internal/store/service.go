@@ -23,6 +23,7 @@ type CatalogRecord struct {
 	Summary     ApplicationSummaryDTO
 	Version     string
 	ContentHash string
+	SyncedAt    string
 }
 
 type CatalogRepository interface {
@@ -186,6 +187,18 @@ func (service *Service) CatalogFiltered(ctx context.Context, filter CatalogFilte
 				return true
 			}
 			return *summaries[i].Rating > *summaries[j].Rating
+		})
+	case "recent":
+		syncedAtFor := func(id string) string {
+			for _, record := range records {
+				if record.Summary.ID == id {
+					return record.SyncedAt
+				}
+			}
+			return ""
+		}
+		sort.Slice(summaries, func(i, j int) bool {
+			return syncedAtFor(summaries[i].ID) > syncedAtFor(summaries[j].ID)
 		})
 	default:
 		sort.Slice(summaries, func(i, j int) bool {

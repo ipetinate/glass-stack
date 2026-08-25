@@ -23,12 +23,26 @@ function buildOperation(operationId: string): InstallOperation {
     appId,
     status: done ? 'installed' : 'installing',
     progress: next,
-    message: done ? 'Instalação concluída.' : 'Baixando imagem…',
+    message: done ? 'Installation complete.' : 'Downloading image…',
   }
 }
 
 export const handlers = [
-  http.get('/api/v1/catalog/apps', () => HttpResponse.json(applications)),
+  http.get('/api/v1/catalog/apps', ({ request }) => {
+    const url = new URL(request.url)
+    const q = (url.searchParams.get('q') ?? '').toLowerCase()
+    const category = url.searchParams.get('category') ?? ''
+    let result = [...applications]
+    if (q) {
+      result = result.filter((app) =>
+        [app.name, app.developer, app.description].join(' ').toLowerCase().includes(q),
+      )
+    }
+    if (category && category !== 'all') {
+      result = result.filter((app) => app.category === category)
+    }
+    return HttpResponse.json(result)
+  }),
   http.get('/api/v1/catalog/apps/:appId', ({ params }) => {
     const application = getApplicationDetail(String(params.appId))
     return application

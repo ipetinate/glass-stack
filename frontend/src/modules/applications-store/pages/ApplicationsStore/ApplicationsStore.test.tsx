@@ -20,46 +20,51 @@ describe('ApplicationsStore', () => {
   it('renders the catalog from the mocked API', async () => {
     renderStore()
 
-    expect(screen.getByRole('heading', { name: 'Loja de aplicativos' })).toBeInTheDocument()
-    expect((await screen.findAllByRole('button', { name: /Jellyfin ícone/i })).length).toBe(2)
-    expect(screen.getByPlaceholderText('Encontre um aplicativo…')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'App Store' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /Jellyfin icon/i })).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('Find an app…')).toBeInTheDocument()
   })
 
   it('filters applications by search', async () => {
     const user = userEvent.setup()
     renderStore()
-    const input = await screen.findByPlaceholderText('Encontre um aplicativo…')
+    const input = await screen.findByPlaceholderText('Find an app…')
 
     await user.type(input, 'Nextcloud')
 
     expect(screen.getByText('Nextcloud')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /Jellyfin ícone/i })).toHaveLength(1)
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /Jellyfin icon/i })).not.toBeInTheDocument(),
+    )
   })
 
   it('opens the application detail and returns to the catalog', async () => {
     const user = userEvent.setup()
     renderStore()
 
-    const jellyfinButtons = await screen.findAllByRole('button', { name: /Jellyfin ícone/i })
-    await user.click(jellyfinButtons[0])
+    const jellyfinButton = await screen.findByRole('button', { name: /Jellyfin icon/i })
+    await user.click(jellyfinButton)
 
-    expect(await screen.findByRole('heading', { name: 'Jellyfin' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Voltar/i })).toBeInTheDocument()
-    expect(screen.getByRole('region', { name: 'Requisitos' })).toHaveTextContent('Armazenamento')
-    expect(screen.getByRole('region', { name: 'Avaliações' })).toHaveTextContent('Eric E.')
-    expect(screen.getByRole('region', { name: 'Detalhes técnicos' })).toHaveTextContent('arm64')
+    const backButton = await screen.findByRole('button', { name: 'Back' })
+    await waitFor(() => {
+      expect(backButton).toHaveStyle({ pointerEvents: 'auto' })
+    })
+    expect(screen.getByRole('heading', { name: 'Jellyfin' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Requirements' })).toHaveTextContent('Storage')
+    expect(screen.getByRole('region', { name: 'Reviews' })).toHaveTextContent('Eric E.')
+    expect(screen.getByRole('region', { name: 'Technical details' })).toHaveTextContent('arm64')
 
-    await user.click(screen.getByRole('button', { name: /Voltar/i }))
-    await waitFor(() => expect(screen.getByPlaceholderText('Encontre um aplicativo…')).toBeInTheDocument())
+    await user.click(backButton)
+    await waitFor(() => expect(screen.getByPlaceholderText('Find an app…')).toBeInTheDocument())
   })
 
   it('starts a standard installation through MSW', async () => {
     const user = userEvent.setup()
     renderStore()
 
-    const installButtons = await screen.findAllByRole('button', { name: 'Instalar' })
+    const installButtons = await screen.findAllByRole('button', { name: 'Install' })
     await user.click(installButtons[0])
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Instalação iniciada')
+    expect(await screen.findByRole('status')).toHaveTextContent('Installation started.')
   })
 })

@@ -21,7 +21,7 @@ func NewCatalogStore(db *Database) *CatalogStore {
 
 func (s *CatalogStore) List(ctx context.Context) ([]store.CatalogRecord, error) {
 	rows, err := s.db.SQL().QueryContext(ctx, `
-		SELECT summary_json, detail_json, version, content_hash
+		SELECT summary_json, detail_json, version, content_hash, synced_at
 		FROM store_apps
 		ORDER BY id
 	`)
@@ -37,7 +37,7 @@ func (s *CatalogStore) List(ctx context.Context) ([]store.CatalogRecord, error) 
 			summaryJSON string
 			detailJSON  string
 		)
-		if err := rows.Scan(&summaryJSON, &detailJSON, &record.Version, &record.ContentHash); err != nil {
+		if err := rows.Scan(&summaryJSON, &detailJSON, &record.Version, &record.ContentHash, &record.SyncedAt); err != nil {
 			return nil, fmt.Errorf("scan store app: %w", err)
 		}
 		if err := json.Unmarshal([]byte(summaryJSON), &record.Summary); err != nil {

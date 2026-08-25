@@ -107,6 +107,7 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewComment, setReviewComment] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
+  const [showAllReviews, setShowAllReviews] = useState(false)
 
   const sessionQuery = useReviewSession(reviewFormOpen)
   const session = sessionQuery.data
@@ -291,30 +292,35 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
           </form>
         ) : null}
         {latestReview ? (
-          <article className="rounded-lg bg-white/5 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <span className="flex min-w-0 items-center gap-2">
-                {latestReview.avatar ? (
-                  <img src={latestReview.avatar} alt="" className="size-5 rounded-full object-cover" />
+          <>
+            {(showAllReviews ? application.reviews : [latestReview]).map((review) => (
+              <article key={review.id} className="rounded-lg bg-white/5 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex min-w-0 items-center gap-2">
+                    {review.avatar ? (
+                      <img src={review.avatar} alt="" className="size-5 rounded-full object-cover" />
+                    ) : null}
+                    <span className="truncate text-sm font-medium text-white">{review.author}</span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-white/45">
+                    {formatRelativeTime(review.postedAt)}
+                  </span>
+                </div>
+                {review.rating > 0 ? (
+                  <Stars value={review.rating} />
                 ) : null}
-                <span className="truncate text-sm font-medium text-white">{latestReview.author}</span>
-              </span>
-              <span className="shrink-0 text-[11px] text-white/45">
-                {formatRelativeTime(latestReview.postedAt)}
-              </span>
-            </div>
-            {latestReview.rating > 0 ? (
-              <Stars value={latestReview.rating} />
-            ) : null}
-            <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/70">{latestReview.snippet}</p>
-          </article>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/70">{review.snippet}</p>
+              </article>
+            ))}
+          </>
         ) : null}
         {application.reviews.length > 1 ? (
           <button
             type="button"
+            onClick={() => setShowAllReviews((current) => !current)}
             className="w-fit text-xs text-white/50 transition-colors hover:text-white/80"
           >
-            View all reviews
+            {showAllReviews ? 'Show less' : 'View all reviews'}
           </button>
         ) : null}
       </section>

@@ -4,9 +4,9 @@ const iconSrc = '/images/logo.png'
 const screenshotSrc = '/images/wallpapers/default-dark.avif'
 
 const sharedRequirements = [
-  { category: 'Memória', minimum: '2 GB', recommended: '4 GB+' },
-  { category: 'Armazenamento', minimum: '50 GB', recommended: '100 GB+' },
-  { category: 'Processador', minimum: 'Dual Core 64 bits', recommended: 'Six Core ARM' },
+  { category: 'Memory', minimum: '2 GB', recommended: '4 GB+' },
+  { category: 'Storage', minimum: '50 GB', recommended: '100 GB+' },
+  { category: 'Processor', minimum: 'Dual Core 64 bits', recommended: 'Six Core ARM' },
 ]
 
 function buildReviews(prefix: string): ApplicationDetail['reviews'] {
@@ -14,16 +14,16 @@ function buildReviews(prefix: string): ApplicationDetail['reviews'] {
     {
       id: `${prefix}-review-1`,
       author: 'Eric E.',
-      postedAt: 'há 3 dias',
+      postedAt: '2025-03-20T10:00:00Z',
       snippet:
-        'Funciona muito bem no meu homelab. A instalação foi rápida e o app subiu sem nenhum ajuste manual.',
+        'Works great on my homelab. Installation was quick and the app came up without any manual adjustments.',
       rating: 5,
     },
     {
       id: `${prefix}-review-2`,
       author: 'Marina S.',
-      postedAt: 'há 1 semana',
-      snippet: 'Ótima alternativa self-hosted, só senti falta de mais opções de backup.',
+      postedAt: '2025-03-15T10:00:00Z',
+      snippet: 'Great self-hosted alternative, just wished for more backup options.',
       rating: 4,
     },
   ]
@@ -34,13 +34,13 @@ export const applications: ApplicationSummary[] = [
     id: 'jellyfin',
     name: 'Jellyfin',
     developer: 'Jellyfin Dev Team',
-    description: 'Sua mídia, seu servidor, do seu jeito.',
+    description: 'Your media, your server, your way.',
     category: 'Multimedia',
     tags: ['Multimedia', 'Video', 'Library'],
     iconSrc,
     screenshots: [
-      { id: 'jellyfin-1', src: screenshotSrc, alt: 'Tela do Jellyfin' },
-      { id: 'jellyfin-2', src: screenshotSrc, alt: 'Biblioteca do Jellyfin' },
+      { id: 'jellyfin-1', src: screenshotSrc, alt: 'Jellyfin screenshot' },
+      { id: 'jellyfin-2', src: screenshotSrc, alt: 'Jellyfin library' },
     ],
     rating: 4.8,
     downloads: '12.4k',
@@ -50,11 +50,11 @@ export const applications: ApplicationSummary[] = [
     id: 'immich',
     name: 'Immich',
     developer: 'Immich Team',
-    description: 'Backup e organização de fotos com foco em privacidade.',
+    description: 'Photo and video backup with a focus on privacy.',
     category: 'Multimedia',
     tags: ['Multimedia', 'Photos'],
     iconSrc,
-    screenshots: [{ id: 'immich-1', src: screenshotSrc, alt: 'Tela do Immich' }],
+    screenshots: [{ id: 'immich-1', src: screenshotSrc, alt: 'Immich screenshot' }],
     rating: 4.6,
     downloads: '8.1k',
     status: 'available',
@@ -63,11 +63,11 @@ export const applications: ApplicationSummary[] = [
     id: 'nextcloud',
     name: 'Nextcloud',
     developer: 'Nextcloud GmbH',
-    description: 'Arquivos, calendário e colaboração em um único lugar.',
+    description: 'Files, calendar and collaboration in one place.',
     category: 'Productivity',
     tags: ['Productivity', 'Files'],
     iconSrc,
-    screenshots: [{ id: 'nextcloud-1', src: screenshotSrc, alt: 'Tela do Nextcloud' }],
+    screenshots: [{ id: 'nextcloud-1', src: screenshotSrc, alt: 'Nextcloud screenshot' }],
     rating: 4.5,
     downloads: '10.7k',
     status: 'available',
@@ -76,11 +76,11 @@ export const applications: ApplicationSummary[] = [
     id: 'adguard',
     name: 'AdGuard Home',
     developer: 'AdGuard Team',
-    description: 'Bloqueio de anúncios e rastreadores para toda a rede.',
+    description: 'Network-wide ads and trackers blocking.',
     category: 'Networking',
     tags: ['Networking', 'DNS'],
     iconSrc,
-    screenshots: [{ id: 'adguard-1', src: screenshotSrc, alt: 'Tela do AdGuard Home' }],
+    screenshots: [{ id: 'adguard-1', src: screenshotSrc, alt: 'AdGuard Home screenshot' }],
     rating: 4.7,
     downloads: '6.2k',
     status: 'available',
@@ -100,7 +100,7 @@ export function getApplicationDetail(id: string): ApplicationDetail | undefined 
     requirements: sharedRequirements,
     reviews: buildReviews(application.id),
     dockerHubUrl: `https://hub.docker.com/r/${application.id}`,
-    longDescription: `${application.description} O aplicativo é executado no seu GlassStack e pode ser acessado pelos dispositivos autorizados.`,
+    longDescription: `${application.description} The application runs on your GlassStack and can be accessed by authorized devices.`,
   }
 }
 
