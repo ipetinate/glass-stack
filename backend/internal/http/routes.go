@@ -210,27 +210,27 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 					authHandler.ListUsers(response, request, session.User)
 				},
 			)
-		protected.With(RequireRole(auth.RoleAdmin)).Patch(
-			"/users/{userID}/role",
-			func(response http.ResponseWriter, request *http.Request) {
-				session, _ := AuthenticatedSession(request.Context())
-				authHandler.ChangeUserRole(
-					response,
-					request,
-					session.User,
-					chi.URLParam(request, "userID"),
-				)
-			},
-		)
+			protected.With(RequireRole(auth.RoleAdmin)).Patch(
+				"/users/{userID}/role",
+				func(response http.ResponseWriter, request *http.Request) {
+					session, _ := AuthenticatedSession(request.Context())
+					authHandler.ChangeUserRole(
+						response,
+						request,
+						session.User,
+						chi.URLParam(request, "userID"),
+					)
+				},
+			)
 
-		adminHandler := handlers.NewAdminHandler(runtime.Database)
-		protected.With(RequireRole(auth.RoleAdmin)).Post(
-			"/admin/reset",
-			func(response http.ResponseWriter, request *http.Request) {
-				adminHandler.ResetSystem(response, request)
-				clearAuthCookies(response, request)
-			},
-		)
+			adminHandler := handlers.NewAdminHandler(runtime.Database)
+			protected.With(RequireRole(auth.RoleAdmin)).Post(
+				"/admin/reset",
+				func(response http.ResponseWriter, request *http.Request) {
+					adminHandler.ResetSystem(response, request)
+					clearAuthCookies(response, request)
+				},
+			)
 		})
 	})
 

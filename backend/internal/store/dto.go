@@ -20,9 +20,9 @@ type ApplicationSummaryDTO struct {
 }
 
 type ScreenshotDTO struct {
-	ID   string `json:"id"`
-	Src  string `json:"src"`
-	Alt  string `json:"alt"`
+	ID  string `json:"id"`
+	Src string `json:"src"`
+	Alt string `json:"alt"`
 }
 
 type RequirementRowDTO struct {
@@ -43,15 +43,15 @@ type ReviewDTO struct {
 
 type ApplicationDetailDTO struct {
 	ApplicationSummaryDTO
-	Type          string              `json:"type"`
-	Version       string              `json:"version"`
-	ImageSize     string              `json:"imageSize,omitempty"`
-	Architectures []string            `json:"architectures"`
-	Requirements  []RequirementRowDTO `json:"requirements"`
-	Reviews       []ReviewDTO         `json:"reviews"`
-	DockerHubURL  string              `json:"dockerHubUrl,omitempty"`
-	LongDescription string            `json:"longDescription"`
-	Entrypoint    EntrypointDTO       `json:"entrypoint"`
+	Type            string              `json:"type"`
+	Version         string              `json:"version"`
+	ImageSize       string              `json:"imageSize,omitempty"`
+	Architectures   []string            `json:"architectures"`
+	Requirements    []RequirementRowDTO `json:"requirements"`
+	Reviews         []ReviewDTO         `json:"reviews"`
+	DockerHubURL    string              `json:"dockerHubUrl,omitempty"`
+	LongDescription string              `json:"longDescription"`
+	Entrypoint      EntrypointDTO       `json:"entrypoint"`
 }
 
 type EntrypointDTO struct {

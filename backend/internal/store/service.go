@@ -53,13 +53,13 @@ type SyncSummary struct {
 var ErrApplicationNotFound = fmt.Errorf("aplicativo não encontrado")
 
 type Service struct {
-	catalog      CatalogRepository
-	source       *SourceClient
-	downloader   *http.Client
-	dataDir      string
-	config       Config
-	logger       *slog.Logger
-	now          func() time.Time
+	catalog    CatalogRepository
+	source     *SourceClient
+	downloader *http.Client
+	dataDir    string
+	config     Config
+	logger     *slog.Logger
+	now        func() time.Time
 
 	reviewMu           sync.Mutex
 	reviewSession      *reviewLoginSession
@@ -324,9 +324,9 @@ func (service *Service) resolveSingleAsset(
 	}
 
 	var (
-		content io.ReadCloser
+		content   io.ReadCloser
 		extension string
-		err error
+		err       error
 	)
 	switch {
 	case isRemoteReference(reference):
