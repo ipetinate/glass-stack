@@ -1,4 +1,4 @@
-import { RefreshCw, Search, ShoppingBag } from 'lucide-react'
+import { Search, ShoppingBag } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -13,6 +13,7 @@ import {
   ApplicationGrid,
   CustomInstallForm,
   FeaturedApplications,
+  FilterTrigger,
   StoreSkeleton,
 } from '../../components'
 import { filterApplications } from '../../functions/filter-applications'
@@ -22,7 +23,6 @@ import {
   useApplications,
   useInstallApplication,
   useInstallOperation,
-  useSyncCatalog,
 } from '../../repositories'
 import type { ApplicationSummary, InstallationMode } from '../../types'
 
@@ -37,7 +37,6 @@ export function ApplicationsStore() {
   const applicationsQuery = useApplications()
   const installMutation = useInstallApplication()
   const installOperationQuery = useInstallOperation(installMutation.data?.id)
-  const syncMutation = useSyncCatalog()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [sort, setSort] = useState('recent')
@@ -132,14 +131,15 @@ export function ApplicationsStore() {
           {!applicationsQuery.isLoading && !applicationsQuery.isError && applications.length > 0 ? (
             <div className="min-h-0 flex-1 overflow-y-auto">
               <FeaturedApplications applications={getFeaturedApplications(applications)} onOpen={handleOpen} />
-              <div className="flex flex-col gap-3 border-b border-white/5 py-3 md:flex-row md:items-center">
+              <div className="relative border-b border-white/5 py-3">
                 <Input
                   aria-label="Search apps"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Find an app…"
                   prepend={<Search className="size-4" />}
-                  containerClassName="min-w-0 flex-1"
+                  append={<FilterTrigger onClick={() => setFiltersExpanded((current) => !current)} expanded={filtersExpanded} />}
+                  containerClassName="w-full"
                   className="text-white"
                 />
                 <ApplicationFilters
@@ -148,18 +148,7 @@ export function ApplicationsStore() {
                   expanded={filtersExpanded}
                   onCategoryChange={setCategory}
                   onSortChange={setSort}
-                  onToggle={() => setFiltersExpanded((current) => !current)}
                 />
-                <button
-                  type="button"
-                  aria-label="Refresh catalog"
-                  title="Refresh catalog"
-                  onClick={() => syncMutation.mutate()}
-                  disabled={syncMutation.isPending}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-white/15 text-white/70 transition-colors hover:border-cyan-300/60 hover:text-cyan-300 disabled:opacity-50"
-                >
-                  <RefreshCw className={syncMutation.isPending ? 'size-4 animate-spin' : 'size-4'} />
-                </button>
               </div>
               <div className="pt-5">
                 {visibleApplications.length > 0 ? (

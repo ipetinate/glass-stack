@@ -1,7 +1,6 @@
-import { Filter, ListFilter } from 'lucide-react'
+import { Filter } from 'lucide-react'
 
 import { Select } from '@/core/components/form'
-import { Button } from '@/core/components/ui/Button'
 
 import { applicationCategories, applicationSortOptions } from '../constants'
 
@@ -11,7 +10,6 @@ type ApplicationFiltersProps = {
   expanded: boolean
   onCategoryChange: (value: string) => void
   onSortChange: (value: string) => void
-  onToggle: () => void
 }
 
 export function ApplicationFilters({
@@ -20,38 +18,38 @@ export function ApplicationFilters({
   expanded,
   onCategoryChange,
   onSortChange,
-  onToggle,
 }: ApplicationFiltersProps) {
+  if (!expanded) return null
+
   return (
-    <div className="relative shrink-0">
-      <Button
-        type="button"
-        size="sm"
-        aria-expanded={expanded}
-        onClick={onToggle}
-        className="min-h-9 rounded-lg border-white/10 bg-black/20 text-white/80 hover:bg-black/35"
-      >
-        <Filter className="size-4" />
-        Filters
-        <ListFilter className="size-4 opacity-60" />
-      </Button>
-      {expanded ? (
-        <div className="absolute right-0 top-11 z-20 grid w-72 gap-3 rounded-xl border border-white/10 bg-[#151a21]/95 p-4 shadow-xl backdrop-blur-xl">
-          <Select
-            aria-label="Categoria"
-            value={category}
-            options={applicationCategories}
-            onValueChange={(value) => onCategoryChange(String(value))}
-          />
-          <Select
-            aria-label="Ordenar aplicativos"
-            value={sort}
-            options={applicationSortOptions}
-            onValueChange={(value) => onSortChange(String(value))}
-          />
-        </div>
-      ) : null}
+    <div className="absolute right-0 top-full z-20 mt-2 grid w-72 gap-3 rounded-xl border border-white/10 bg-[#151a21]/95 p-4 shadow-xl backdrop-blur-xl">
+      <Select
+        aria-label="Category"
+        value={category}
+        options={applicationCategories}
+        onValueChange={(value) => onCategoryChange(String(value))}
+      />
+      <Select
+        aria-label="Sort apps"
+        value={sort}
+        options={applicationSortOptions}
+        onValueChange={(value) => onSortChange(String(value))}
+      />
     </div>
+  )
+}
+
+export function FilterTrigger({ onClick, expanded }: { onClick: () => void; expanded: boolean }) {
+  return (
+    <button
+      type="button"
+      aria-expanded={expanded}
+      aria-label="Filters"
+      onClick={onClick}
+      className="flex size-8 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+    >
+      <Filter className="size-4" />
+    </button>
   )
 }
 
