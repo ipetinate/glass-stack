@@ -72,6 +72,7 @@ func newRuntime() (*httpserver.Runtime, error) {
 			nil,
 			"https://api.github.com",
 			"https://codeload.github.com",
+			configuration.GitHubToken,
 		),
 		nil,
 		storeDataDir,

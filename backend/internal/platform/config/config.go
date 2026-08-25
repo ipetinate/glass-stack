@@ -31,6 +31,7 @@ type Config struct {
 	StoreRepository        string
 	StoreBranch            string
 	StorePollHours         int
+	GitHubToken            string
 }
 
 func Load() (Config, error) {
@@ -104,6 +105,11 @@ func Load() (Config, error) {
 			"GLASS_STORE_BRANCH",
 			"main",
 		),
+		GitHubToken: strings.TrimSpace(configuredValue(
+			fileEnvironment,
+			"GLASS_GITHUB_TOKEN",
+			"",
+		)),
 	}
 
 	config.StorePollHours = 6

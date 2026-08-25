@@ -49,6 +49,14 @@ type ApplicationDetailDTO struct {
 	Reviews       []ReviewDTO         `json:"reviews"`
 	DockerHubURL  string              `json:"dockerHubUrl,omitempty"`
 	LongDescription string            `json:"longDescription"`
+	Entrypoint    EntrypointDTO       `json:"entrypoint"`
+}
+
+type EntrypointDTO struct {
+	Main    string `json:"main"`
+	Index   string `json:"index"`
+	PortMap string `json:"portMap"`
+	Scheme  string `json:"scheme"`
 }
 
 var displayCategories = map[string]string{
@@ -105,6 +113,12 @@ func (app *App) Detail(iconSrc string, screenshots []ScreenshotDTO) ApplicationD
 		Architectures:         architectureList(app.Architectures),
 		Reviews:               []ReviewDTO{},
 		LongDescription:       app.Description,
+		Entrypoint: EntrypointDTO{
+			Main:    app.Entrypoint.Main,
+			Index:   app.Entrypoint.Index,
+			PortMap: app.Entrypoint.PortMap,
+			Scheme:  app.Entrypoint.Scheme,
+		},
 	}
 	if detail.Tags == nil {
 		detail.Tags = []string{}

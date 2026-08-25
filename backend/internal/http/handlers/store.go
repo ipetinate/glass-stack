@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
@@ -14,12 +16,20 @@ import (
 )
 
 type StoreHandler struct {
-	service *store.Service
-	logger  *slog.Logger
+	service    *store.Service
+	logger     *slog.Logger
+	authorFrom func(ctx context.Context) string
 }
 
-func NewStoreHandler(service *store.Service, logger *slog.Logger) *StoreHandler {
-	return &StoreHandler{service: service, logger: logger}
+func NewStoreHandler(
+	service *store.Service,
+	logger *slog.Logger,
+	authorFrom func(ctx context.Context) string,
+) *StoreHandler {
+	if authorFrom == nil {
+		authorFrom = func(context.Context) string { return "" }
+	}
+	return &StoreHandler{service: service, logger: logger, authorFrom: authorFrom}
 }
 
 func (handler *StoreHandler) Catalog(response http.ResponseWriter, request *http.Request) {
@@ -95,4 +105,50 @@ func writeStoreError(
 		"message":   message,
 		"requestId": observability.RequestID(request.Context()),
 	})
+}
+
+func (handler *StoreHandler) CreateReview(response http.ResponseWriter, request *http.Request) {
+	appID := chi.URLParam(request, "appID")
+	var payload struct {
+		Rating  int    `json:"rating"`
+		Comment string `json:"comment"`
+	}
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		writeStoreError(response, request, http.StatusBadRequest, "invalid_payload", "Avaliação inválida.")
+		return
+	}
+	author := handler.authorFrom(request.Context())
+	if author == "" {
+		author = "Anônimo"
+	}
+	err := handler.service.CreateReview(
+		request.Context(),
+		appID,
+		payload.Rating,
+		payload.Comment,
+		author,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrInvalidReview):
+			writeStoreError(response, request, http.StatusBadRequest, "invalid_review", "Informe uma nota de 1 a 5 estrelas e um comentário.")
+		case errors.Is(err, store.ErrReviewsUnavailable):
+			writeStoreError(
+				response,
+				request,
+				http.StatusServiceUnavailable,
+				"reviews_unavailable",
+				"Avaliações exigem um token do GitHub (GLASS_GITHUB_TOKEN) configurado no servidor.",
+			)
+		default:
+			writeStoreError(response, request, http.StatusInternalServerError, "review_failed", "Não foi possível publicar a avaliação.")
+		}
+		return
+	}
+	application, err := handler.service.Application(request.Context(), appID)
+	if err != nil {
+		writeJSON(response, http.StatusCreated, map[string]string{"status": "created"})
+		return
+	}
+	writeJSON(response, http.StatusCreated, application)
 }

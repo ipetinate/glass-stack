@@ -193,6 +193,10 @@ func (service *Service) Sync(ctx context.Context) (SyncSummary, error) {
 	}
 
 	appIDs := make([]string, 0, len(manifests))
+	reviewsByApp, reviewsByAppErr := service.source.FetchReviews(ctx, service.config.Repository)
+	if reviewsByAppErr != nil {
+		service.warn("avaliações da comunidade ignoradas", "error", reviewsByAppErr.Error())
+	}
 	for id, manifestData := range manifests {
 		parsed, parseErr := ParseManifest([]byte(manifestData))
 		if parseErr != nil {
@@ -213,6 +217,9 @@ func (service *Service) Sync(ctx context.Context) (SyncSummary, error) {
 			Summary:     parsed.Summary(iconSrc, screenshots),
 			Version:     parsed.Version,
 			ContentHash: contentHash,
+		}
+		if communityReviews := reviewsByApp[parsed.ID]; len(communityReviews) > 0 {
+			record.App.Reviews = communityReviews
 		}
 		if _, ok := previous[parsed.ID]; ok {
 			if previous[parsed.ID] != contentHash {
@@ -378,4 +385,48 @@ func remoteFallback(reference string) string {
 		return reference
 	}
 	return ""
+}
+
+func (service *Service) CreateReview(
+	ctx context.Context,
+	appID string,
+	rating int,
+	comment string,
+	author string,
+) error {
+	comment = strings.TrimSpace(comment)
+	author = strings.TrimSpace(author)
+	if rating < 1 || rating > 5 || comment == "" {
+		return ErrInvalidReview
+	}
+	if err := service.source.CreateReview(ctx, service.config.Repository, appID, rating, comment, author); err != nil {
+		return err
+	}
+	return service.refreshReviews(ctx)
+}
+
+func (service *Service) refreshReviews(ctx context.Context) error {
+	reviewsByApp, err := service.source.FetchReviews(ctx, service.config.Repository)
+	if err != nil {
+		return nil
+	}
+	records, err := service.catalog.List(ctx)
+	if err != nil {
+		return fmt.Errorf("list catalog: %w", err)
+	}
+	for _, record := range records {
+		reviews := reviewsByApp[record.App.ID]
+		if len(reviews) == 0 && len(record.App.Reviews) == 0 {
+			continue
+		}
+		if len(reviews) > 0 {
+			record.App.Reviews = reviews
+		} else {
+			record.App.Reviews = []ReviewDTO{}
+		}
+		if err := service.catalog.Upsert(ctx, record); err != nil {
+			return fmt.Errorf("upsert app %s: %w", record.App.ID, err)
+		}
+	}
+	return nil
 }

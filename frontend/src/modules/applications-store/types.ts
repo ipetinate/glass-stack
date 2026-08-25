@@ -47,6 +47,13 @@ export type ApplicationSummary = {
   status: AppStatus
 }
 
+export type AppEntrypoint = {
+  main: string
+  index: string
+  portMap: string
+  scheme: string
+}
+
 export type ApplicationDetail = ApplicationSummary & {
   type: string
   version: string
@@ -56,6 +63,7 @@ export type ApplicationDetail = ApplicationSummary & {
   reviews: AppReview[]
   dockerHubUrl?: string
   longDescription: string
+  entrypoint?: AppEntrypoint
 }
 
 export type InstallRequest = {

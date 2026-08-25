@@ -15,12 +15,18 @@ import (
 )
 
 type SourceClient struct {
-	http        *http.Client
-	commitsURL  string
-	tarballURL  string
+	http       *http.Client
+	commitsURL string
+	tarballURL string
+	token      string
 }
 
-func NewSourceClient(httpClient *http.Client, commitsBaseURL, tarballBaseURL string) *SourceClient {
+func NewSourceClient(
+	httpClient *http.Client,
+	commitsBaseURL string,
+	tarballBaseURL string,
+	token string,
+) *SourceClient {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
@@ -28,6 +34,7 @@ func NewSourceClient(httpClient *http.Client, commitsBaseURL, tarballBaseURL str
 		http:       httpClient,
 		commitsURL: strings.TrimSuffix(commitsBaseURL, "/"),
 		tarballURL: strings.TrimSuffix(tarballBaseURL, "/"),
+		token:      strings.TrimSpace(token),
 	}
 }
 

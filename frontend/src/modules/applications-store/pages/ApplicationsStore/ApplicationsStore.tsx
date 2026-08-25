@@ -164,8 +164,9 @@ export function ApplicationsStore() {
           ) : null}
         </div>
       )}
-      {selectedSummary && customInstallOpen ? (
+      {selectedSummary && customInstallOpen && selectedQuery.data ? (
         <CustomInstallForm
+          application={selectedQuery.data}
           onCancel={() => setCustomInstallOpen(false)}
           onSubmit={(options) => {
             startInstall(selectedSummary.id, 'custom', options)

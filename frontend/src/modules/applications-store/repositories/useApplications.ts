@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
+  createReview,
   getApplication,
   getApplications,
   getInstallOperation,
@@ -44,6 +45,22 @@ export function useSyncCatalog() {
     mutationFn: () => syncStoreCatalog(),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: applicationsQueryKey })
+    },
+  })
+}
+
+export function useCreateReview(appId: string | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (review: { rating: number; comment: string }) => {
+      if (!appId) throw new Error('Nenhum aplicativo selecionado.')
+      return createReview(appId, review)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [...applicationsQueryKey, appId],
+      })
     },
   })
 }

@@ -175,10 +175,17 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 			}
 
 			if runtime.Store != nil {
-				storeHandler := handlers.NewStoreHandler(runtime.Store, runtime.Logger)
+				storeHandler := handlers.NewStoreHandler(runtime.Store, runtime.Logger, func(ctx context.Context) string {
+					sessionUser, ok := AuthenticatedSession(ctx)
+					if !ok {
+						return ""
+					}
+					return sessionUser.User.Username
+				})
 				protected.Get("/store/apps", storeHandler.Catalog)
 				protected.Get("/catalog/apps", storeHandler.Catalog)
 				protected.Get("/catalog/apps/{appID}", storeHandler.Application)
+				protected.Post("/catalog/apps/{appID}/reviews", storeHandler.CreateReview)
 				protected.Post("/store/sync", storeHandler.Sync)
 				protected.Get(
 					"/store/apps/{appID}/assets/{file}",

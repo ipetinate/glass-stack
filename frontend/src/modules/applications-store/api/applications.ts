@@ -15,6 +15,19 @@ export function getApplication(appId: string) {
   return glassRequest<ApplicationDetail>(`/api/v1/catalog/apps/${appId}`)
 }
 
+export function createReview(
+  appId: string,
+  review: { rating: number; comment: string },
+) {
+  return glassRequest<ApplicationDetail>(
+    `/api/v1/catalog/apps/${appId}/reviews`,
+    {
+      method: 'POST',
+      body: JSON.stringify(review),
+    },
+  )
+}
+
 export function startApplicationInstall(request: InstallRequest) {
   return glassRequest<InstallOperation>('/api/v1/apps/install', {
     method: 'POST',

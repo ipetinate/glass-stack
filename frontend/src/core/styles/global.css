@@ -90,3 +90,11 @@ body {
     overflow-x: hidden;
     overscroll-behavior-y: none;
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

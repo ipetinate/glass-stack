@@ -59,4 +59,38 @@ export const handlers = [
       unchanged: false,
     }),
   ),
+  http.post('/api/v1/catalog/apps/:appId/reviews', async ({ request }) => {
+    const body = (await request.json()) as { rating?: number; comment?: string }
+    if (!body.rating || !body.comment) {
+      return HttpResponse.json(
+        { code: 'invalid_review', message: 'Informe uma nota de 1 a 5 estrelas e um comentário.' },
+        { status: 400 },
+      )
+    }
+    return HttpResponse.json({
+      id: 'mock-app',
+      name: 'Mock App',
+      developer: '',
+      description: '',
+      category: 'Other',
+      tags: [],
+      iconSrc: '',
+      screenshots: [],
+      status: 'available',
+      type: 'Docker Image',
+      version: '1.0.0',
+      architectures: [],
+      requirements: [],
+      reviews: [
+        {
+          id: 'gh-1',
+          author: 'ipetinate',
+          postedAt: new Date().toISOString(),
+          snippet: body.comment,
+          rating: body.rating,
+        },
+      ],
+      longDescription: '',
+    })
+  }),
 ]

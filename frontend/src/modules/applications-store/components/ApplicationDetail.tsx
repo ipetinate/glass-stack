@@ -1,10 +1,12 @@
 import { ArrowLeft, Check, Download, LoaderCircle } from 'lucide-react'
 import { useRef, useState } from 'react'
 
+import { BackgroundBlur } from '@/core/components/ui/BackgroundBlur'
 import { Button } from '@/core/components/ui/Button'
 
 import type { ApplicationDetail as ApplicationDetailModel } from '../types'
 import { ApplicationCategoryTags, ApplicationInfoColumns, Stars } from './ApplicationInfoColumns'
+import { ScreenshotCarousel } from './ScreenshotCarousel'
 
 type InstallActionProps = {
   status: ApplicationDetailModel['status']
@@ -84,7 +86,10 @@ export function ApplicationDetail({
     <div ref={scrollRef} onScroll={handleScroll} className="relative flex h-full min-h-0 flex-col overflow-y-auto pr-2">
       <div className="pointer-events-none sticky top-0 z-20 h-0 overflow-visible">
         {scrolled ? (
-          <div className="pointer-events-auto -mx-2 mb-2 flex items-center gap-3 rounded-xl border border-white/10 bg-black/70 px-4 py-2 backdrop-blur-md">
+          <BackgroundBlur
+            as="div"
+            className="pointer-events-auto mb-2 flex items-center gap-3 rounded-2xl border-white/10 bg-black/70 px-4 py-2"
+          >
             <img src={application.iconSrc} alt="" className="size-10 rounded-lg object-cover" />
             <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white">{application.name}</span>
             <InstallAction
@@ -93,7 +98,7 @@ export function ApplicationDetail({
               installProgress={installProgress}
               onInstall={onInstall}
             />
-          </div>
+          </BackgroundBlur>
         ) : null}
       </div>
 
@@ -163,25 +168,7 @@ export function ApplicationDetail({
 
       <section className="mt-8 pb-2">
         <h2 className="mb-4 text-base font-semibold text-white">Screenshots</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {application.screenshots.map((screenshot) => (
-            <figure key={screenshot.id} className="flex flex-col gap-2">
-              <img src={screenshot.src} alt={screenshot.alt} className="aspect-video w-full rounded-xl object-cover" />
-              <span className="mx-auto flex items-center gap-1.5" aria-hidden="true">
-                {application.screenshots.map((item) => (
-                  <span
-                    key={item.id}
-                    className={
-                      item.id === screenshot.id
-                        ? 'size-1.5 rounded-full bg-white'
-                        : 'size-1.5 rounded-full bg-white/30'
-                    }
-                  />
-                ))}
-              </span>
-            </figure>
-          ))}
-        </div>
+        <ScreenshotCarousel screenshots={application.screenshots} />
       </section>
 
       <div className="pb-6 pt-2">

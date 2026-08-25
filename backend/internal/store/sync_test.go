@@ -117,6 +117,7 @@ func TestSyncDownloadsAndStores(t *testing.T) {
 	client := NewSourceClient(nil,
 		server.URL,
 		server.URL,
+		"",
 	)
 	service := NewService(catalog, client, server.Client(), t.TempDir(), Config{
 		Repository:        "owner/store",
@@ -149,6 +150,7 @@ func TestSyncSkipsWhenUnchanged(t *testing.T) {
 	client := NewSourceClient(nil,
 		server.URL,
 		server.URL,
+		"",
 	)
 	service := NewService(catalog, client, server.Client(), t.TempDir(), Config{
 		Repository:        "owner/store",
@@ -178,6 +180,7 @@ func TestSyncRemovesStaleApps(t *testing.T) {
 	client := NewSourceClient(nil,
 		server.URL,
 		server.URL,
+		"",
 	)
 	service := NewService(catalog, client, server.Client(), t.TempDir(), Config{
 		Repository:        "owner/store",
@@ -219,6 +222,7 @@ x-glass:
 	client := NewSourceClient(nil,
 		server.URL,
 		server.URL,
+		"",
 	)
 	service := NewService(catalog, client, server.Client(), dataDir, Config{
 		Repository:        "owner/store",
