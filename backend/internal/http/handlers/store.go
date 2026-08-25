@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -118,27 +119,36 @@ func (handler *StoreHandler) CreateReview(response http.ResponseWriter, request 
 		return
 	}
 	author := handler.authorFrom(request.Context())
-	if author == "" {
-		author = "Anônimo"
+	fallbackAuthor := author
+	if fallbackAuthor == "" {
+		fallbackAuthor = "Anônimo"
 	}
 	err := handler.service.CreateReview(
 		request.Context(),
 		appID,
 		payload.Rating,
 		payload.Comment,
-		author,
+		fallbackAuthor,
 	)
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrInvalidReview):
 			writeStoreError(response, request, http.StatusBadRequest, "invalid_review", "Informe uma nota de 1 a 5 estrelas e um comentário.")
+		case errors.Is(err, store.ErrServerTokenRequired):
+			writeStoreError(
+				response,
+				request,
+				http.StatusUnauthorized,
+				"review_login_required",
+				"Entre com GitHub ou Google para publicar sua avaliação.",
+			)
 		case errors.Is(err, store.ErrReviewsUnavailable):
 			writeStoreError(
 				response,
 				request,
 				http.StatusServiceUnavailable,
 				"reviews_unavailable",
-				"Avaliações exigem um token do GitHub (GLASS_GITHUB_TOKEN) configurado no servidor.",
+				"Avaliações indisponíveis: verifique a configuração de login no servidor.",
 			)
 		default:
 			writeStoreError(response, request, http.StatusInternalServerError, "review_failed", "Não foi possível publicar a avaliação.")
@@ -151,4 +161,41 @@ func (handler *StoreHandler) CreateReview(response http.ResponseWriter, request 
 		return
 	}
 	writeJSON(response, http.StatusCreated, application)
+}
+
+func (handler *StoreHandler) ReviewSession(response http.ResponseWriter, request *http.Request) {
+	writeJSON(response, http.StatusOK, handler.service.ReviewSession())
+}
+
+func (handler *StoreHandler) StartReviewLogin(response http.ResponseWriter, request *http.Request) {
+	var payload struct {
+		Provider string `json:"provider"`
+	}
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		writeStoreError(response, request, http.StatusBadRequest, "invalid_payload", "Solicitação inválida.")
+		return
+	}
+	snapshot, err := handler.service.StartReviewLogin(strings.TrimSpace(payload.Provider))
+	if err != nil {
+		switch {
+		case errors.Is(err, store.ErrClientIDMissing):
+			writeStoreError(
+				response,
+				request,
+				http.StatusServiceUnavailable,
+				"reviews_login_unavailable",
+				"Login para avaliações não configurado no servidor (GLASS_GITHUB_CLIENT_ID ou GLASS_GOOGLE_CLIENT_ID).",
+			)
+		case errors.Is(err, store.ErrReviewsUnavailable):
+			writeStoreError(response, request, http.StatusBadGateway, "reviews_login_failed", "Não foi possível iniciar o login: "+err.Error())
+		default:
+			writeStoreError(response, request, http.StatusInternalServerError, "reviews_login_failed", "Não foi possível iniciar o login.")
+		}
+		return
+	}
+	writeJSON(response, http.StatusOK, snapshot)
+}
+
+func (handler *StoreHandler) CancelReviewLogin(response http.ResponseWriter, request *http.Request) {
+	writeJSON(response, http.StatusOK, handler.service.CancelReviewLogin())
 }

@@ -32,6 +32,9 @@ type Config struct {
 	StoreBranch            string
 	StorePollHours         int
 	GitHubToken            string
+	GitHubClientID         string
+	GoogleClientID         string
+	GoogleClientSecret     string
 }
 
 func Load() (Config, error) {
@@ -108,6 +111,21 @@ func Load() (Config, error) {
 		GitHubToken: strings.TrimSpace(configuredValue(
 			fileEnvironment,
 			"GLASS_GITHUB_TOKEN",
+			"",
+		)),
+		GitHubClientID: strings.TrimSpace(configuredValue(
+			fileEnvironment,
+			"GLASS_GITHUB_CLIENT_ID",
+			"",
+		)),
+		GoogleClientID: strings.TrimSpace(configuredValue(
+			fileEnvironment,
+			"GLASS_GOOGLE_CLIENT_ID",
+			"",
+		)),
+		GoogleClientSecret: strings.TrimSpace(configuredValue(
+			fileEnvironment,
+			"GLASS_GOOGLE_CLIENT_SECRET",
 			"",
 		)),
 	}

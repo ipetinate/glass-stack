@@ -34,6 +34,8 @@ type RequirementRowDTO struct {
 type ReviewDTO struct {
 	ID       string `json:"id"`
 	Author   string `json:"author"`
+	Avatar   string `json:"avatar,omitempty"`
+	Provider string `json:"provider,omitempty"`
 	PostedAt string `json:"postedAt"`
 	Snippet  string `json:"snippet"`
 	Rating   int    `json:"rating"`

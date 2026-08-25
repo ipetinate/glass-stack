@@ -5,6 +5,7 @@ import type {
   ApplicationSummary,
   InstallOperation,
   InstallRequest,
+  ReviewSession,
 } from '../types'
 
 export function getApplications() {
@@ -26,6 +27,23 @@ export function createReview(
       body: JSON.stringify(review),
     },
   )
+}
+
+export function getReviewSession() {
+  return glassRequest<ReviewSession>('/api/v1/store/reviews/session')
+}
+
+export function startReviewLogin(provider: 'github' | 'google') {
+  return glassRequest<ReviewSession>('/api/v1/store/reviews/session', {
+    method: 'POST',
+    body: JSON.stringify({ provider }),
+  })
+}
+
+export function cancelReviewLogin() {
+  return glassRequest<ReviewSession>('/api/v1/store/reviews/session', {
+    method: 'DELETE',
+  })
 }
 
 export function startApplicationInstall(request: InstallRequest) {

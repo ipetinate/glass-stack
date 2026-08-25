@@ -116,6 +116,7 @@ func TestSyncDownloadsAndStores(t *testing.T) {
 
 	client := NewSourceClient(nil,
 		server.URL,
+		"",
 		server.URL,
 		"",
 	)
@@ -149,6 +150,7 @@ func TestSyncSkipsWhenUnchanged(t *testing.T) {
 	catalog := newMemoryCatalog()
 	client := NewSourceClient(nil,
 		server.URL,
+		"",
 		server.URL,
 		"",
 	)
@@ -179,6 +181,7 @@ func TestSyncRemovesStaleApps(t *testing.T) {
 	catalog.records["ghost"] = CatalogRecord{}
 	client := NewSourceClient(nil,
 		server.URL,
+		"",
 		server.URL,
 		"",
 	)
@@ -221,6 +224,7 @@ x-glass:
 	dataDir := t.TempDir()
 	client := NewSourceClient(nil,
 		server.URL,
+		"",
 		server.URL,
 		"",
 	)

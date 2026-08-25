@@ -17,6 +17,7 @@ import (
 type SourceClient struct {
 	http       *http.Client
 	commitsURL string
+	webURL     string
 	tarballURL string
 	token      string
 }
@@ -24,18 +25,28 @@ type SourceClient struct {
 func NewSourceClient(
 	httpClient *http.Client,
 	commitsBaseURL string,
+	webBaseURL string,
 	tarballBaseURL string,
 	token string,
 ) *SourceClient {
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
+	if webBaseURL == "" {
+		webBaseURL = "https://github.com"
+	}
 	return &SourceClient{
 		http:       httpClient,
 		commitsURL: strings.TrimSuffix(commitsBaseURL, "/"),
+		webURL:     strings.TrimSuffix(webBaseURL, "/"),
 		tarballURL: strings.TrimSuffix(tarballBaseURL, "/"),
 		token:      strings.TrimSpace(token),
 	}
+}
+
+// HasServerToken reports whether a server-wide GitHub token is configured.
+func (client *SourceClient) HasServerToken() bool {
+	return client.token != ""
 }
 
 func (client *SourceClient) LatestCommit(

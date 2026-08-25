@@ -1,10 +1,15 @@
-import { ExternalLink, LoaderCircle, Star, Tag } from 'lucide-react'
+import { Copy, ExternalLink, LoaderCircle, LogOut, Star, Tag } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/core/components/ui/Button'
 
 import { architectureColors, categoryTagColors } from '../constants'
-import { useCreateReview } from '../repositories'
+import {
+  useCancelReviewLogin,
+  useCreateReview,
+  useReviewSession,
+  useStartReviewLogin,
+} from '../repositories'
 import type { ApplicationDetail as ApplicationDetailModel } from '../types'
 
 function Stars({ value }: { value: number }) {
@@ -70,6 +75,25 @@ function StarPicker({
   )
 }
 
+function GitHubGlyph() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 16 16" className="size-4 fill-current">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.5 7.5 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A7.99 7.99 0 0 0 16 8c0-4.42-3.58-8-8-8Z" />
+    </svg>
+  )
+}
+
+function GoogleGlyph() {
+  return (
+    <span
+      aria-hidden="true"
+      className="flex size-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-[#1a73e8]"
+    >
+      G
+    </span>
+  )
+}
+
 type ApplicationInfoColumnsProps = {
   application: ApplicationDetailModel
 }
@@ -77,9 +101,26 @@ type ApplicationInfoColumnsProps = {
 export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsProps) {
   const latestReview = application.reviews[0]
   const createReviewMutation = useCreateReview(application.id)
+  const startLoginMutation = useStartReviewLogin()
+  const cancelLoginMutation = useCancelReviewLogin()
   const [reviewFormOpen, setReviewFormOpen] = useState(false)
   const [reviewRating, setReviewRating] = useState(0)
   const [reviewComment, setReviewComment] = useState('')
+  const [codeCopied, setCodeCopied] = useState(false)
+
+  const sessionQuery = useReviewSession(reviewFormOpen)
+  const session = sessionQuery.data
+  const isAuthenticated = session?.status === 'authenticated'
+  const isPending = session?.status === 'pending'
+
+  const toggleForm = () => {
+    setReviewFormOpen((current) => !current)
+    setCodeCopied(false)
+    if (reviewFormOpen) {
+      setReviewRating(0)
+      setReviewComment('')
+    }
+  }
 
   const submitReview = () => {
     createReviewMutation.mutate(
@@ -101,14 +142,93 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
           <h2 className="text-base font-semibold text-white">Avaliações</h2>
           <button
             type="button"
-            onClick={() => setReviewFormOpen((current) => !current)}
+            onClick={toggleForm}
             className="text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
           >
             {reviewFormOpen ? 'Cancelar' : 'Escrever avaliação'}
           </button>
         </header>
         <Stars value={application.rating ?? 0} />
-        {reviewFormOpen ? (
+        {reviewFormOpen && !isAuthenticated ? (
+          <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-black/25 p-4">
+            {isPending ? (
+              <>
+                <p className="text-xs leading-5 text-white/70">
+                  Abra o link abaixo e digite o código para conectar sua conta{' '}
+                  {session?.provider === 'google' ? 'Google' : 'GitHub'}.
+                </p>
+                <div className="flex items-center justify-center gap-2">
+                  <code className="rounded-md border border-cyan-300/40 bg-black/50 px-4 py-2 font-mono text-xl tracking-[0.3em] text-cyan-200">
+                    {session?.userCode}
+                  </code>
+                  <button
+                    type="button"
+                    aria-label="Copiar código"
+                    onClick={() => {
+                      void navigator.clipboard.writeText(session?.userCode ?? '')
+                      setCodeCopied(true)
+                    }}
+                    className="flex size-8 items-center justify-center rounded-md border border-white/15 text-white/70 transition-colors hover:border-cyan-300/60 hover:text-cyan-300"
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                </div>
+                {codeCopied ? (
+                  <span className="text-center text-[11px] text-white/45">Código copiado.</span>
+                ) : null}
+                <a
+                  href={session?.verificationUri || 'https://github.com/login/device'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mx-auto inline-flex w-fit items-center gap-1.5 text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
+                >
+                  Abrir página de autorização
+                  <ExternalLink className="size-3" />
+                </a>
+                <p className="flex items-center justify-center gap-2 text-[11px] text-white/50">
+                  <LoaderCircle className="size-3 animate-spin" />
+                  Aguardando autorização…
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs leading-5 text-white/70">
+                  Entre com sua conta para publicar sua avaliação.
+                </p>
+                {startLoginMutation.isError ? (
+                  <p role="alert" className="text-xs leading-4 text-rose-300">
+                    {startLoginMutation.error instanceof Error
+                      ? startLoginMutation.error.message
+                      : 'Não foi possível iniciar o login.'}
+                  </p>
+                ) : null}
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={startLoginMutation.isPending}
+                    onClick={() => startLoginMutation.mutate('github')}
+                    className="min-h-9 border-white/20 bg-white/95 text-black hover:bg-white"
+                  >
+                    <GitHubGlyph />
+                    GitHub
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={startLoginMutation.isPending}
+                    onClick={() => startLoginMutation.mutate('google')}
+                    className="min-h-9 border-white/20 bg-white/95 text-black hover:bg-white"
+                  >
+                    <GoogleGlyph />
+                    Google
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
+        {reviewFormOpen && isAuthenticated ? (
           <form
             className="flex flex-col gap-3 rounded-lg border border-white/10 bg-black/25 p-3"
             onSubmit={(event) => {
@@ -116,6 +236,26 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
               submitReview()
             }}
           >
+            <div className="flex items-center justify-between gap-2 rounded-md bg-white/5 px-2.5 py-1.5">
+              <span className="flex min-w-0 items-center gap-2">
+                {session?.avatarUrl ? (
+                  <img src={session.avatarUrl} alt="" className="size-6 rounded-full object-cover" />
+                ) : null}
+                <span className="truncate text-xs font-medium text-white">{session?.login}</span>
+                <span className="shrink-0 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] uppercase text-white/60">
+                  {session?.provider === 'google' ? 'Google' : 'GitHub'}
+                </span>
+              </span>
+              <button
+                type="button"
+                aria-label="Desconectar conta"
+                title="Sair"
+                onClick={() => cancelLoginMutation.mutate()}
+                className="shrink-0 text-white/50 transition-colors hover:text-rose-300"
+              >
+                <LogOut className="size-3.5" />
+              </button>
+            </div>
             <StarPicker value={reviewRating} onChange={setReviewRating} />
             <textarea
               aria-label="Seu comentário"
@@ -153,7 +293,12 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
         {latestReview ? (
           <article className="rounded-lg bg-white/5 p-3">
             <div className="flex items-center justify-between gap-2">
-              <span className="truncate text-sm font-medium text-white">{latestReview.author}</span>
+              <span className="flex min-w-0 items-center gap-2">
+                {latestReview.avatar ? (
+                  <img src={latestReview.avatar} alt="" className="size-5 rounded-full object-cover" />
+                ) : null}
+                <span className="truncate text-sm font-medium text-white">{latestReview.author}</span>
+              </span>
               <span className="shrink-0 text-[11px] text-white/45">
                 {formatRelativeTime(latestReview.postedAt)}
               </span>

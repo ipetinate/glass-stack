@@ -71,15 +71,19 @@ func newRuntime() (*httpserver.Runtime, error) {
 		store.NewSourceClient(
 			nil,
 			"https://api.github.com",
+			"https://github.com",
 			"https://codeload.github.com",
 			configuration.GitHubToken,
 		),
 		nil,
 		storeDataDir,
 		store.Config{
-			Repository:        configuration.StoreRepository,
-			Branch:            configuration.StoreBranch,
-			PollIntervalHours: configuration.StorePollHours,
+			Repository:         configuration.StoreRepository,
+			Branch:             configuration.StoreBranch,
+			PollIntervalHours:  configuration.StorePollHours,
+			GitHubClientID:     configuration.GitHubClientID,
+			GoogleClientID:     configuration.GoogleClientID,
+			GoogleClientSecret: configuration.GoogleClientSecret,
 		},
 		logger,
 	)

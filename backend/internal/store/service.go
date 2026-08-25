@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -33,9 +34,12 @@ type CatalogRepository interface {
 }
 
 type Config struct {
-	Repository        string
-	Branch            string
-	PollIntervalHours int
+	Repository         string
+	Branch             string
+	PollIntervalHours  int
+	GitHubClientID     string
+	GoogleClientID     string
+	GoogleClientSecret string
 }
 
 type SyncSummary struct {
@@ -56,6 +60,12 @@ type Service struct {
 	config       Config
 	logger       *slog.Logger
 	now          func() time.Time
+
+	reviewMu           sync.Mutex
+	reviewSession      *reviewLoginSession
+	githubClientID     string
+	googleClientID     string
+	googleClientSecret string
 }
 
 func NewService(
@@ -70,13 +80,16 @@ func NewService(
 		downloader = http.DefaultClient
 	}
 	return &Service{
-		catalog:    catalog,
-		source:     source,
-		downloader: downloader,
-		dataDir:    dataDir,
-		config:     config,
-		logger:     logger,
-		now:        time.Now,
+		catalog:            catalog,
+		source:             source,
+		downloader:         downloader,
+		dataDir:            dataDir,
+		config:             config,
+		logger:             logger,
+		now:                time.Now,
+		githubClientID:     strings.TrimSpace(config.GitHubClientID),
+		googleClientID:     strings.TrimSpace(config.GoogleClientID),
+		googleClientSecret: strings.TrimSpace(config.GoogleClientSecret),
 	}
 }
 
@@ -392,14 +405,21 @@ func (service *Service) CreateReview(
 	appID string,
 	rating int,
 	comment string,
-	author string,
+	fallbackAuthor string,
 ) error {
 	comment = strings.TrimSpace(comment)
-	author = strings.TrimSpace(author)
 	if rating < 1 || rating > 5 || comment == "" {
 		return ErrInvalidReview
 	}
-	if err := service.source.CreateReview(ctx, service.config.Repository, appID, rating, comment, author); err != nil {
+	if err := service.source.CreateReview(
+		ctx,
+		service.config.Repository,
+		appID,
+		rating,
+		comment,
+		service.reviewerIdentity(),
+		strings.TrimSpace(fallbackAuthor),
+	); err != nil {
 		return err
 	}
 	return service.refreshReviews(ctx)

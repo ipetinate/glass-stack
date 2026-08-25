@@ -22,9 +22,20 @@ export type AppScreenshot = {
 export type AppReview = {
   id: string
   author: string
+  avatar?: string
+  provider?: 'github' | 'google'
   postedAt: string
   snippet: string
   rating: number
+}
+
+export type ReviewSession = {
+  status: 'idle' | 'pending' | 'authenticated' | 'denied' | 'expired' | 'failed'
+  provider?: 'github' | 'google'
+  userCode?: string
+  verificationUri?: string
+  login?: string
+  avatarUrl?: string
 }
 
 export type AppRequirement = {

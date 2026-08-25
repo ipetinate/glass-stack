@@ -50,6 +50,24 @@ export const handlers = [
   http.get('/api/v1/apps/install/:operationId', ({ params }) =>
     HttpResponse.json(buildOperation(String(params.operationId))),
   ),
+  http.get('/api/v1/store/reviews/session', () =>
+    HttpResponse.json({ status: 'idle' }),
+  ),
+  http.post('/api/v1/store/reviews/session', async ({ request }) => {
+    const body = (await request.json()) as { provider?: string }
+    return HttpResponse.json({
+      status: 'pending',
+      provider: body.provider ?? 'github',
+      userCode: 'XXXX-XXXX',
+      verificationUri:
+        body.provider === 'google'
+          ? 'https://google.com/device'
+          : 'https://github.com/login/device',
+    })
+  }),
+  http.delete('/api/v1/store/reviews/session', () =>
+    HttpResponse.json({ status: 'idle' }),
+  ),
   http.post('/api/v1/store/sync', () =>
     HttpResponse.json({
       commit: 'abc123def456',

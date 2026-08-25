@@ -186,6 +186,9 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 				protected.Get("/catalog/apps", storeHandler.Catalog)
 				protected.Get("/catalog/apps/{appID}", storeHandler.Application)
 				protected.Post("/catalog/apps/{appID}/reviews", storeHandler.CreateReview)
+				protected.Get("/store/reviews/session", storeHandler.ReviewSession)
+				protected.Post("/store/reviews/session", storeHandler.StartReviewLogin)
+				protected.Delete("/store/reviews/session", storeHandler.CancelReviewLogin)
 				protected.Post("/store/sync", storeHandler.Sync)
 				protected.Get(
 					"/store/apps/{appID}/assets/{file}",

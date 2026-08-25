@@ -1,11 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
+  cancelReviewLogin,
   createReview,
   getApplication,
   getApplications,
   getInstallOperation,
+  getReviewSession,
   startApplicationInstall,
+  startReviewLogin,
   syncStoreCatalog,
 } from '../api/applications'
 import type { InstallRequest } from '../types'
@@ -61,6 +64,40 @@ export function useCreateReview(appId: string | undefined) {
       void queryClient.invalidateQueries({
         queryKey: [...applicationsQueryKey, appId],
       })
+    },
+  })
+}
+
+const reviewSessionQueryKey = ['applications-store', 'review-session']
+
+export function useReviewSession(enabled: boolean) {
+  return useQuery({
+    queryKey: reviewSessionQueryKey,
+    queryFn: getReviewSession,
+    enabled,
+    refetchInterval: (query) =>
+      query.state.data?.status === 'pending' ? 4000 : false,
+  })
+}
+
+export function useStartReviewLogin() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (provider: 'github' | 'google') => startReviewLogin(provider),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: reviewSessionQueryKey })
+    },
+  })
+}
+
+export function useCancelReviewLogin() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => cancelReviewLogin(),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: reviewSessionQueryKey })
     },
   })
 }
