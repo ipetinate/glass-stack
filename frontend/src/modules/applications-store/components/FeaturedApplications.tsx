@@ -42,8 +42,11 @@ export function FeaturedApplications({
       </div>
       <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
       <BackgroundBlur
-        as="div"
-        className="absolute left-5 top-5 flex h-20 w-[271px] items-center gap-3 rounded-2xl border-white/15 bg-black/20 p-2 before:!backdrop-blur-[10px]"
+        as="button"
+        type="button"
+        aria-label={`Abrir ${activeApplication.name}`}
+        onClick={() => onOpen(activeApplication.id)}
+        className="absolute left-5 top-5 flex h-24 w-[300px] cursor-pointer items-center gap-4 rounded-2xl border-white/15 bg-black/20 p-4 text-left transition-[filter] hover:brightness-110 before:!backdrop-blur-[10px]"
       >
         <img
           src={activeApplication.iconSrc}
@@ -61,14 +64,9 @@ export function FeaturedApplications({
             {activeApplication.type ?? 'Docker Image'}
           </span>
         </span>
-        <button
-          type="button"
-          aria-label={`Abrir ${activeApplication.name}`}
-          onClick={() => onOpen(activeApplication.id)}
-          className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-black/25 text-white transition-colors hover:border-cyan-300/60 hover:text-cyan-300"
-        >
+        <span className="flex size-6 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-black/25 text-white transition-colors group-hover:border-cyan-300/60 group-hover:text-cyan-300 pointer-events-none">
           <ArrowUpRight className="size-3.5" />
-        </button>
+        </span>
       </BackgroundBlur>
       <div className="absolute right-5 bottom-6 flex items-center gap-4">
         <div role="tablist" aria-label="Destaques" className="flex items-center gap-1.5">
