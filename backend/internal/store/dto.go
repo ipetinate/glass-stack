@@ -11,6 +11,7 @@ type ApplicationSummaryDTO struct {
 	Developer   string   `json:"developer"`
 	Description string   `json:"description"`
 	Category    string   `json:"category"`
+	Type        string   `json:"type,omitempty"`
 	Tags        []string `json:"tags"`
 	IconSrc     string   `json:"iconSrc"`
 	Screenshots []any    `json:"screenshots"`
@@ -96,6 +97,7 @@ func (app *App) Summary(iconSrc string, screenshots []ScreenshotDTO) Application
 		Developer:   app.Developer,
 		Description: app.Tagline,
 		Category:    displayCategories[app.Category],
+		Type:        "Docker Image",
 		Tags:        defaultTags(app.Tags),
 		IconSrc:     iconSrc,
 		Screenshots: converted,

@@ -50,6 +50,7 @@ export type ApplicationSummary = {
   developer: string
   description: string
   category: AppCategory
+  type?: string
   tags: string[]
   iconSrc: string
   screenshots: AppScreenshot[]
