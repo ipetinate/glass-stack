@@ -84,7 +84,9 @@ export function ApplicationsStore() {
     setSlideDirection('in')
     setSelectedId(appId)
     setShowDetail(false)
-    requestAnimationFrame(() => setShowDetail(true))
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => setShowDetail(true))
+    })
   }
 
   const handleBack = () => {
@@ -95,7 +97,7 @@ export function ApplicationsStore() {
       setSelectedId(undefined)
       setCustomInstallOpen(false)
       setInstallingId(undefined)
-    }, 300)
+    }, 350)
   }
 
   const handleClose = () => {
@@ -115,10 +117,9 @@ export function ApplicationsStore() {
       <div className="relative h-full min-h-0">
         {/* List view */}
         <div
-          className="absolute inset-0 flex flex-col gap-5 transition-all duration-300 ease-out"
+          className="absolute inset-0 flex flex-col gap-5 transition-transform duration-300"
           style={{
             transform: showDetail ? 'translateX(-100%)' : 'translateX(0)',
-            opacity: showDetail ? 0 : 1,
             pointerEvents: showDetail ? 'none' : 'auto',
           }}
         >
@@ -181,14 +182,13 @@ export function ApplicationsStore() {
         {/* Detail view */}
         {selectedId && selectedQuery.data ? (
           <div
-            className="absolute inset-0 transition-all duration-300 ease-out"
+            className="absolute inset-0 transition-transform duration-300"
             style={{
               transform: showDetail
                 ? 'translateX(0)'
                 : slideDirection === 'in'
                   ? 'translateX(100%)'
                   : 'translateX(100%)',
-              opacity: showDetail ? 1 : 0,
               pointerEvents: showDetail ? 'auto' : 'none',
             }}
           >
