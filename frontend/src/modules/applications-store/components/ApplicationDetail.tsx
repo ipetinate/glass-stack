@@ -101,7 +101,7 @@ export function ApplicationDetail({
         type="button"
         size="sm"
         onClick={onBack}
-        className="mb-6 w-fit min-h-8 rounded-lg border-0 bg-transparent px-0 text-xs text-white hover:bg-transparent hover:text-cyan-300"
+        className="mb-6 w-fit rounded-lg border-0 bg-transparent px-3 text-white hover:bg-white/10 hover:text-cyan-300"
       >
         <ArrowLeft className="size-4" />
         Voltar
@@ -118,8 +118,13 @@ export function ApplicationDetail({
             <h1 className="text-3xl font-semibold text-white">{application.name}</h1>
             <p className="mt-2 text-sm text-white/50">{application.developer}</p>
             <div className="mt-3 flex items-center gap-2 text-xs text-white/75">
-              <Stars value={application.rating} />
-              {application.rating.toFixed(1)} · {application.downloads} downloads
+              <Stars value={application.rating ?? 0} />
+              {application.rating !== undefined ? (
+                <span>
+                  {application.rating.toFixed(1)}
+                  {application.downloads ? ` · ${application.downloads} downloads` : ''}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
