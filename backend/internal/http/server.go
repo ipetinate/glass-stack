@@ -73,6 +73,15 @@ func (server *Server) Start(parent context.Context) (result error) {
 		close(metricsDone)
 	}
 
+	if server.runtime.Store != nil {
+		storeContext, cancelStore := context.WithCancel(parent)
+		go func() {
+			server.runtime.Store.Run(storeContext)
+			cancelStore()
+		}()
+		defer cancelStore()
+	}
+
 	serverErrors := make(chan error, 1)
 	go func() {
 		logger.Info("http server started", "address", server.httpServer.Addr)

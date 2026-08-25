@@ -13,6 +13,7 @@ import (
 	"github.com/ipetinate/glass-stack/backend/internal/host"
 	"github.com/ipetinate/glass-stack/backend/internal/http/handlers"
 	"github.com/ipetinate/glass-stack/backend/internal/settings"
+	"github.com/ipetinate/glass-stack/backend/internal/store"
 	systeminfo "github.com/ipetinate/glass-stack/backend/internal/system"
 )
 
@@ -25,6 +26,7 @@ type Runtime struct {
 	Logger         *slog.Logger
 	Auth           *auth.Service
 	Settings       *settings.Service
+	Store          *store.Service
 	Database       ControlPlaneDatabase
 	Address        string
 	AllowedOrigins []string
@@ -170,6 +172,18 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 						chi.URLParam(request, "wallpaperID"),
 					)
 				})
+			}
+
+			if runtime.Store != nil {
+				storeHandler := handlers.NewStoreHandler(runtime.Store, runtime.Logger)
+				protected.Get("/store/apps", storeHandler.Catalog)
+				protected.Get("/catalog/apps", storeHandler.Catalog)
+				protected.Get("/catalog/apps/{appID}", storeHandler.Application)
+				protected.Post("/store/sync", storeHandler.Sync)
+				protected.Get(
+					"/store/apps/{appID}/assets/{file}",
+					storeHandler.Asset,
+				)
 			}
 
 			protected.With(RequireRole(auth.RoleAdmin)).Post(

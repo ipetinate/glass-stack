@@ -28,6 +28,9 @@ type Config struct {
 	AllowedOrigins         []string
 	UnsplashAccessKey      string
 	UnsplashSelfHost       bool
+	StoreRepository        string
+	StoreBranch            string
+	StorePollHours         int
 }
 
 func Load() (Config, error) {
@@ -91,6 +94,38 @@ func Load() (Config, error) {
 			configuredValue(fileEnvironment, "GLASS_UNSPLASH_SELF_HOST", "false"),
 			"true",
 		),
+		StoreRepository: configuredValue(
+			fileEnvironment,
+			"GLASS_STORE_REPOSITORY",
+			"ipetinate/glass-store",
+		),
+		StoreBranch: configuredValue(
+			fileEnvironment,
+			"GLASS_STORE_BRANCH",
+			"main",
+		),
+	}
+
+	config.StorePollHours = 6
+	if raw := strings.TrimSpace(configuredValue(
+		fileEnvironment,
+		"GLASS_STORE_POLL_HOURS",
+		"",
+	)); raw != "" {
+		parsed := 0
+		if _, err := fmt.Sscanf(raw, "%d", &parsed); err != nil || parsed < 1 || parsed > 168 {
+			return Config{}, fmt.Errorf(
+				"GLASS_STORE_POLL_HOURS must be an integer between 1 and 168",
+			)
+		}
+		config.StorePollHours = parsed
+	}
+	if !strings.Contains(config.StoreRepository, "/") ||
+		strings.ContainsAny(config.StoreRepository, " \t\n") {
+		return Config{}, fmt.Errorf("GLASS_STORE_REPOSITORY must be in owner/name form")
+	}
+	if config.StoreBranch == "" {
+		return Config{}, fmt.Errorf("GLASS_STORE_BRANCH must not be empty")
 	}
 
 	for _, directory := range []string{

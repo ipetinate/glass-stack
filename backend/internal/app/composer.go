@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/ipetinate/glass-stack/backend/internal/platform/secrets"
 	platformwallpaper "github.com/ipetinate/glass-stack/backend/internal/platform/wallpaper"
 	"github.com/ipetinate/glass-stack/backend/internal/settings"
+	"github.com/ipetinate/glass-stack/backend/internal/store"
 	systeminfo "github.com/ipetinate/glass-stack/backend/internal/system"
 )
 
@@ -63,6 +65,23 @@ func newRuntime() (*httpserver.Runtime, error) {
 		platformwallpaper.NewUnsplash(configuration.UnsplashAccessKey),
 		configuration.UnsplashSelfHost,
 	)
+	storeDataDir := filepath.Join(configuration.DataDir, "store")
+	storeService := store.NewService(
+		database.NewCatalogStore(db),
+		store.NewSourceClient(
+			nil,
+			"https://api.github.com",
+			"https://codeload.github.com",
+		),
+		nil,
+		storeDataDir,
+		store.Config{
+			Repository:        configuration.StoreRepository,
+			Branch:            configuration.StoreBranch,
+			PollIntervalHours: configuration.StorePollHours,
+		},
+		logger,
+	)
 	temperatureCollector := systeminfo.NewTemperatureCollector()
 	ioCollector := systeminfo.NewIOCollector()
 	cpuCollector := systeminfo.NewCPUCollector()
@@ -82,6 +101,7 @@ func newRuntime() (*httpserver.Runtime, error) {
 		Logger:         logger,
 		Auth:           authService,
 		Settings:       settingsService,
+		Store:          storeService,
 		Database:       db,
 		Address:        configuration.Address,
 		AllowedOrigins: configuration.AllowedOrigins,

@@ -4,6 +4,7 @@ go 1.26.4
 
 require (
 	github.com/go-chi/chi/v5 v5.3.1
+	github.com/goccy/go-yaml v1.19.2
 	github.com/mattn/go-sqlite3 v1.14.49
 	github.com/shirou/gopsutil/v4 v4.26.6
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
