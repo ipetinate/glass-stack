@@ -20,6 +20,11 @@ type ApplicationSummaryDTO struct {
 	Status      string   `json:"status"`
 }
 
+type PaginatedCatalog struct {
+	Data  []ApplicationSummaryDTO `json:"data"`
+	Total int                     `json:"total"`
+}
+
 type ScreenshotDTO struct {
 	ID  string `json:"id"`
 	Src string `json:"src"`

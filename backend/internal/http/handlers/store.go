@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -38,8 +39,10 @@ func (handler *StoreHandler) Catalog(response http.ResponseWriter, request *http
 		Query:    request.URL.Query().Get("q"),
 		Category: request.URL.Query().Get("category"),
 		Sort:     request.URL.Query().Get("sort"),
+		Offset:   parseIntParam(request, "offset", 0),
+		Limit:    parseIntParam(request, "limit", 20),
 	}
-	applications, err := handler.service.CatalogFiltered(request.Context(), filter)
+	result, err := handler.service.CatalogFiltered(request.Context(), filter)
 	if err != nil {
 		writeStoreError(
 			response,
@@ -50,7 +53,7 @@ func (handler *StoreHandler) Catalog(response http.ResponseWriter, request *http
 		)
 		return
 	}
-	writeJSON(response, http.StatusOK, applications)
+	writeJSON(response, http.StatusOK, result)
 }
 
 func (handler *StoreHandler) Application(response http.ResponseWriter, request *http.Request) {
@@ -203,4 +206,16 @@ func (handler *StoreHandler) StartReviewLogin(response http.ResponseWriter, requ
 
 func (handler *StoreHandler) CancelReviewLogin(response http.ResponseWriter, request *http.Request) {
 	writeJSON(response, http.StatusOK, handler.service.CancelReviewLogin())
+}
+
+func parseIntParam(request *http.Request, key string, fallback int) int {
+	value := request.URL.Query().Get(key)
+	if value == "" {
+		return fallback
+	}
+	parsed, err := strconv.Atoi(value)
+	if err != nil || parsed < 0 {
+		return fallback
+	}
+	return parsed
 }

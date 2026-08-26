@@ -10,25 +10,24 @@ import { useUnsavedChanges } from '@/core/hooks/useUnsavedChanges'
 import {
   ApplicationDetail,
   ApplicationFilters,
-  ApplicationGrid,
   CustomInstallForm,
   FeaturedApplications,
   FilterTrigger,
   StoreSkeleton,
+  VirtualizedApplicationGrid,
 } from '../../components'
 import {
   applicationsQueryKey,
+  flattenPages,
   useApplication,
-  useApplications,
+  useInfiniteApplications,
   useInstallApplication,
   useInstallOperation,
   useSyncCatalog,
 } from '../../repositories'
-import type { ApplicationSummary, InstallationMode } from '../../types'
+import type { InstallationMode } from '../../types'
 
 import { getFeaturedApplications } from './ApplicationsStore.functions'
-
-const EMPTY_APPLICATIONS: ApplicationSummary[] = []
 
 export function ApplicationsStore() {
   const navigate = useNavigate()
@@ -50,9 +49,10 @@ export function ApplicationsStore() {
   const [showDetail, setShowDetail] = useState(false)
   const prevSelectedId = useRef<string | undefined>(undefined)
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(undefined as never)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
 
-  const applicationsQuery = useApplications({ q: debouncedSearch, category, sort })
-  const applications = applicationsQuery.data ?? EMPTY_APPLICATIONS
+  const applicationsQuery = useInfiniteApplications({ q: debouncedSearch, category, sort })
+  const applications = flattenPages(applicationsQuery.data?.pages)
   const selectedSummary = applications.find((application) => application.id === selectedId)
   const selectedQuery = useApplication(selectedId)
 
@@ -134,7 +134,7 @@ export function ApplicationsStore() {
             </div>
           ) : null}
           {!applicationsQuery.isLoading && !applicationsQuery.isError && applications.length > 0 ? (
-            <div className="min-h-0 flex-1 overflow-y-auto">
+            <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto">
               <FeaturedApplications applications={getFeaturedApplications(applications)} onOpen={handleOpen} />
               <div className="relative border-b border-white/5 py-3">
                 <div className="flex items-center">
@@ -169,11 +169,15 @@ export function ApplicationsStore() {
               </div>
               <div className="pt-5">
                 {applications.length > 0 ? (
-                  <ApplicationGrid
+                  <VirtualizedApplicationGrid
                     applications={applications}
                     installingApplicationId={isInstalling ? installingId : undefined}
                     onOpen={handleOpen}
                     onInstall={(appId) => startInstall(appId, 'standard')}
+                    scrollContainerRef={scrollContainerRef}
+                    hasNextPage={applicationsQuery.hasNextPage}
+                    isFetchingNextPage={applicationsQuery.isFetchingNextPage}
+                    fetchNextPage={() => void applicationsQuery.fetchNextPage()}
                   />
                 ) : (
                   <div className="rounded-xl border border-white/10 bg-black/20 p-8 text-center text-sm text-white/60">

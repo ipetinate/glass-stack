@@ -144,12 +144,14 @@ type CatalogFilter struct {
 	Query    string
 	Category string
 	Sort     string
+	Offset   int
+	Limit    int
 }
 
-func (service *Service) CatalogFiltered(ctx context.Context, filter CatalogFilter) ([]ApplicationSummaryDTO, error) {
+func (service *Service) CatalogFiltered(ctx context.Context, filter CatalogFilter) (PaginatedCatalog, error) {
 	records, err := service.catalog.List(ctx)
 	if err != nil {
-		return nil, err
+		return PaginatedCatalog{}, err
 	}
 
 	search := strings.TrimSpace(strings.ToLower(filter.Query))
@@ -206,7 +208,29 @@ func (service *Service) CatalogFiltered(ctx context.Context, filter CatalogFilte
 		})
 	}
 
-	return summaries, nil
+	total := len(summaries)
+
+	offset := filter.Offset
+	if offset < 0 {
+		offset = 0
+	}
+	if offset >= total {
+		return PaginatedCatalog{Data: []ApplicationSummaryDTO{}, Total: total}, nil
+	}
+
+	limit := filter.Limit
+	if limit <= 0 {
+		limit = total
+	}
+	end := offset + limit
+	if end > total {
+		end = total
+	}
+
+	return PaginatedCatalog{
+		Data:  summaries[offset:end],
+		Total: total,
+	}, nil
 }
 
 func (service *Service) Application(

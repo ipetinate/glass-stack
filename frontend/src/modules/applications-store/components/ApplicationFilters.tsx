@@ -23,7 +23,7 @@ export function ApplicationFilters({
   if (!expanded) return null
 
   return (
-    <BackgroundBlur className="absolute right-0 top-full z-20 mt-2 grid w-72 gap-3 p-4">
+    <BackgroundBlur className="absolute right-0 top-full z-20 mt-2 grid w-72 overflow-visible gap-3 p-4">
       <Select
         aria-label="Category"
         value={category}

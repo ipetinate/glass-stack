@@ -32,6 +32,8 @@ export const handlers = [
     const url = new URL(request.url)
     const q = (url.searchParams.get('q') ?? '').toLowerCase()
     const category = url.searchParams.get('category') ?? ''
+    const offset = parseInt(url.searchParams.get('offset') ?? '0', 10) || 0
+    const limit = parseInt(url.searchParams.get('limit') ?? '20', 10) || 20
     let result = [...applications]
     if (q) {
       result = result.filter((app) =>
@@ -41,7 +43,9 @@ export const handlers = [
     if (category && category !== 'all') {
       result = result.filter((app) => app.category === category)
     }
-    return HttpResponse.json(result)
+    const total = result.length
+    const data = result.slice(offset, offset + limit)
+    return HttpResponse.json({ data, total })
   }),
   http.get('/api/v1/catalog/apps/:appId', ({ params }) => {
     const application = getApplicationDetail(String(params.appId))

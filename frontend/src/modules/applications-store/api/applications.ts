@@ -5,16 +5,25 @@ import type {
   ApplicationSummary,
   InstallOperation,
   InstallRequest,
+  PaginatedResponse,
   ReviewSession,
 } from '../types'
 
-export function getApplications(filters?: { q?: string; category?: string; sort?: string }) {
+export function getApplications(filters?: {
+  q?: string
+  category?: string
+  sort?: string
+  offset?: number
+  limit?: number
+}): Promise<PaginatedResponse<ApplicationSummary>> {
   const params = new URLSearchParams()
   if (filters?.q) params.set('q', filters.q)
   if (filters?.category && filters.category !== 'all') params.set('category', filters.category)
   if (filters?.sort) params.set('sort', filters.sort)
+  if (filters?.offset !== undefined) params.set('offset', String(filters.offset))
+  if (filters?.limit !== undefined) params.set('limit', String(filters.limit))
   const query = params.toString()
-  return glassRequest<ApplicationSummary[]>(`/api/v1/catalog/apps${query ? `?${query}` : ''}`)
+  return glassRequest(`/api/v1/catalog/apps${query ? `?${query}` : ''}`)
 }
 
 export function getApplication(appId: string) {

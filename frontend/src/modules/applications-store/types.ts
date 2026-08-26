@@ -59,6 +59,11 @@ export type ApplicationSummary = {
   status: AppStatus
 }
 
+export type PaginatedResponse<T> = {
+  data: T[]
+  total: number
+}
+
 export type AppEntrypoint = {
   main: string
   index: string

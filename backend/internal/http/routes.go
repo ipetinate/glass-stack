@@ -182,7 +182,6 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 					}
 					return sessionUser.User.Username
 				})
-				protected.Get("/store/apps", storeHandler.Catalog)
 				protected.Get("/catalog/apps", storeHandler.Catalog)
 				protected.Get("/catalog/apps/{appID}", storeHandler.Application)
 				protected.Post("/catalog/apps/{appID}/reviews", storeHandler.CreateReview)

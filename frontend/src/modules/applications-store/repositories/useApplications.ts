@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import {
   cancelReviewLogin,
@@ -11,15 +11,27 @@ import {
   startReviewLogin,
   syncStoreCatalog,
 } from '../api/applications'
-import type { InstallRequest } from '../types'
+import type { ApplicationSummary, InstallRequest } from '../types'
 
 export const applicationsQueryKey = ['applications-store', 'applications']
 
-export function useApplications(filters?: { q?: string; category?: string; sort?: string }) {
-  return useQuery({
+const PAGE_SIZE = 20
+
+export function useInfiniteApplications(filters?: { q?: string; category?: string; sort?: string }) {
+  return useInfiniteQuery({
     queryKey: [...applicationsQueryKey, filters],
-    queryFn: () => getApplications(filters),
+    queryFn: ({ pageParam }) =>
+      getApplications({ ...filters, offset: pageParam, limit: PAGE_SIZE }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      const loaded = allPages.reduce((sum, page) => sum + page.data.length, 0)
+      return loaded < lastPage.total ? loaded : undefined
+    },
   })
+}
+
+export function flattenPages(pages?: { data: ApplicationSummary[] }[]): ApplicationSummary[] {
+  return pages?.flatMap((page) => page.data) ?? []
 }
 
 export function useApplication(appId: string | undefined) {
