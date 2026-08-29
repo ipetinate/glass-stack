@@ -139,9 +139,12 @@ func (handler *StoreHandler) CreateReview(response http.ResponseWriter, request 
 		fallbackAuthor,
 	)
 	if err != nil {
+		handler.logger.Error("create review failed", "app_id", appID, "author", fallbackAuthor, "error", err)
 		switch {
 		case errors.Is(err, store.ErrInvalidReview):
 			writeStoreError(response, request, http.StatusBadRequest, "invalid_review", "Informe uma nota de 1 a 5 estrelas e um comentário.")
+		case errors.Is(err, store.ErrDuplicateReview):
+			writeStoreError(response, request, http.StatusConflict, "duplicate_review", "Você já publicou uma avaliação para este aplicativo.")
 		case errors.Is(err, store.ErrServerTokenRequired):
 			writeStoreError(
 				response,
@@ -206,6 +209,56 @@ func (handler *StoreHandler) StartReviewLogin(response http.ResponseWriter, requ
 
 func (handler *StoreHandler) CancelReviewLogin(response http.ResponseWriter, request *http.Request) {
 	writeJSON(response, http.StatusOK, handler.service.CancelReviewLogin())
+}
+
+func (handler *StoreHandler) EditReview(response http.ResponseWriter, request *http.Request) {
+	appID := chi.URLParam(request, "appID")
+	var payload struct {
+		CommentID string `json:"commentId"`
+		Comment   string `json:"comment"`
+	}
+	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
+		writeStoreError(response, request, http.StatusBadRequest, "invalid_payload", "Avaliação inválida.")
+		return
+	}
+	author := handler.authorFrom(request.Context())
+	fallbackAuthor := author
+	if fallbackAuthor == "" {
+		fallbackAuthor = "Anônimo"
+	}
+	err := handler.service.EditReview(
+		request.Context(),
+		appID,
+		payload.CommentID,
+		payload.Comment,
+		fallbackAuthor,
+	)
+	if err != nil {
+		handler.logger.Error("edit review failed", "app_id", appID, "comment_id", payload.CommentID, "error", err)
+		switch {
+		case errors.Is(err, store.ErrInvalidReview):
+			writeStoreError(response, request, http.StatusBadRequest, "invalid_review", "Comentário da avaliação não pode ser vazio.")
+		case errors.Is(err, store.ErrReviewNotFound):
+			writeStoreError(response, request, http.StatusNotFound, "review_not_found", "Avaliação não encontrada.")
+		case errors.Is(err, store.ErrEditWindowExpired):
+			writeStoreError(response, request, http.StatusForbidden, "edit_window_expired", "Janela de edição de 10 minutos expirou.")
+		case errors.Is(err, store.ErrAlreadyEdited):
+			writeStoreError(response, request, http.StatusForbidden, "already_edited", "Esta avaliação já foi editada.")
+		case errors.Is(err, store.ErrServerTokenRequired):
+			writeStoreError(response, request, http.StatusUnauthorized, "review_login_required", "Entre com GitHub ou Google para editar sua avaliação.")
+		case errors.Is(err, store.ErrReviewsUnavailable):
+			writeStoreError(response, request, http.StatusServiceUnavailable, "reviews_unavailable", "Avaliações indisponíveis.")
+		default:
+			writeStoreError(response, request, http.StatusInternalServerError, "review_failed", "Não foi possível editar a avaliação.")
+		}
+		return
+	}
+	application, err := handler.service.Application(request.Context(), appID)
+	if err != nil {
+		writeJSON(response, http.StatusOK, map[string]string{"status": "updated"})
+		return
+	}
+	writeJSON(response, http.StatusOK, application)
 }
 
 func parseIntParam(request *http.Request, key string, fallback int) int {

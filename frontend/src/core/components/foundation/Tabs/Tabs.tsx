@@ -11,7 +11,7 @@ import { sortTabs } from './Tabs.functions'
 export type TabItem = {
   id: string
   title: string
-  content: ReactNode
+  content?: ReactNode
   icon?: IconName
   closeUnsavedChangesScope?: string
   pinned?: boolean
@@ -32,6 +32,7 @@ export type TabsProps = {
   onTabsChange?: (tabs: TabItem[]) => void
   onTabClose?: (tab: TabItem) => void
   onTabPinChange?: (tab: TabItem, pinned: boolean) => void
+  renderPanel?: (tab: TabItem) => ReactNode
 }
 
 export function Tabs({
@@ -49,6 +50,7 @@ export function Tabs({
   onTabsChange,
   onTabClose,
   onTabPinChange,
+  renderPanel,
 }: TabsProps) {
   const [internalTabs, setInternalTabs] = useState(tabs)
   const [internalActiveTabId, setInternalActiveTabId] = useState(
@@ -152,7 +154,7 @@ export function Tabs({
         )}
       >
         <div className="h-full min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain p-10">
-          {activeTab?.content}
+          {renderPanel ? renderPanel(activeTab) : activeTab?.content}
         </div>
       </BackgroundBlur>
     </div>

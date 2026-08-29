@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	slugPattern       = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]*$`)
+	slugPattern      = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]*$`)
 	pinnedImageRegex = regexp.MustCompile(`^[^:\s@]+:[A-Za-z0-9._-]+(@sha256:[a-f0-9]{64})?$`)
 	datePattern      = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 	portPattern      = regexp.MustCompile(`^\d+$`)
@@ -238,28 +238,28 @@ func applyEntrypoint(app *App, envelope composeEnvelope, metadata map[string]any
 }
 
 var casaosCategories = map[string]string{
-	"media":       "multimedia",
-	"multimedia":  "multimedia",
-	"video":       "multimedia",
-	"photos":      "multimedia",
-	"music":       "multimedia",
-	"backup":      "productivity",
+	"media":        "multimedia",
+	"multimedia":   "multimedia",
+	"video":        "multimedia",
+	"photos":       "multimedia",
+	"music":        "multimedia",
+	"backup":       "productivity",
 	"productivity": "productivity",
-	"office":      "productivity",
-	"network":     "networking",
-	"networking":  "networking",
-	"dns":         "networking",
-	"home":        "home",
-	"automation":  "home",
-	"security":    "security",
-	"developer":   "devops",
-	"devops":      "devops",
-	"monitoring":  "devops",
-	"utilities":   "other",
-	"social":      "other",
-	"games":       "other",
-	"finance":     "other",
-	"books":       "other",
+	"office":       "productivity",
+	"network":      "networking",
+	"networking":   "networking",
+	"dns":          "networking",
+	"home":         "home",
+	"automation":   "home",
+	"security":     "security",
+	"developer":    "devops",
+	"devops":       "devops",
+	"monitoring":   "devops",
+	"utilities":    "other",
+	"social":       "other",
+	"games":        "other",
+	"finance":      "other",
+	"books":        "other",
 }
 
 func normalizeCasaosCategory(raw string) string {

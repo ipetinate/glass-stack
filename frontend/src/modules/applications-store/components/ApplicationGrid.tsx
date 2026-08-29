@@ -3,14 +3,12 @@ import type { ApplicationSummary } from '../types'
 
 type ApplicationGridProps = {
   applications: ApplicationSummary[]
-  installingApplicationId?: string
   onOpen: (applicationId: string) => void
   onInstall: (applicationId: string) => void
 }
 
 export function ApplicationGrid({
   applications,
-  installingApplicationId,
   onOpen,
   onInstall,
 }: ApplicationGridProps) {
@@ -20,7 +18,6 @@ export function ApplicationGrid({
         <ApplicationCard
           key={application.id}
           application={application}
-          installing={installingApplicationId === application.id}
           onOpen={onOpen}
           onInstall={onInstall}
         />

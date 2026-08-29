@@ -80,8 +80,8 @@ In another terminal:
 pnpm --dir frontend dev
 ```
 
-The frontend is available at `http://localhost:5173` and proxies `/api` to
-the backend at `http://localhost:8080`. Vite provides HMR for the frontend and
+The frontend is available at `http://localhost:8080` and proxies `/api` to
+the backend at `http://localhost:8070`. Vite provides HMR for the frontend and
 Air rebuilds the backend whenever Go files change.
 
 On first start, the backend logs the path of a mode-0600 bootstrap-token file
@@ -111,7 +111,7 @@ To run only the backend directly:
 go tool air -c .air.toml
 ```
 
-The API will be available at `http://localhost:8080`.
+The API will be available at `http://localhost:8070`.
 
 ### System monitoring endpoints
 

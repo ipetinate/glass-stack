@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react'
 
 import { useThemeStore } from '@/core/stores/theme/theme'
 import { useWallpaperStore } from '@/core/stores/wallpaper'
+import { InstallOperationsStream } from '@/modules/applications-store/providers/InstallOperationsStream'
 
 type AppProvidersProps = PropsWithChildren<{
   queryClient?: QueryClientInstance
@@ -50,6 +51,7 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
 
   return (
     <QueryClientProvider client={activeQueryClient}>
+      <InstallOperationsStream />
       {children}
     </QueryClientProvider>
   )

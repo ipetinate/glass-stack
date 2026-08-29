@@ -71,6 +71,33 @@ func TestReadEnvironmentFile(t *testing.T) {
 	}
 }
 
+func TestDockerHost(t *testing.T) {
+	tests := []struct {
+		name       string
+		configured string
+		expected   string
+	}{
+		{name: "defaults to empty", expected: ""},
+		{name: "unix socket", configured: "unix:///var/run/docker.sock", expected: "unix:///var/run/docker.sock"},
+		{name: "tcp target", configured: "tcp://127.0.0.1:2375", expected: "tcp://127.0.0.1:2375"},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("GLASS_ENV", "development")
+			t.Setenv("GLASS_DATA_DIR", filepath.Join(t.TempDir(), "data"))
+			t.Setenv("GLASS_DOCKER_HOST", test.configured)
+
+			configuration, err := Load()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if configuration.DockerHost != test.expected {
+				t.Fatalf("DockerHost = %q, want %q", configuration.DockerHost, test.expected)
+			}
+		})
+	}
+}
+
 func TestConfiguredValuePrefersProcessEnvironment(t *testing.T) {
 	t.Setenv("GLASS_UNSPLASH_ACCESS_KEY", "shell-key")
 

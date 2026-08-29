@@ -38,13 +38,16 @@ type RequirementRowDTO struct {
 }
 
 type ReviewDTO struct {
-	ID       string `json:"id"`
-	Author   string `json:"author"`
-	Avatar   string `json:"avatar,omitempty"`
-	Provider string `json:"provider,omitempty"`
-	PostedAt string `json:"postedAt"`
-	Snippet  string `json:"snippet"`
-	Rating   int    `json:"rating"`
+	ID        string `json:"id"`
+	CommentID string `json:"commentId,omitempty"`
+	Author    string `json:"author"`
+	Avatar    string `json:"avatar,omitempty"`
+	Provider  string `json:"provider,omitempty"`
+	PostedAt  string `json:"postedAt"`
+	EditedAt  string `json:"editedAt,omitempty"`
+	Edits     int    `json:"edits,omitempty"`
+	Snippet   string `json:"snippet"`
+	Rating    int    `json:"rating"`
 }
 
 type ApplicationDetailDTO struct {

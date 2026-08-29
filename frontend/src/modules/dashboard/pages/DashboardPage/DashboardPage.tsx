@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useRef, useState, type PointerEvent } from 'react'
 
 import { fetchStorage } from '@/modules/dashboard/api/queries'
+import { InstalledApps } from '@/modules/dashboard/components/InstalledApps'
 import { InputOutput } from '@/modules/dashboard/components/InputOutput'
 import { ProcessingLoad } from '@/modules/dashboard/components/ProcessingLoad'
 import { Widget } from '@/modules/dashboard/components/Widget/Widget'
@@ -174,14 +175,7 @@ export function DashboardPage() {
         title="Applications"
         className="col-span-1 col-start-1 row-span-3 row-start-4 min-h-0"
       >
-        <div className="flex items-start pt-8">
-          <div className="flex flex-col items-center gap-2">
-            <div className="grid h-14 w-14 place-items-center rounded-xl bg-[#070b1f]">
-              <div className="h-8 w-8 rounded-full border-[5px] border-[#8fbfff] border-b-[#40d7ff] border-l-[#40d7ff]" />
-            </div>
-            <p className="text-xs font-semibold text-white">Jellyfin</p>
-          </div>
-        </div>
+        <InstalledApps />
       </Widget>
 
       <InputOutput />

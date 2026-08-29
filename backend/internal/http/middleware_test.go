@@ -12,7 +12,7 @@ import (
 
 func TestCORSAllowsDevelopmentOrigin(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/api/health", nil)
-	request.Header.Set("Origin", "http://localhost:5173")
+	request.Header.Set("Origin", "http://localhost:8080")
 	response := httptest.NewRecorder()
 
 	NewRouter().ServeHTTP(response, request)
@@ -21,7 +21,7 @@ func TestCORSAllowsDevelopmentOrigin(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusOK, response.Code)
 	}
 
-	if origin := response.Header().Get("Access-Control-Allow-Origin"); origin != "http://localhost:5173" {
+	if origin := response.Header().Get("Access-Control-Allow-Origin"); origin != "http://localhost:8080" {
 		t.Fatalf("expected allowed origin header, got %q", origin)
 	}
 
@@ -48,7 +48,7 @@ func TestCORSDoesNotAllowUnknownOrigin(t *testing.T) {
 
 func TestCORSHandlesPreflight(t *testing.T) {
 	request := httptest.NewRequest(http.MethodOptions, "/api/events", nil)
-	request.Header.Set("Origin", "http://127.0.0.1:5173")
+	request.Header.Set("Origin", "http://127.0.0.1:8080")
 	request.Header.Set("Access-Control-Request-Method", http.MethodGet)
 	request.Header.Set("Access-Control-Request-Headers", "Accept")
 	response := httptest.NewRecorder()
@@ -59,7 +59,7 @@ func TestCORSHandlesPreflight(t *testing.T) {
 		t.Fatalf("expected status %d, got %d", http.StatusNoContent, response.Code)
 	}
 
-	if origin := response.Header().Get("Access-Control-Allow-Origin"); origin != "http://127.0.0.1:5173" {
+	if origin := response.Header().Get("Access-Control-Allow-Origin"); origin != "http://127.0.0.1:8080" {
 		t.Fatalf("expected allowed origin header, got %q", origin)
 	}
 

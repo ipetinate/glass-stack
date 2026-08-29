@@ -470,11 +470,11 @@ func (service *Service) cancelActiveSessionLocked() {
 	}
 	session := service.reviewSession
 	session.mu.Lock()
-	shouldCancel := session.cancel != nil
+	cancel := session.cancel
 	session.cancel = nil
 	session.mu.Unlock()
-	if shouldCancel {
-		session.cancel()
+	if cancel != nil {
+		cancel()
 	}
 	service.reviewSession = nil
 }

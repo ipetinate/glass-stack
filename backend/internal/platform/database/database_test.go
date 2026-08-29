@@ -2,10 +2,47 @@ package database
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/ipetinate/glass-stack/backend/internal/store"
 )
+
+func TestCatalogStoreComposeRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	db, err := Open(ctx, filepath.Join(t.TempDir(), "apps.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+
+	catalog := NewCatalogStore(db)
+	const compose = "name: uptime-kuma\nservices:\n  web:\n    image: louislam/uptime-kuma:1.23.16\n"
+	if err := catalog.Upsert(ctx, store.CatalogRecord{
+		Summary:     store.ApplicationSummaryDTO{ID: "uptime-kuma"},
+		Version:     "1",
+		ContentHash: "deadbeef",
+		Compose:     compose,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := catalog.Compose(ctx, "uptime-kuma")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != compose {
+		t.Fatalf("compose = %q", got)
+	}
+
+	if _, err := catalog.Compose(ctx, "ghost"); !errors.Is(err, store.ErrApplicationNotFound) {
+		t.Fatalf("err = %v", err)
+	}
+}
 
 func TestBackupAtomicallyReplacesPreviousBackup(t *testing.T) {
 	t.Parallel()

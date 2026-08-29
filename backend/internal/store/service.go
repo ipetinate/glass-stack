@@ -24,6 +24,7 @@ type CatalogRecord struct {
 	Version     string
 	ContentHash string
 	SyncedAt    string
+	Compose     string
 }
 
 type CatalogRepository interface {
@@ -32,6 +33,7 @@ type CatalogRepository interface {
 	DeleteMissing(ctx context.Context, keepIDs []string) (int64, error)
 	SyncState(ctx context.Context) (string, time.Time, error)
 	SaveSyncState(ctx context.Context, commitSHA string, syncedAt time.Time) error
+	Compose(ctx context.Context, appID string) (string, error)
 }
 
 type Config struct {
@@ -249,6 +251,18 @@ func (service *Service) Application(
 	return nil, ErrApplicationNotFound
 }
 
+// Manifest returns the raw docker-compose manifest for an app.
+func (service *Service) Manifest(ctx context.Context, appID string) (string, error) {
+	compose, err := service.catalog.Compose(ctx, appID)
+	if err != nil {
+		return "", err
+	}
+	if strings.TrimSpace(compose) == "" {
+		return "", ErrApplicationNotFound
+	}
+	return compose, nil
+}
+
 func (service *Service) AssetRoot(appID string) (string, error) {
 	if !slugPattern.MatchString(appID) {
 		return "", fmt.Errorf("id de aplicativo inválido")
@@ -327,6 +341,8 @@ func (service *Service) Sync(ctx context.Context) (SyncSummary, error) {
 		}
 		if communityReviews := reviewsByApp[parsed.ID]; len(communityReviews) > 0 {
 			record.App.Reviews = communityReviews
+			record.Summary.Rating = computeAverageRating(communityReviews)
+			record.App.Rating = record.Summary.Rating
 		}
 		if _, ok := previous[parsed.ID]; ok {
 			if previous[parsed.ID] != contentHash {
@@ -335,6 +351,7 @@ func (service *Service) Sync(ctx context.Context) (SyncSummary, error) {
 		} else {
 			summary.Added++
 		}
+		record.Compose = manifestData
 		if err := service.catalog.Upsert(ctx, record); err != nil {
 			return summary, fmt.Errorf("upsert app %s: %w", parsed.ID, err)
 		}
@@ -519,6 +536,31 @@ func (service *Service) CreateReview(
 	return service.refreshReviews(ctx)
 }
 
+func (service *Service) EditReview(
+	ctx context.Context,
+	appID string,
+	commentID string,
+	newText string,
+	fallbackAuthor string,
+) error {
+	newText = strings.TrimSpace(newText)
+	if newText == "" {
+		return ErrInvalidReview
+	}
+	if err := service.source.EditReview(
+		ctx,
+		service.config.Repository,
+		appID,
+		commentID,
+		newText,
+		service.reviewerIdentity(),
+		strings.TrimSpace(fallbackAuthor),
+	); err != nil {
+		return err
+	}
+	return service.refreshReviews(ctx)
+}
+
 func (service *Service) refreshReviews(ctx context.Context) error {
 	reviewsByApp, err := service.source.FetchReviews(ctx, service.config.Repository)
 	if err != nil {
@@ -538,6 +580,8 @@ func (service *Service) refreshReviews(ctx context.Context) error {
 		} else {
 			record.App.Reviews = []ReviewDTO{}
 		}
+		record.Summary.Rating = computeAverageRating(record.App.Reviews)
+		record.App.Rating = record.Summary.Rating
 		if err := service.catalog.Upsert(ctx, record); err != nil {
 			return fmt.Errorf("upsert app %s: %w", record.App.ID, err)
 		}

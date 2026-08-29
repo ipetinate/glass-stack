@@ -165,6 +165,8 @@ type UserStore interface {
 	ListIdentities(context.Context) ([]Identity, error)
 	SetUserRole(context.Context, string, Role, time.Time) error
 	UpdatePassword(context.Context, string, string, time.Time) error
+	CreateUser(context.Context, User, *TOTPCredential, [][]byte, string) error
+	DeleteUser(context.Context, string) (bool, error)
 }
 
 type SessionStore interface {

@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/ipetinate/glass-stack/backend/internal/auth"
+	"github.com/ipetinate/glass-stack/backend/internal/containers"
 	"github.com/ipetinate/glass-stack/backend/internal/events"
 	"github.com/ipetinate/glass-stack/backend/internal/host"
 	"github.com/ipetinate/glass-stack/backend/internal/http/handlers"
@@ -27,6 +28,8 @@ type Runtime struct {
 	Auth           *auth.Service
 	Settings       *settings.Service
 	Store          *store.Service
+	Containers     handlers.ContainerOperations
+	Apps           handlers.AppsService
 	Database       ControlPlaneDatabase
 	Address        string
 	AllowedOrigins []string
@@ -114,6 +117,19 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 		api.With(publicAuthLimit).Post("/invitations/totp", authHandler.BeginInvitationTOTP)
 		api.With(publicAuthLimit).Post("/invitations/accept", authHandler.AcceptInvitation)
 
+		if runtime.Store != nil {
+			storeHandler := handlers.NewStoreHandler(runtime.Store, runtime.Logger, func(ctx context.Context) string {
+				sessionUser, ok := AuthenticatedSession(ctx)
+				if !ok {
+					return ""
+				}
+				return sessionUser.User.Username
+			})
+			api.Post("/store/reviews/session", storeHandler.StartReviewLogin)
+			api.Get("/store/reviews/session", storeHandler.ReviewSession)
+			api.Delete("/store/reviews/session", storeHandler.CancelReviewLogin)
+		}
+
 		api.Group(func(protected chi.Router) {
 			protected.Use(RequireAuthentication(runtime.Auth))
 			protected.Use(RequireCSRF(runtime.Auth, allowedOrigins(runtime)...))
@@ -185,9 +201,7 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 				protected.Get("/catalog/apps", storeHandler.Catalog)
 				protected.Get("/catalog/apps/{appID}", storeHandler.Application)
 				protected.Post("/catalog/apps/{appID}/reviews", storeHandler.CreateReview)
-				protected.Get("/store/reviews/session", storeHandler.ReviewSession)
-				protected.Post("/store/reviews/session", storeHandler.StartReviewLogin)
-				protected.Delete("/store/reviews/session", storeHandler.CancelReviewLogin)
+				protected.Put("/catalog/apps/{appID}/reviews", storeHandler.EditReview)
 				protected.Post("/store/sync", storeHandler.Sync)
 				protected.Get(
 					"/store/apps/{appID}/assets/{file}",
@@ -209,6 +223,20 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 					authHandler.ListUsers(response, request, session.User)
 				},
 			)
+			protected.With(RequireRole(auth.RoleAdmin)).Post(
+				"/users/totp",
+				func(response http.ResponseWriter, request *http.Request) {
+					session, _ := AuthenticatedSession(request.Context())
+					authHandler.BeginUserTOTP(response, request, session.User)
+				},
+			)
+			protected.With(RequireRole(auth.RoleAdmin)).Post(
+				"/users",
+				func(response http.ResponseWriter, request *http.Request) {
+					session, _ := AuthenticatedSession(request.Context())
+					authHandler.CreateUser(response, request, session.User)
+				},
+			)
 			protected.With(RequireRole(auth.RoleAdmin)).Patch(
 				"/users/{userID}/role",
 				func(response http.ResponseWriter, request *http.Request) {
@@ -221,6 +249,41 @@ func NewRouterWithRuntime(runtime *Runtime) http.Handler {
 					)
 				},
 			)
+			protected.With(RequireRole(auth.RoleAdmin)).Delete(
+				"/users/{userID}",
+				func(response http.ResponseWriter, request *http.Request) {
+					session, _ := AuthenticatedSession(request.Context())
+					authHandler.DeleteUser(
+						response,
+						request,
+						session.User,
+						chi.URLParam(request, "userID"),
+					)
+				},
+			)
+
+			if runtime.Containers != nil {
+				protected.Get("/docker/status", handlers.DockerStatus(runtime.Containers))
+				protected.Get("/docker/events", handlers.DockerEvents(runtime.Containers))
+				protected.Get("/containers", handlers.ContainersList(runtime.Containers))
+				protected.Get("/containers/{id}", handlers.ContainerDetail(runtime.Containers))
+				protected.Post("/containers/{id}/start", handlers.ContainerLifecycle(runtime.Containers, containers.LifecycleStart))
+				protected.Post("/containers/{id}/stop", handlers.ContainerLifecycle(runtime.Containers, containers.LifecycleStop))
+				protected.Post("/containers/{id}/restart", handlers.ContainerLifecycle(runtime.Containers, containers.LifecycleRestart))
+				protected.Get("/containers/{id}/logs", handlers.ContainerLogs(runtime.Containers))
+				protected.Get("/containers/{id}/stats", handlers.ContainerStats(runtime.Containers))
+			}
+
+			if runtime.Apps != nil {
+				protected.Get("/apps", handlers.AppsList(runtime.Apps))
+				protected.Get("/apps/{appId}", handlers.AppDetail(runtime.Apps))
+				protected.Post("/apps/install", handlers.InstallApp(runtime.Apps))
+				protected.Get("/apps/install/{operationId}", handlers.InstallOperationStatus(runtime.Apps))
+				protected.Get("/apps/events", handlers.OperationEventStream(runtime.Broker))
+				protected.Post("/apps/{appId}/update", handlers.UpdateApp(runtime.Apps))
+				protected.Patch("/apps/{appId}", handlers.EditApp(runtime.Apps))
+				protected.Post("/apps/{appId}/remove", handlers.RemoveApp(runtime.Apps))
+			}
 
 			adminHandler := handlers.NewAdminHandler(runtime.Database)
 			protected.With(RequireRole(auth.RoleAdmin)).Post(
@@ -255,5 +318,5 @@ func allowedOrigins(runtime *Runtime) []string {
 	if len(runtime.AllowedOrigins) > 0 {
 		return runtime.AllowedOrigins
 	}
-	return []string{"http://localhost:5173", "http://127.0.0.1:5173"}
+	return []string{"http://localhost:8080", "http://127.0.0.1:8080"}
 }

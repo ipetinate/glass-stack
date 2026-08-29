@@ -99,7 +99,7 @@ func TestAuthIdentitiesAndUnlockHTTPContract(t *testing.T) {
 			t.Fatalf("status = %d, body = %s", response.Code, response.Body.String())
 		}
 		var payload struct {
-			User      struct {
+			User struct {
 				ID       string `json:"id"`
 				Username string `json:"username"`
 			} `json:"user"`

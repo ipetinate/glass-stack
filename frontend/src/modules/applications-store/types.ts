@@ -21,10 +21,13 @@ export type AppScreenshot = {
 
 export type AppReview = {
   id: string
+  commentId?: string
   author: string
   avatar?: string
   provider?: 'github' | 'google'
   postedAt: string
+  editedAt?: string
+  edits?: number
   snippet: string
   rating: number
 }
@@ -83,20 +86,58 @@ export type ApplicationDetail = ApplicationSummary & {
   entrypoint?: AppEntrypoint
 }
 
+export type InstallOptions = {
+  port?: number
+  volume?: string
+}
+
 export type InstallRequest = {
   appId: string
   mode: InstallationMode
-  options?: {
-    port?: number
-    volume?: string
-  }
+  options?: InstallOptions
 }
+
+export type InstallOperationStatus =
+  | 'queued'
+  | 'installing'
+  | 'updating'
+  | 'editing'
+  | 'removing'
+  | 'installed'
+  | 'removed'
+  | 'error'
 
 export type InstallOperation = {
   id: string
   appId: string
-  status: Extract<AppStatus, 'installing' | 'installed' | 'error'>
+  status: InstallOperationStatus
   progress: number
   message: string
+}
+
+export type InstalledApplicationStatus =
+  | 'installing'
+  | 'installed'
+  | 'updating'
+  | 'editing'
+  | 'removing'
+  | 'removed'
+  | 'error'
+
+export type InstalledApplicationRuntime = 'running' | 'stopped' | 'degraded'
+
+export type InstalledApplication = {
+  id: string
+  title: string
+  version: string
+  status: InstalledApplicationStatus
+  runtime: InstalledApplicationRuntime
+  accessUrl: string
+  options: {
+    port?: number
+    volume?: string
+  }
+  lastError: string
+  updatedAt: string
 }
 

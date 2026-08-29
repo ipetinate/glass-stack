@@ -1,0 +1,21 @@
+name: uptime-kuma
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1.23.16
+    volumes:
+      - uptime-kuma-data:/app/data
+volumes:
+  uptime-kuma-data:
+    name: uptime-kuma-data
+x-glass:
+  title: Uptime Kuma
+  description: Monitor de uptime com painel web.
+  developer: Louis Lam
+  version: 1.23.16
+  icon: icon.png
+  category: devops
+  entrypoint:
+    main: uptime-kuma
+    index: /
+    portMap: 3001
+    scheme: http

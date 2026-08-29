@@ -386,6 +386,67 @@ func (handler *AuthHandler) CreateInvitation(
 	})
 }
 
+func (handler *AuthHandler) BeginUserTOTP(
+	response http.ResponseWriter,
+	request *http.Request,
+	actor auth.User,
+) {
+	var input struct {
+		Username string `json:"username"`
+	}
+	if err := decodeJSON(request, &input); err != nil {
+		writeError(response, request, auth.ErrInvalidInput)
+		return
+	}
+	enrollment, err := handler.service.BeginUserTOTP(
+		request.Context(),
+		actor,
+		input.Username,
+	)
+	if err != nil {
+		writeError(response, request, err)
+		return
+	}
+	writeJSON(response, http.StatusOK, enrollment)
+}
+
+func (handler *AuthHandler) CreateUser(
+	response http.ResponseWriter,
+	request *http.Request,
+	actor auth.User,
+) {
+	var input struct {
+		Username       string    `json:"username"`
+		Password       string    `json:"password"`
+		Role           auth.Role `json:"role"`
+		ChallengeToken string    `json:"challengeToken"`
+		TOTPCode       string    `json:"totpCode"`
+	}
+	if err := decodeJSON(request, &input); err != nil {
+		writeError(response, request, auth.ErrInvalidInput)
+		return
+	}
+	user, recoveryCodes, err := handler.service.CreateUser(
+		request.Context(),
+		actor,
+		auth.CreateUserInput{
+			Username:       input.Username,
+			Password:       input.Password,
+			Role:           input.Role,
+			ChallengeToken: input.ChallengeToken,
+			TOTPCode:       input.TOTPCode,
+		},
+	)
+	if err != nil {
+		writeError(response, request, err)
+		return
+	}
+	writeJSON(response, http.StatusCreated, map[string]any{
+		"user":          userResponse(user),
+		"recoveryCodes": recoveryCodes,
+	})
+}
+
 func (handler *AuthHandler) ListUsers(
 	response http.ResponseWriter,
 	request *http.Request,
@@ -422,6 +483,19 @@ func (handler *AuthHandler) ChangeUserRole(
 		userID,
 		input.Role,
 	); err != nil {
+		writeError(response, request, err)
+		return
+	}
+	response.WriteHeader(http.StatusNoContent)
+}
+
+func (handler *AuthHandler) DeleteUser(
+	response http.ResponseWriter,
+	request *http.Request,
+	actor auth.User,
+	userID string,
+) {
+	if err := handler.service.DeleteUser(request.Context(), actor, userID); err != nil {
 		writeError(response, request, err)
 		return
 	}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/ipetinate/glass-stack/backend/internal/events"
@@ -123,6 +124,48 @@ func EventStream(broker *events.Broker) http.HandlerFunc {
 				}
 
 				if forwardBatch && !writeSSE(response, flusher, event) {
+					return
+				}
+			}
+		}
+	}
+}
+
+// OperationEventStream forwards glass.apps.* broker events verbatim, without
+// the interval batching that EventStream applies to host metrics. App
+// operations publish a handful of steps per install, so every event must reach
+// the client immediately rather than being throttled to one per window.
+func OperationEventStream(broker *events.Broker) http.HandlerFunc {
+	return func(response http.ResponseWriter, request *http.Request) {
+		flusher, ok := response.(http.Flusher)
+		if !ok {
+			http.Error(response, "streaming unsupported", http.StatusInternalServerError)
+			return
+		}
+
+		response.Header().Set("Content-Type", "text/event-stream")
+		response.Header().Set("Cache-Control", "no-cache")
+		response.Header().Set("Connection", "keep-alive")
+		flusher.Flush()
+
+		subscription := broker.SubscribeAfter(
+			request.Context(),
+			request.Header.Get("Last-Event-ID"),
+		)
+		defer subscription.Close()
+
+		for {
+			select {
+			case <-request.Context().Done():
+				return
+			case event, open := <-subscription.Events():
+				if !open {
+					return
+				}
+				if !strings.HasPrefix(event.Type, "glass.apps.") {
+					continue
+				}
+				if !writeSSE(response, flusher, event) {
 					return
 				}
 			}

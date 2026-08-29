@@ -24,6 +24,7 @@ const (
 	challengePurposeSetup      = "setup"
 	challengePurposeInvitation = "invitation"
 	challengePurposeLoginMFA   = "login_mfa"
+	challengePurposeUser       = "user_creation"
 )
 
 type Service struct {
@@ -695,6 +696,188 @@ func (service *Service) ListUsers(ctx context.Context, actor User) ([]User, erro
 
 func (service *Service) ListIdentities(ctx context.Context) ([]Identity, error) {
 	return service.store.ListIdentities(ctx)
+}
+
+// CreateUserInput describes a user created directly by an administrator.
+type CreateUserInput struct {
+	Username       string
+	Password       string
+	Role           Role
+	ChallengeToken string
+	TOTPCode       string
+}
+
+func (service *Service) BeginUserTOTP(
+	ctx context.Context,
+	actor User,
+	username string,
+) (TOTPEnrollment, error) {
+	if actor.Role != RoleAdmin {
+		return TOTPEnrollment{}, ErrAuthorization
+	}
+	normalized, err := NormalizeUsername(username)
+	if err != nil {
+		return TOTPEnrollment{}, err
+	}
+	secret, err := newTOTPSecret()
+	if err != nil {
+		return TOTPEnrollment{}, err
+	}
+	uri := totpURI("GlassStack", normalized, secret)
+	qr, err := qrDataURI(uri)
+	if err != nil {
+		return TOTPEnrollment{}, err
+	}
+	challenge, err := service.createEnrollmentChallenge(
+		ctx,
+		challengePurposeUser,
+		normalized,
+		secret,
+	)
+	if err != nil {
+		return TOTPEnrollment{}, err
+	}
+	return TOTPEnrollment{
+		ChallengeToken: challenge,
+		Secret:         secret,
+		URI:            uri,
+		QRCodeDataURI:  qr,
+	}, nil
+}
+
+func (service *Service) CreateUser(
+	ctx context.Context,
+	actor User,
+	input CreateUserInput,
+) (User, []string, error) {
+	if actor.Role != RoleAdmin || !input.Role.Valid() {
+		return User{}, nil, ErrAuthorization
+	}
+	now := service.now().UTC()
+	normalized, err := NormalizeUsername(input.Username)
+	if err != nil {
+		return User{}, nil, err
+	}
+	password, passwordAssessment, err := service.validateNewPassword(
+		ctx,
+		input.Password,
+		normalized,
+	)
+	if err != nil {
+		return User{}, nil, err
+	}
+	passwordHash, err := HashPassword(password)
+	if err != nil {
+		return User{}, nil, err
+	}
+	userID, err := newID()
+	if err != nil {
+		return User{}, nil, err
+	}
+	user := User{
+		ID:                 userID,
+		Username:           strings.TrimSpace(input.Username),
+		UsernameNormalized: normalized,
+		PasswordHash:       passwordHash,
+		Role:               input.Role,
+		Status:             "active",
+		CreatedAt:          now,
+		UpdatedAt:          now,
+		PasswordChangedAt:  now,
+	}
+	var credential *TOTPCredential
+	var recoveryCodes []string
+	var recoveryHashes [][]byte
+	if input.Role == RoleAdmin {
+		secret, err := service.loadEnrollmentChallenge(
+			ctx,
+			input.ChallengeToken,
+			challengePurposeUser,
+			normalized,
+			now,
+		)
+		if err != nil {
+			return User{}, nil, err
+		}
+		counter, valid := validateTOTP(secret, input.TOTPCode, now, -1)
+		if !valid {
+			return User{}, nil, ErrAuthentication
+		}
+		if _, err := service.store.ConsumeAuthChallenge(
+			ctx,
+			hashToken(input.ChallengeToken),
+			challengePurposeUser,
+			now,
+		); err != nil {
+			return User{}, nil, ErrInvalidToken
+		}
+		ciphertext, nonce, err := encryptSecret(service.masterKey, []byte(secret))
+		if err != nil {
+			return User{}, nil, err
+		}
+		recoveryCodes, recoveryHashes, err = newRecoveryCodes()
+		if err != nil {
+			return User{}, nil, err
+		}
+		credential = &TOTPCredential{
+			UserID:           userID,
+			SecretCiphertext: ciphertext,
+			Nonce:            nonce,
+			LastCounter:      counter,
+			EnabledAt:        now,
+		}
+	}
+	if err := service.store.CreateUser(
+		ctx,
+		user,
+		credential,
+		recoveryHashes,
+		sanitizePreferencesJSON(""),
+	); err != nil {
+		return User{}, nil, err
+	}
+	service.recordAudit(ctx, actor.ID, "identity.user.create", userID, "success", map[string]any{
+		"role":                      input.Role,
+		"password_compromise_check": passwordAssessment.auditValue(),
+	})
+	return user, recoveryCodes, nil
+}
+
+func (service *Service) DeleteUser(
+	ctx context.Context,
+	actor User,
+	userID string,
+) error {
+	if actor.Role != RoleAdmin {
+		return ErrAuthorization
+	}
+	if userID == actor.ID {
+		return fmt.Errorf("%w: you cannot delete your own account", ErrConflict)
+	}
+	target, err := service.store.FindUserByID(ctx, userID)
+	if err != nil {
+		return ErrNotFound
+	}
+	if target.Role == RoleAdmin {
+		admins, err := service.store.CountAdmins(ctx)
+		if err != nil {
+			return err
+		}
+		if admins <= 1 {
+			return fmt.Errorf("%w: at least one active administrator is required", ErrConflict)
+		}
+	}
+	removed, err := service.store.DeleteUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if !removed {
+		return ErrNotFound
+	}
+	service.recordAudit(ctx, actor.ID, "identity.user.delete", userID, "success", map[string]any{
+		"role": target.Role,
+	})
+	return nil
 }
 
 func (service *Service) Unlock(

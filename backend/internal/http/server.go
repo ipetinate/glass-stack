@@ -21,7 +21,7 @@ func NewServer() *Server {
 func NewServerWithRuntime(runtime *Runtime) *Server {
 	address := runtime.Address
 	if address == "" {
-		address = ":8080"
+		address = ":8070"
 	}
 	return &Server{
 		runtime: runtime,

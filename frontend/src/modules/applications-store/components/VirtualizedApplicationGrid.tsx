@@ -6,7 +6,6 @@ import type { ApplicationSummary } from '../types'
 
 type VirtualizedApplicationGridProps = {
   applications: ApplicationSummary[]
-  installingApplicationId?: string
   onOpen: (applicationId: string) => void
   onInstall: (applicationId: string) => void
   scrollContainerRef: React.RefObject<HTMLDivElement | null>
@@ -21,7 +20,6 @@ const COLUMNS = 2
 
 export function VirtualizedApplicationGrid({
   applications,
-  installingApplicationId,
   onOpen,
   onInstall,
   scrollContainerRef,
@@ -60,7 +58,6 @@ export function VirtualizedApplicationGrid({
           <ApplicationCard
             key={application.id}
             application={application}
-            installing={installingApplicationId === application.id}
             onOpen={onOpen}
             onInstall={onInstall}
           />
@@ -72,7 +69,6 @@ export function VirtualizedApplicationGrid({
 
   return <VirtualizedGrid
     applications={applications}
-    installingApplicationId={installingApplicationId}
     onOpen={onOpen}
     onInstall={onInstall}
     scrollContainerRef={scrollContainerRef}
@@ -83,7 +79,6 @@ export function VirtualizedApplicationGrid({
 
 function VirtualizedGrid({
   applications,
-  installingApplicationId,
   onOpen,
   onInstall,
   scrollContainerRef,
@@ -92,6 +87,7 @@ function VirtualizedGrid({
 }: {
   applications: ApplicationSummary[]
   installingApplicationId?: string
+  installProgress?: number
   onOpen: (applicationId: string) => void
   onInstall: (applicationId: string) => void
   scrollContainerRef: React.RefObject<HTMLDivElement | null>
@@ -128,7 +124,6 @@ function VirtualizedGrid({
           >
             <ApplicationCard
               application={application}
-              installing={installingApplicationId === application.id}
               onOpen={onOpen}
               onInstall={onInstall}
             />

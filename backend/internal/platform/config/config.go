@@ -28,6 +28,7 @@ type Config struct {
 	AllowedOrigins         []string
 	UnsplashAccessKey      string
 	UnsplashSelfHost       bool
+	DockerHost             string
 	StoreRepository        string
 	StoreBranch            string
 	StorePollHours         int
@@ -54,10 +55,10 @@ func Load() (Config, error) {
 		return Config{}, err
 	}
 	dataDir = configuredValue(fileEnvironment, "GLASS_DATA_DIR", dataDir)
-	address := configuredValue(fileEnvironment, "GLASS_ADDRESS", "127.0.0.1:8080")
+	address := configuredValue(fileEnvironment, "GLASS_ADDRESS", "127.0.0.1:8070")
 	publicURL := "http://" + address
 	if environment == development {
-		publicURL = "http://localhost:5173"
+		publicURL = "http://localhost:8080"
 	}
 
 	passwordCompromiseMode := strings.ToLower(
@@ -87,7 +88,7 @@ func Load() (Config, error) {
 		AllowedOrigins: csvOrDefault(
 			fileEnvironment,
 			"GLASS_ALLOWED_ORIGINS",
-			[]string{"http://localhost:5173", "http://127.0.0.1:5173"},
+			[]string{"http://localhost:8080", "http://127.0.0.1:8080"},
 		),
 		UnsplashAccessKey: configuredValue(
 			fileEnvironment,
@@ -98,6 +99,11 @@ func Load() (Config, error) {
 			configuredValue(fileEnvironment, "GLASS_UNSPLASH_SELF_HOST", "false"),
 			"true",
 		),
+		DockerHost: strings.TrimSpace(configuredValue(
+			fileEnvironment,
+			"GLASS_DOCKER_HOST",
+			"",
+		)),
 		StoreRepository: configuredValue(
 			fileEnvironment,
 			"GLASS_STORE_REPOSITORY",

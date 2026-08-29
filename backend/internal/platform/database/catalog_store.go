@@ -62,15 +62,16 @@ func (s *CatalogStore) Upsert(ctx context.Context, record store.CatalogRecord) e
 	}
 
 	_, err = s.db.SQL().ExecContext(ctx, `
-		INSERT INTO store_apps (id, summary_json, detail_json, version, content_hash, synced_at)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO store_apps (id, summary_json, detail_json, version, content_hash, synced_at, compose_yaml)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			summary_json = excluded.summary_json,
 			detail_json = excluded.detail_json,
 			version = excluded.version,
 			content_hash = excluded.content_hash,
-			synced_at = excluded.synced_at
-	`, record.Summary.ID, string(summaryJSON), string(detailJSON), record.Version, record.ContentHash, time.Now().UTC().Format(time.RFC3339))
+			synced_at = excluded.synced_at,
+			compose_yaml = excluded.compose_yaml
+	`, record.Summary.ID, string(summaryJSON), string(detailJSON), record.Version, record.ContentHash, time.Now().UTC().Format(time.RFC3339), record.Compose)
 	if err != nil {
 		return fmt.Errorf("upsert store app: %w", err)
 	}
@@ -154,4 +155,21 @@ func (s *CatalogStore) SaveSyncState(ctx context.Context, commitSHA string, sync
 		return fmt.Errorf("save store sync state: %w", err)
 	}
 	return nil
+}
+
+// Compose returns the raw docker-compose manifest stored for an app.
+func (s *CatalogStore) Compose(ctx context.Context, appID string) (string, error) {
+	var compose string
+	err := s.db.SQL().QueryRowContext(
+		ctx,
+		`SELECT compose_yaml FROM store_apps WHERE id = ?`,
+		appID,
+	).Scan(&compose)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", store.ErrApplicationNotFound
+	}
+	if err != nil {
+		return "", fmt.Errorf("read store app compose: %w", err)
+	}
+	return compose, nil
 }

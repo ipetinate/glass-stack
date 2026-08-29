@@ -774,6 +774,85 @@ func (store *AuthStore) AcceptInvitation(
 	})
 }
 
+func (store *AuthStore) CreateUser(
+	ctx context.Context,
+	user auth.User,
+	credential *auth.TOTPCredential,
+	recovery [][]byte,
+	preferencesJSON string,
+) error {
+	now := user.CreatedAt
+	return store.database.Write(ctx, func(transaction *sql.Tx) error {
+		if err := insertUser(ctx, transaction, user); err != nil {
+			return err
+		}
+		if credential != nil {
+			if err := insertTOTP(ctx, transaction, *credential); err != nil {
+				return err
+			}
+			for _, hash := range recovery {
+				if _, err := transaction.ExecContext(
+					ctx,
+					`INSERT INTO mfa_recovery_codes(user_id, code_hash) VALUES(?, ?)`,
+					user.ID,
+					hash,
+				); err != nil {
+					return err
+				}
+			}
+		}
+		if _, err := transaction.ExecContext(
+			ctx,
+			`INSERT INTO user_preferences(user_id, revision, preferences_json, updated_at)
+			 VALUES(?, 1, ?, ?)`,
+			user.ID,
+			preferencesJSON,
+			formatTime(now),
+		); err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func (store *AuthStore) DeleteUser(
+	ctx context.Context,
+	userID string,
+) (bool, error) {
+	removed := false
+	err := store.database.Write(ctx, func(transaction *sql.Tx) error {
+		if _, err := transaction.ExecContext(
+			ctx,
+			`DELETE FROM invitations WHERE created_by = ?`,
+			userID,
+		); err != nil {
+			return err
+		}
+		if _, err := transaction.ExecContext(
+			ctx,
+			`DELETE FROM password_reset_tokens WHERE created_by = ?`,
+			userID,
+		); err != nil {
+			return err
+		}
+		result, err := transaction.ExecContext(
+			ctx,
+			`DELETE FROM users WHERE id = ?`,
+			userID,
+		)
+		if err != nil {
+			return err
+		}
+		affected, err := result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		removed = affected > 0
+		return nil
+	})
+	return removed, err
+}
+
 func (store *AuthStore) AppendAudit(ctx context.Context, event auth.AuditEvent) error {
 	metadata, err := json.Marshal(event.Metadata)
 	if err != nil {

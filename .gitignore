@@ -15,3 +15,4 @@ AGENTS*
 !.codex/skills/glass-stack-architecture/agents/
 !.codex/skills/glass-stack-architecture/agents/**
 .DS_Store
+backend/internal/platform/database/file:*

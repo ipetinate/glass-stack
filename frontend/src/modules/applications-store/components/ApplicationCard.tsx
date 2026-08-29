@@ -3,31 +3,55 @@ import { Check, Download, LoaderCircle, Star } from 'lucide-react'
 import { Button } from '@/core/components/ui/Button'
 
 import { categoryLabels } from '../constants'
-import type { ApplicationSummary } from '../types'
+import { useActiveOperation } from '../repositories'
+import { isRunningOperation } from '../stores/install-operations'
+import type { ApplicationSummary, InstallOperationStatus } from '../types'
 
 type ApplicationCardProps = {
   application: ApplicationSummary
   installing?: boolean
+  installProgress?: number
   onOpen: (applicationId: string) => void
   onInstall: (applicationId: string) => void
+}
+
+const OPERATION_LABELS: Partial<Record<InstallOperationStatus, string>> = {
+  installing: 'Installing…',
+  updating: 'Updating…',
+  editing: 'Editing…',
+  removing: 'Removing…',
 }
 
 export function ApplicationCard({
   application,
   installing = false,
+  installProgress,
   onOpen,
   onInstall,
 }: ApplicationCardProps) {
+  const activeOperation = useActiveOperation(application.id)
+  const activeRunning =
+    activeOperation !== undefined &&
+    isRunningOperation(activeOperation.status)
   const isInstalled = application.status === 'installed'
-  const isInstalling = installing || application.status === 'installing'
+  const isInstalling =
+    installing || activeRunning || application.status === 'installing'
+  const operationLabel = activeOperation
+    ? OPERATION_LABELS[activeOperation.status]
+    : undefined
+  const progress =
+    isInstalling && activeOperation
+      ? Math.max(0, Math.min(100, activeOperation.progress))
+      : isInstalling && installProgress !== undefined
+        ? Math.max(0, Math.min(100, installProgress))
+        : undefined
 
   return (
-    <article className="flex min-h-44 flex-col rounded-2xl border border-white/10 bg-black/20 p-5 backdrop-blur-sm transition-colors hover:bg-black/30">
-      <button
-        type="button"
-        className="flex min-w-0 flex-1 gap-4 text-left"
-        onClick={() => onOpen(application.id)}
-      >
+    <article
+      onClick={() => onOpen(application.id)}
+      className="flex min-h-44 cursor-pointer flex-col rounded-2xl border border-white/10 bg-black/20 p-5 backdrop-blur-sm transition-colors hover:bg-black/30"
+    >
+      <div className="flex min-w-0 flex-1 gap-4 text-left">
         <img
           src={application.iconSrc}
           alt={`${application.name} icon`}
@@ -44,7 +68,7 @@ export function ApplicationCard({
             {application.description}
           </span>
         </span>
-      </button>
+      </div>
 
       <div className="mt-4 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2 text-[11px] text-white/70">
@@ -54,24 +78,40 @@ export function ApplicationCard({
           <span className="flex items-center gap-1">
             {application.rating !== undefined ? (
               <>
-                <Star className="size-3 fill-current text-cyan-300" />
+                <Star className="size-3 fill-current text-[#00bfff]" />
                 {application.rating.toFixed(1)}
               </>
             ) : null}
           </span>
         </div>
-        <Button
-          type="button"
-          size="sm"
-          disabled={isInstalled || isInstalling}
-          onClick={() => onInstall(application.id)}
-          className="min-h-8 shrink-0 rounded-lg border-0 bg-[#00bfff] px-3 text-xs text-white hover:bg-[#00a9df]"
-        >
-          {isInstalled ? <Check className="size-3.5" /> : isInstalling ? <LoaderCircle className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-          {isInstalled ? 'Installed' : isInstalling ? 'Installing…' : 'Install'}
-        </Button>
+        <div className="flex shrink-0 flex-col items-stretch gap-1.5">
+          <Button
+            type="button"
+            size="sm"
+            disabled={isInstalled || isInstalling}
+            onClick={(e) => { e.stopPropagation(); onInstall(application.id) }}
+            className="min-h-8 rounded-lg border-0 bg-[#00bfff] px-3 text-xs text-white hover:bg-[#00a9df]"
+          >
+            {isInstalled ? <Check className="size-3.5" /> : isInstalling ? <LoaderCircle className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+            {isInstalled ? 'Installed' : isInstalling ? (operationLabel ?? 'Installing…') : 'Install'}
+          </Button>
+          {isInstalling && progress !== undefined ? (
+            <div
+              role="progressbar"
+              aria-label={`Installing ${application.name}`}
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              className="h-1 min-w-16 overflow-hidden rounded-full bg-white/10"
+            >
+              <div
+                className="h-full rounded-full bg-[#00bfff] transition-[width] duration-300 ease-out"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
     </article>
   )
 }
-

@@ -1,8 +1,9 @@
 import { useMutation } from '@tanstack/react-query'
-import { AlertTriangle, ChevronRight, Trash2 } from 'lucide-react'
+import { AlertTriangle, Trash2 } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router'
 
+import { AccordionCard } from '@/core/components/ui/AccordionCard'
 import { resetSystem } from '@/modules/settings/api/admin'
 import { SettingsSection } from '@/modules/settings/components/SettingsSection/SettingsSection'
 
@@ -20,7 +21,6 @@ export function AdvancedSettings() {
 
 function ResetSection() {
   const navigate = useNavigate()
-  const [expanded, setExpanded] = useState(false)
   const [confirmation, setConfirmation] = useState('')
   const [message, setMessage] = useState('')
 
@@ -51,33 +51,13 @@ function ResetSection() {
   }
 
   return (
-    <div className="w-full max-w-xl rounded-2xl border border-rose-300/30 bg-rose-500/10 p-5 dark:border-rose-300/20 dark:bg-rose-500/5">
-      <button
-        type="button"
-        onClick={() => {
-          setExpanded((prev) => !prev)
-          setMessage('')
-          setConfirmation('')
-        }}
-        className="flex w-full items-center gap-3 text-left"
-      >
-        <AlertTriangle size={20} className="shrink-0 text-rose-600 dark:text-rose-400" />
-        <div className="flex-1">
-          <p className="font-medium text-rose-700 dark:text-rose-300">
-            Factory Reset
-          </p>
-          <p className="mt-1 text-sm opacity-70">
-            Erase all data and restart the initial setup process.
-          </p>
-        </div>
-        <ChevronRight
-          size={18}
-          className={`shrink-0 opacity-50 transition-transform ${expanded ? 'rotate-90' : ''}`}
-        />
-      </button>
-
-      {expanded && (
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+    <AccordionCard
+      icon={<AlertTriangle size={20} />}
+      title="Factory Reset"
+      description="Erase all data and restart the initial setup process."
+      variant="danger"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div className="rounded-xl border border-rose-300/20 bg-black/5 p-4 dark:bg-black/20">
             <p className="text-sm font-medium text-rose-700 dark:text-rose-300">
               This action will permanently delete:
@@ -128,7 +108,6 @@ function ResetSection() {
             {mutation.isPending ? 'Resetting system…' : 'Reset system'}
           </button>
         </form>
-      )}
-    </div>
+    </AccordionCard>
   )
 }

@@ -25,16 +25,16 @@ export function Sidebar() {
               icon="LayoutDashboard"
             />
             <SidebarButton
+              to="/app-store"
+              active={isActive('/app-store')}
+              description="Application Store"
+              icon="ShoppingBag"
+            />
+            <SidebarButton
               to="/terminal"
               active={isActive('/terminal')}
               description="Terminal"
               icon="SquareTerminal"
-            />
-            <SidebarButton
-              to="/app-store"
-              active={isActive('/app-store')}
-              description="Store"
-              icon="ShoppingBag"
             />
             <SidebarButton
               to="/file-manager"

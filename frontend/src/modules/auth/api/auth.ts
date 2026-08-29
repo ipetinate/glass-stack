@@ -196,10 +196,40 @@ export const createInvitation = (role: AuthUser['role']) =>
 export const listUsers = () =>
   glassRequest<{ users: AuthUser[] }>('/api/v1/users')
 
+export type TOTPEnrollment = {
+  challengeToken: string
+  secret: string
+  uri: string
+  qrCodeDataUri: string
+}
+
+export const beginUserTOTP = (username: string) =>
+  glassRequest<TOTPEnrollment>('/api/v1/users/totp', {
+    method: 'POST',
+    body: JSON.stringify({ username }),
+  })
+
+export const createUser = (input: {
+  username: string
+  password: string
+  role: AuthUser['role']
+  challengeToken?: string
+  totpCode?: string
+}) =>
+  glassRequest<{ user: AuthUser; recoveryCodes: string[] }>('/api/v1/users', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+
 export const changeUserRole = (userId: string, role: AuthUser['role']) =>
   glassRequest<void>(`/api/v1/users/${encodeURIComponent(userId)}/role`, {
     method: 'PATCH',
     body: JSON.stringify({ role }),
+  })
+
+export const deleteUser = (userId: string) =>
+  glassRequest<void>(`/api/v1/users/${encodeURIComponent(userId)}`, {
+    method: 'DELETE',
   })
 
 export const changePassword = (input: {

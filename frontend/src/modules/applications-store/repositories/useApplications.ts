@@ -3,15 +3,27 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import {
   cancelReviewLogin,
   createReview,
+  editInstalledApp,
+  editReview,
   getApplication,
   getApplications,
-  getInstallOperation,
+  getInstalledApps,
   getReviewSession,
+  removeInstalledApp,
   startApplicationInstall,
   startReviewLogin,
   syncStoreCatalog,
+  updateInstalledApp,
 } from '../api/applications'
-import type { ApplicationSummary, InstallRequest } from '../types'
+import { useInstallOperations } from '../stores/install-operations'
+import type {
+  ApplicationSummary,
+  InstallOperation,
+  InstallRequest,
+  InstalledApplication,
+  InstallOptions,
+  RemoveInstalledAppRequest,
+} from '../types'
 
 export const applicationsQueryKey = ['applications-store', 'applications']
 
@@ -47,10 +59,60 @@ export function useInstallApplication() {
 
   return useMutation({
     mutationFn: (request: InstallRequest) => startApplicationInstall(request),
-    onSuccess: () => {
+    onSuccess: (operation) => {
+      useInstallOperations.getState().upsertOperation(operation)
       void queryClient.invalidateQueries({ queryKey: applicationsQueryKey })
     },
   })
+}
+
+export function useRemoveApplication() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ appId, request }: { appId: string; request?: RemoveInstalledAppRequest }) =>
+      removeInstalledApp(appId, request),
+    onSuccess: (operation) => {
+      useInstallOperations.getState().upsertOperation(operation)
+      void queryClient.invalidateQueries({ queryKey: applicationsQueryKey })
+    },
+  })
+}
+
+export function useUpdateApplication() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (appId: string) => updateInstalledApp(appId),
+    onSuccess: (operation) => {
+      useInstallOperations.getState().upsertOperation(operation)
+      void queryClient.invalidateQueries({ queryKey: applicationsQueryKey })
+    },
+  })
+}
+
+export function useEditApplication() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      appId,
+      options,
+    }: {
+      appId: string
+      options: InstallOptions
+    }) => editInstalledApp(appId, 'custom', options),
+    onSuccess: (operation) => {
+      useInstallOperations.getState().upsertOperation(operation)
+      void queryClient.invalidateQueries({ queryKey: applicationsQueryKey })
+    },
+  })
+}
+
+export function useActiveOperation(appId: string | undefined): InstallOperation | undefined {
+  return useInstallOperations(
+    (state) => (appId ? state.operations[appId] : undefined),
+  )
 }
 
 export function useSyncCatalog() {
@@ -71,6 +133,22 @@ export function useCreateReview(appId: string | undefined) {
     mutationFn: (review: { rating: number; comment: string }) => {
       if (!appId) throw new Error('No app selected.')
       return createReview(appId, review)
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [...applicationsQueryKey, appId],
+      })
+    },
+  })
+}
+
+export function useEditReview(appId: string | undefined) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: { commentId: string; comment: string }) => {
+      if (!appId) throw new Error('No app selected.')
+      return editReview(appId, payload)
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
@@ -114,13 +192,36 @@ export function useCancelReviewLogin() {
   })
 }
 
-export function useInstallOperation(operationId: string | undefined) {
+const installedApplicationsQueryKey = [...applicationsQueryKey, 'installed']
+
+export function useInstalledApplications() {
   return useQuery({
-    queryKey: [...applicationsQueryKey, 'install', operationId],
-    queryFn: () => getInstallOperation(operationId!),
-    enabled: Boolean(operationId),
-    refetchInterval: (query) =>
-      query.state.data?.status === 'installing' ? 1000 : false,
+    queryKey: installedApplicationsQueryKey,
+    queryFn: getInstalledApps,
+    refetchInterval: 5000,
+  })
+}
+
+export function useInstalledAppMap(): Map<string, InstalledApplication> {
+  const query = useInstalledApplications()
+  const apps = query.data?.data ?? []
+  return new Map(apps.map((app) => [app.id, app]))
+}
+
+const catalogIconsQueryKey = [...applicationsQueryKey, 'catalog-icons']
+
+export function useCatalogAppIcons() {
+  return useQuery({
+    queryKey: catalogIconsQueryKey,
+    queryFn: async () => {
+      const page = await getApplications({ limit: 1000 })
+      const icons = new Map<string, string>()
+      for (const application of page.data) {
+        if (application.iconSrc) icons.set(application.id, application.iconSrc)
+      }
+      return icons
+    },
+    staleTime: 5 * 60 * 1000,
   })
 }
 

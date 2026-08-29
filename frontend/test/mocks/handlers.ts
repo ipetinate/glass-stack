@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
 
-import { applications, getApplicationDetail } from './fixtures'
+import { installedApplications, applications, getApplicationDetail } from './fixtures'
 import type { InstallOperation } from '@/modules/applications-store/types'
 
 const installProgress = new Map<string, number>()
@@ -58,16 +58,67 @@ export const handlers = [
     const operationId = `operation-${body.appId}`
     installProgress.set(operationId, 20)
     return HttpResponse.json({
-      id: operationId,
-      appId: body.appId,
-      status: 'installing',
-      progress: 20,
-      message: 'Preparando contêiner…',
+      data: {
+        id: operationId,
+        appId: body.appId,
+        status: 'installing',
+        progress: 20,
+        message: 'Preparando contêiner…',
+      },
     })
   }),
   http.get('/api/v1/apps/install/:operationId', ({ params }) =>
-    HttpResponse.json(buildOperation(String(params.operationId))),
+    HttpResponse.json({ data: buildOperation(String(params.operationId)) }),
   ),
+  http.get('/api/v1/apps/events', () =>
+    new HttpResponse(null, {
+      headers: { 'Content-Type': 'text/event-stream' },
+      body: new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(':\n\n'))
+        },
+      }),
+    }),
+  ),
+  http.get('/api/v1/apps', () =>
+    HttpResponse.json({ data: installedApplications }),
+  ),
+  http.post('/api/v1/apps/:appId/update', ({ params }) =>
+    HttpResponse.json({
+      data: {
+        id: `operation-${params.appId}`,
+        appId: params.appId,
+        status: 'updating',
+        progress: 20,
+        message: 'Atualizando aplicativo…',
+      },
+    }),
+  ),
+  http.patch('/api/v1/apps/:appId', ({ params }) =>
+    HttpResponse.json({
+      data: {
+        id: `operation-${params.appId}`,
+        appId: params.appId,
+        status: 'editing',
+        progress: 20,
+        message: 'Editando aplicativo…',
+      },
+    }),
+  ),
+  http.post('/api/v1/apps/:appId/remove', ({ params }) => {
+    const appId = String(params.appId)
+    const index = installedApplications.findIndex((app) => app.id === appId)
+    if (index >= 0) installedApplications.splice(index, 1)
+    return HttpResponse.json({
+      data: {
+        id: `operation-${appId}`,
+        appId,
+        status: 'removing',
+        progress: 40,
+        message: 'Removendo contêineres…',
+      },
+    })
+  }),
   http.get('/api/v1/store/reviews/session', () =>
     HttpResponse.json({ status: 'idle' }),
   ),

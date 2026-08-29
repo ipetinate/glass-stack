@@ -1,27 +1,34 @@
-import { Copy, ExternalLink, LoaderCircle, LogOut, Star, Tag } from 'lucide-react'
-import { useState } from 'react'
+import { Copy, Edit3, ExternalLink, LoaderCircle, LogOut, Star, Tag } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/core/components/ui/Button'
+import { useReviewConnectionStore } from '@/core/stores/review-connection/review-connection'
 
 import { architectureColors, categoryTagColors } from '../constants'
 import {
   useCancelReviewLogin,
   useCreateReview,
+  useEditReview,
   useReviewSession,
   useStartReviewLogin,
 } from '../repositories'
-import type { ApplicationDetail as ApplicationDetailModel } from '../types'
+import type { ApplicationDetail as ApplicationDetailModel, AppReview } from '../types'
 
-function Stars({ value }: { value: number }) {
+const EDIT_WINDOW_MS = 10 * 60 * 1000
+
+function Stars({ value, size = 'md' }: { value: number; size?: 'xs' | 'sm' | 'md' | 'lg' }) {
+  const sizeClass =
+    size === 'lg' ? 'size-14' : size === 'md' ? 'size-10' : size === 'xs' ? 'size-3.5' : 'size-6'
+  const gapClass = size === 'lg' ? 'gap-1.5' : size === 'xs' ? 'gap-px' : 'gap-0.5'
   return (
-    <span className="flex items-center gap-0.5" aria-label={`${value} of 5 stars`}>
+    <span className={`flex items-center ${gapClass}`} aria-label={`${value} of 5 stars`}>
       {[1, 2, 3, 4, 5].map((position) => (
         <Star
           key={position}
           className={
             position <= Math.round(value)
-              ? 'size-3.5 fill-current text-amber-300'
-              : 'size-3.5 text-white/25'
+              ? `${sizeClass} fill-current text-[#00bfff]`
+              : `${sizeClass} text-white/20`
           }
         />
       ))}
@@ -65,8 +72,8 @@ function StarPicker({
           <Star
             className={
               position <= (hovered || value)
-                ? 'size-6 fill-current text-amber-300 transition-colors'
-                : 'size-6 text-white/30 transition-colors hover:text-white/60'
+                ? 'size-10 fill-current text-[#00bfff] transition-colors'
+                : 'size-10 text-white/30 transition-colors hover:text-white/60'
             }
           />
         </button>
@@ -98,9 +105,37 @@ type ApplicationInfoColumnsProps = {
   application: ApplicationDetailModel
 }
 
+function useEditCountdown(review: AppReview | undefined): { remaining: number; canEdit: boolean } {
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    if (!review || review.editedAt || (review.edits ?? 0) >= 1) return
+    const interval = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(interval)
+  }, [review?.editedAt, review?.edits])
+
+  if (!review || review.editedAt || (review.edits ?? 0) >= 1) {
+    return { remaining: 0, canEdit: false }
+  }
+  const posted = Date.parse(review.postedAt)
+  if (Number.isNaN(posted)) return { remaining: 0, canEdit: false }
+  const elapsed = now - posted
+  const remaining = Math.max(0, EDIT_WINDOW_MS - elapsed)
+  return { remaining, canEdit: remaining > 0 }
+}
+
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return '0:00'
+  const totalSeconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${String(seconds).padStart(2, '0')}`
+}
+
 export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsProps) {
   const latestReview = application.reviews[0]
   const createReviewMutation = useCreateReview(application.id)
+  const editReviewMutation = useEditReview(application.id)
   const startLoginMutation = useStartReviewLogin()
   const cancelLoginMutation = useCancelReviewLogin()
   const [reviewFormOpen, setReviewFormOpen] = useState(false)
@@ -108,15 +143,63 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
   const [reviewComment, setReviewComment] = useState('')
   const [codeCopied, setCodeCopied] = useState(false)
   const [showAllReviews, setShowAllReviews] = useState(false)
+  const [signedOut, setSignedOut] = useState(false)
+  const [editingReview, setEditingReview] = useState<AppReview | null>(null)
+  const [editComment, setEditComment] = useState('')
 
-  const sessionQuery = useReviewSession(reviewFormOpen)
+  const setConnection = useReviewConnectionStore((s) => s.setConnection)
+  const clearConnection = useReviewConnectionStore((s) => s.clearConnection)
+  const getConnection = useReviewConnectionStore((s) => s.getConnection)
+
+  const sessionQuery = useReviewSession(reviewFormOpen || editingReview !== null)
   const session = sessionQuery.data
-  const isAuthenticated = session?.status === 'authenticated'
+
+  const backendAuthenticated = session?.status === 'authenticated'
   const isPending = session?.status === 'pending'
+
+  const savedConnection =
+    !signedOut && session?.provider ? getConnection(session.provider) : undefined
+  const isAuthenticated = backendAuthenticated || Boolean(savedConnection)
+
+  const displaySession = backendAuthenticated
+    ? session
+    : savedConnection
+      ? {
+          ...session,
+          status: 'authenticated' as const,
+          login: savedConnection.login,
+          avatarUrl: savedConnection.avatarUrl,
+          provider: savedConnection.provider,
+        }
+      : session
+
+  const userReview = isAuthenticated
+    ? application.reviews.find(
+        (r) =>
+          r.author === displaySession?.login &&
+          (r.provider === displaySession?.provider || (!r.provider && displaySession?.provider === 'github')),
+      )
+    : undefined
+
+  const editCountdown = useEditCountdown(userReview)
+
+  useEffect(() => {
+    if (backendAuthenticated && session?.provider && session?.login) {
+      setSignedOut(false)
+      setConnection({
+        provider: session.provider,
+        login: session.login,
+        avatarUrl: session.avatarUrl,
+      })
+    }
+  }, [backendAuthenticated, session?.provider, session?.login, session?.avatarUrl, setConnection])
 
   const toggleForm = () => {
     setReviewFormOpen((current) => !current)
     setCodeCopied(false)
+    setSignedOut(false)
+    setEditingReview(null)
+    setEditComment('')
     if (reviewFormOpen) {
       setReviewRating(0)
       setReviewComment('')
@@ -136,37 +219,85 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
     )
   }
 
+  const startEdit = (review: AppReview) => {
+    setEditingReview(review)
+    setEditComment(review.snippet)
+    setReviewFormOpen(false)
+    setCodeCopied(false)
+    setSignedOut(false)
+  }
+
+  const cancelEdit = () => {
+    setEditingReview(null)
+    setEditComment('')
+  }
+
+  const submitEdit = () => {
+    if (!editingReview?.commentId) return
+    editReviewMutation.mutate(
+      { commentId: editingReview.commentId, comment: editComment },
+      {
+        onSuccess: () => {
+          setEditingReview(null)
+          setEditComment('')
+        },
+      },
+    )
+  }
+
   return (
     <div className="grid gap-6 border-t border-white/10 pt-6 md:grid-cols-3">
       <section aria-label="Reviews" className="flex flex-col gap-3">
         <header className="flex items-baseline justify-between">
           <h2 className="text-base font-semibold text-white">Reviews</h2>
-          <button
-            type="button"
-            onClick={toggleForm}
-            className="text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
-          >
-            {reviewFormOpen ? 'Cancel' : 'Write a review'}
-          </button>
+          {isAuthenticated && userReview ? (
+            <button
+              type="button"
+              onClick={() => (editingReview ? cancelEdit() : startEdit(userReview))}
+              className="flex items-center gap-1 text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
+            >
+              <Edit3 className="size-3" />
+              {editingReview ? 'Cancel edit' : 'Edit your review'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={toggleForm}
+              className="text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
+            >
+              {reviewFormOpen ? 'Cancel' : 'Write a review'}
+            </button>
+          )}
         </header>
-        <Stars value={application.rating ?? 0} />
+        <Stars value={application.rating ?? 0} size="lg" />
+        {userReview && editCountdown.canEdit && !editingReview ? (
+          <div className="flex items-center gap-2 rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+            <Edit3 className="size-3 shrink-0" />
+            <span>Edit available for {formatCountdown(editCountdown.remaining)}</span>
+          </div>
+        ) : null}
+        {userReview && !editCountdown.canEdit && !userReview.editedAt && (userReview.edits ?? 0) < 1 ? (
+          <div className="flex items-center gap-2 rounded-md bg-white/5 px-3 py-2 text-xs text-white/50">
+            Edit window expired
+          </div>
+        ) : null}
         {reviewFormOpen && !isAuthenticated ? (
           <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-black/25 p-4">
             {isPending ? (
               <>
                 <p className="text-xs leading-5 text-white/70">
                   Open the link below and enter the code to connect your{' '}
-                  {session?.provider === 'google' ? 'Google' : 'GitHub'} account.
+                  {displaySession?.provider === 'google' ? 'Google' : 'GitHub'} account.
                 </p>
                 <div className="flex items-center justify-center gap-2">
                   <code className="rounded-md border border-cyan-300/40 bg-black/50 px-4 py-2 font-mono text-xl tracking-[0.3em] text-cyan-200">
-                    {session?.userCode}
+                    {displaySession?.userCode}
                   </code>
                   <button
                     type="button"
                     aria-label="Copy code"
                     onClick={() => {
-                      void navigator.clipboard.writeText(session?.userCode ?? '')
+                      void navigator.clipboard.writeText(displaySession?.userCode ?? '')
                       setCodeCopied(true)
                     }}
                     className="flex size-8 items-center justify-center rounded-md border border-white/15 text-white/70 transition-colors hover:border-cyan-300/60 hover:text-cyan-300"
@@ -178,7 +309,7 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
                   <span className="text-center text-[11px] text-white/45">Code copied.</span>
                 ) : null}
                 <a
-                  href={session?.verificationUri || 'https://github.com/login/device'}
+                  href={displaySession?.verificationUri || 'https://github.com/login/device'}
                   target="_blank"
                   rel="noreferrer"
                   className="mx-auto inline-flex w-fit items-center gap-1.5 text-xs text-[#00bfff] transition-colors hover:text-[#33ccff]"
@@ -208,7 +339,10 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
                     type="button"
                     size="sm"
                     disabled={startLoginMutation.isPending}
-                    onClick={() => startLoginMutation.mutate('github')}
+                    onClick={() => {
+                      setSignedOut(false)
+                      startLoginMutation.mutate('github')
+                    }}
                     className="min-h-9 border-white/20 bg-white/95 text-black hover:bg-white"
                   >
                     <GitHubGlyph />
@@ -218,7 +352,10 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
                     type="button"
                     size="sm"
                     disabled={startLoginMutation.isPending}
-                    onClick={() => startLoginMutation.mutate('google')}
+                    onClick={() => {
+                      setSignedOut(false)
+                      startLoginMutation.mutate('google')
+                    }}
                     className="min-h-9 border-white/20 bg-white/95 text-black hover:bg-white"
                   >
                     <GoogleGlyph />
@@ -229,7 +366,7 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
             )}
           </div>
         ) : null}
-        {reviewFormOpen && isAuthenticated ? (
+        {reviewFormOpen && isAuthenticated && !userReview ? (
           <form
             className="flex flex-col gap-3 rounded-lg border border-white/10 bg-black/25 p-3"
             onSubmit={(event) => {
@@ -239,19 +376,23 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
           >
             <div className="flex items-center justify-between gap-2 rounded-md bg-white/5 px-2.5 py-1.5">
               <span className="flex min-w-0 items-center gap-2">
-                {session?.avatarUrl ? (
-                  <img src={session.avatarUrl} alt="" className="size-6 rounded-full object-cover" />
+                {displaySession?.avatarUrl ? (
+                  <img src={displaySession.avatarUrl} alt="" className="size-6 rounded-full object-cover" />
                 ) : null}
-                <span className="truncate text-xs font-medium text-white">{session?.login}</span>
+                <span className="truncate text-xs font-medium text-white">{displaySession?.login}</span>
                 <span className="shrink-0 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px] uppercase text-white/60">
-                  {session?.provider === 'google' ? 'Google' : 'GitHub'}
+                  {displaySession?.provider === 'google' ? 'Google' : 'GitHub'}
                 </span>
               </span>
               <button
                 type="button"
                 aria-label="Sign out"
                 title="Sign out"
-                onClick={() => cancelLoginMutation.mutate()}
+                onClick={() => {
+                  setSignedOut(true)
+                  if (displaySession?.provider) clearConnection(displaySession.provider)
+                  cancelLoginMutation.mutate()
+                }}
                 className="shrink-0 text-white/50 transition-colors hover:text-rose-300"
               >
                 <LogOut className="size-3.5" />
@@ -291,6 +432,64 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
             </Button>
           </form>
         ) : null}
+        {editingReview ? (
+          <div className="flex flex-col gap-3 rounded-lg border border-amber-300/20 bg-amber-500/5 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-2 text-xs font-medium text-amber-200">
+                <Edit3 className="size-3.5" />
+                Editing your review
+              </span>
+              {editCountdown.canEdit ? (
+                <span className="text-[11px] text-amber-300/70">
+                  {formatCountdown(editCountdown.remaining)} left
+                </span>
+              ) : null}
+            </div>
+            <Stars value={editingReview.rating} size="sm" />
+            <textarea
+              aria-label="Edit your comment"
+              required
+              rows={3}
+              value={editComment}
+              onChange={(event) => setEditComment(event.target.value)}
+              className="w-full resize-none rounded-md border border-white/15 bg-black/40 p-2 text-xs text-white outline-none placeholder:text-white/35 focus:border-cyan-300/60"
+            />
+            {editReviewMutation.isError ? (
+              <p role="alert" className="text-xs leading-4 text-rose-300">
+                {(editReviewMutation.error instanceof Error
+                  ? editReviewMutation.error.message
+                  : '') || 'Could not update review.'}
+              </p>
+            ) : null}
+            <div className="flex items-center gap-2 self-end">
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={cancelEdit}
+                className="min-h-7 px-3 text-xs text-white/60 hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={
+                  editReviewMutation.isPending ||
+                  editComment.trim().length === 0 ||
+                  !editCountdown.canEdit
+                }
+                onClick={submitEdit}
+                className="min-h-7 bg-[#00bfff] px-3 text-xs text-black hover:bg-[#33ccff]"
+              >
+                {editReviewMutation.isPending ? (
+                  <LoaderCircle className="size-3.5 animate-spin" />
+                ) : null}
+                Save edit
+              </Button>
+            </div>
+          </div>
+        ) : null}
         {latestReview ? (
           <>
             {(showAllReviews ? application.reviews : [latestReview]).map((review) => (
@@ -301,13 +500,16 @@ export function ApplicationInfoColumns({ application }: ApplicationInfoColumnsPr
                       <img src={review.avatar} alt="" className="size-5 rounded-full object-cover" />
                     ) : null}
                     <span className="truncate text-sm font-medium text-white">{review.author}</span>
+                    {review.edits && review.edits > 0 ? (
+                      <span className="shrink-0 text-[10px] text-white/40">(edited)</span>
+                    ) : null}
                   </span>
                   <span className="shrink-0 text-[11px] text-white/45">
                     {formatRelativeTime(review.postedAt)}
                   </span>
                 </div>
                 {review.rating > 0 ? (
-                  <Stars value={review.rating} />
+                  <Stars value={review.rating} size="sm" />
                 ) : null}
                 <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/70">{review.snippet}</p>
               </article>

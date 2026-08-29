@@ -65,6 +65,14 @@ func (m *memoryCatalog) SaveSyncState(ctx context.Context, commitSHA string, syn
 	return nil
 }
 
+func (m *memoryCatalog) Compose(ctx context.Context, appID string) (string, error) {
+	record, ok := m.records[appID]
+	if !ok {
+		return "", ErrApplicationNotFound
+	}
+	return record.Compose, nil
+}
+
 func fakeGitHub(t *testing.T, manifestYAML string) (*httptest.Server, *string) {
 	t.Helper()
 	commitSHA := "abc123def4567890"

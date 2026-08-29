@@ -5,6 +5,7 @@ import type {
   ApplicationSummary,
   InstallOperation,
   InstallRequest,
+  InstalledApplication,
   PaginatedResponse,
   ReviewSession,
 } from '../types'
@@ -43,6 +44,19 @@ export function createReview(
   )
 }
 
+export function editReview(
+  appId: string,
+  payload: { commentId: string; comment: string },
+) {
+  return glassRequest<ApplicationDetail>(
+    `/api/v1/catalog/apps/${appId}/reviews`,
+    {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    },
+  )
+}
+
 export function getReviewSession() {
   return glassRequest<ReviewSession>('/api/v1/store/reviews/session')
 }
@@ -60,17 +74,78 @@ export function cancelReviewLogin() {
   })
 }
 
-export function startApplicationInstall(request: InstallRequest) {
-  return glassRequest<InstallOperation>('/api/v1/apps/install', {
-    method: 'POST',
-    body: JSON.stringify(request),
-  })
+export async function startApplicationInstall(
+  request: InstallRequest,
+): Promise<InstallOperation> {
+  const response = await glassRequest<{ data: InstallOperation }>(
+    '/api/v1/apps/install',
+    {
+      method: 'POST',
+      body: JSON.stringify(request),
+    },
+  )
+  return response.data
 }
 
-export function getInstallOperation(operationId: string) {
-  return glassRequest<InstallOperation>(
+export async function getInstallOperation(
+  operationId: string,
+): Promise<InstallOperation> {
+  const response = await glassRequest<{ data: InstallOperation }>(
     `/api/v1/apps/install/${operationId}`,
   )
+  return response.data
+}
+
+export type InstalledAppsResponse = {
+  data: InstalledApplication[]
+}
+
+export function getInstalledApps(): Promise<InstalledAppsResponse> {
+  return glassRequest<InstalledAppsResponse>('/api/v1/apps')
+}
+
+export type RemoveInstalledAppRequest = {
+  containers?: boolean
+  images?: boolean
+  config?: boolean
+  data?: boolean
+}
+
+export async function removeInstalledApp(
+  appId: string,
+  request: RemoveInstalledAppRequest = {},
+): Promise<InstallOperation> {
+  const response = await glassRequest<{ data: InstallOperation }>(
+    `/api/v1/apps/${appId}/remove`,
+    {
+      method: 'POST',
+      body: JSON.stringify(request),
+    },
+  )
+  return response.data
+}
+
+export async function updateInstalledApp(appId: string): Promise<InstallOperation> {
+  const response = await glassRequest<{ data: InstallOperation }>(
+    `/api/v1/apps/${appId}/update`,
+    { method: 'POST' },
+  )
+  return response.data
+}
+
+export async function editInstalledApp(
+  appId: string,
+  mode: string,
+  options: InstallOptions,
+): Promise<InstallOperation> {
+  const response = await glassRequest<{ data: InstallOperation }>(
+    `/api/v1/apps/${appId}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify({ mode, options }),
+    },
+  )
+  return response.data
 }
 
 export type StoreSyncSummary = {

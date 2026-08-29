@@ -1,7 +1,7 @@
-import { RouteTransition } from '@/core/components/foundation/RouteTransition'
 import { Searchbar } from '@/core/components/foundation/Searchbar'
 import { Sidebar } from '@/core/components/foundation/Sidebar'
 import { Statusbar } from '@/core/components/foundation/Statusbar'
+import { Outlet } from 'react-router'
 
 export function AppLayout() {
   return (
@@ -13,7 +13,7 @@ export function AppLayout() {
         <Searchbar />
 
         <main className="col-span-2 h-full min-h-0 overflow-hidden text-[#151A21] dark:text-white">
-          <RouteTransition />
+          <Outlet />
         </main>
       </div>
     </div>

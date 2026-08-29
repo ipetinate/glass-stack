@@ -9,7 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ipetinate/glass-stack/backend/internal/apps"
 	"github.com/ipetinate/glass-stack/backend/internal/auth"
+	"github.com/ipetinate/glass-stack/backend/internal/containers"
+	dockeradapter "github.com/ipetinate/glass-stack/backend/internal/docker"
 	"github.com/ipetinate/glass-stack/backend/internal/events"
 	"github.com/ipetinate/glass-stack/backend/internal/host"
 	httpserver "github.com/ipetinate/glass-stack/backend/internal/http"
@@ -92,6 +95,28 @@ func newRuntime() (*httpserver.Runtime, error) {
 	cpuCollector := systeminfo.NewCPUCollector()
 	gpuCollector := systeminfo.NewGPUCollector()
 
+	dockerCandidates := dockeradapter.Candidates(configuration.DockerHost)
+	dockerDial := func() (containers.Engine, error) {
+		return dockeradapter.Dial(dockerCandidates, dockeradapter.DialTimeout)
+	}
+	containersService := containers.New(dockerDial, dockeradapter.ComposeAvailable())
+
+	appsStore := database.NewAppsStore(db)
+	appsService := apps.NewInstaller(
+		appsStore,
+		storeService,
+		apps.NewCommandRunner(),
+		filepath.Join(configuration.DataDir, "apps"),
+		nil,
+		logger,
+	)
+	appsService.SetHostResolver(accessHost(configuration.PublicURL))
+	appsService.SetPortResolver(accessPort(containersService, storeService))
+
+	go apps.NewReconciler(appsStore, &reconcilerEngine{containers: containersService}, logger).Run(
+		context.Background(),
+	)
+
 	runtime := &httpserver.Runtime{
 		Broker: events.NewBroker(64, 8),
 		Metrics: host.NewMetricsService(
@@ -107,6 +132,8 @@ func newRuntime() (*httpserver.Runtime, error) {
 		Auth:           authService,
 		Settings:       settingsService,
 		Store:          storeService,
+		Containers:     containersService,
+		Apps:           appsService,
 		Database:       db,
 		Address:        configuration.Address,
 		AllowedOrigins: configuration.AllowedOrigins,

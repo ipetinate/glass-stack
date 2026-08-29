@@ -1,23 +1,30 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Settings } from 'lucide-react'
-import { useNavigate } from 'react-router'
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router'
 
 import { Tabs } from '@/core/components/foundation/Tabs'
 import { Window } from '@/core/components/foundation/Window'
 import { useUnsavedChanges } from '@/core/hooks/useUnsavedChanges'
 import { useWallpaperSearchStore } from '@/core/stores/wallpaper-search'
-import { AdvancedSettings } from '@/modules/settings/pages/AdvancedSettings/AdvancedSettings'
-import { AppearanceSettings } from '@/modules/settings/pages/AppearanceSettings'
-import { GeneralSettings } from '@/modules/settings/pages/GeneralSettings'
-import { SecuritySettings } from '@/modules/settings/pages/SecuritySettings'
-import { ServicesSettings } from '@/modules/settings/pages/ServicesSettings'
+
+import {
+  DEFAULT_SETTINGS_TAB,
+  isSettingsTabId,
+  settingsTabs,
+} from './SettingsPage.tabs'
 
 export function SettingsPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
   const clearWallpaperSearch = useWallpaperSearchStore(
     (state) => state.clearSearch,
   )
+
+  const tabFromPath = location.pathname.split('/')[2]
+  const activeTabId = isSettingsTabId(tabFromPath ?? '')
+    ? tabFromPath
+    : DEFAULT_SETTINGS_TAB
 
   const { confirmClose } = useUnsavedChanges({ scope: 'Settings' })
 
@@ -32,6 +39,10 @@ export function SettingsPage() {
     navigate('/')
   }
 
+  if (tabFromPath !== undefined && !isSettingsTabId(tabFromPath)) {
+    return <Navigate to={`/settings/${DEFAULT_SETTINGS_TAB}`} replace />
+  }
+
   return (
     <Window
       title="Settings"
@@ -42,40 +53,10 @@ export function SettingsPage() {
       contentClassName="pt-10"
     >
       <Tabs
-        defaultActiveTabId="appearance"
-        tabs={[
-          {
-            id: 'general',
-            title: 'General',
-            icon: 'Settings',
-            content: <GeneralSettings />,
-          },
-          {
-            id: 'appearance',
-            title: 'Appearance',
-            icon: 'Palette',
-            pinned: true,
-            content: <AppearanceSettings />,
-          },
-          {
-            id: 'services',
-            title: 'Services',
-            icon: 'Server',
-            content: <ServicesSettings />,
-          },
-          {
-            id: 'security',
-            title: 'Security',
-            icon: 'ShieldCheck',
-            content: <SecuritySettings />,
-          },
-          {
-            id: 'advanced',
-            title: 'Advanced',
-            icon: 'AlertTriangle',
-            content: <AdvancedSettings />,
-          },
-        ]}
+        activeTabId={activeTabId}
+        onActiveTabChange={(id) => navigate(`/settings/${id}`)}
+        renderPanel={() => <Outlet />}
+        tabs={settingsTabs}
       />
     </Window>
   )

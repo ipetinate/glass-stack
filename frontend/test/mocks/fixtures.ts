@@ -1,4 +1,8 @@
-import type { ApplicationDetail, ApplicationSummary } from '@/modules/applications-store/types'
+import type {
+  ApplicationDetail,
+  ApplicationSummary,
+  InstalledApplication,
+} from '@/modules/applications-store/types'
 
 const iconSrc = '/images/logo.png'
 const screenshotSrc = '/images/wallpapers/default-dark.avif'
@@ -84,6 +88,31 @@ export const applications: ApplicationSummary[] = [
     rating: 4.7,
     downloads: '6.2k',
     status: 'available',
+  },
+]
+
+export const installedApplications: InstalledApplication[] = [
+  {
+    id: 'jellyfin',
+    title: 'Jellyfin',
+    version: '10.9.0',
+    status: 'installed',
+    runtime: 'running',
+    accessUrl: 'http://localhost:8096/',
+    options: {},
+    lastError: '',
+    updatedAt: '2026-08-28T18:00:00Z',
+  },
+  {
+    id: 'gitea',
+    title: 'Gitea',
+    version: '1.22.1',
+    status: 'installing',
+    runtime: 'stopped',
+    accessUrl: '',
+    options: {},
+    lastError: '',
+    updatedAt: '2026-08-28T19:05:00Z',
   },
 ]
 
